@@ -6,16 +6,18 @@ import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
 function RefillHistoryPage() {
 
-    const [histories, setHistories] = useState([]);
-
+    const [history, setHistory] = useState([]);
+    const [allHistory, setAllHistory] = useState([]);
     const navigate = useNavigate();
 
+    const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
 
 
     // ================= FETCH HISTORY =================
 
-    const fetchHistories = async () => {
-
+    const fetchHistory = async () => {
+        
         try {
 
             const token =
@@ -30,8 +32,9 @@ function RefillHistoryPage() {
                 }
             );
 
-            setHistories(response.data);
+            setHistory(response.data);
             console.log(response.data);
+            setAllHistory(response.data);
         } catch (error) {
 
             console.log(error);
@@ -40,7 +43,65 @@ function RefillHistoryPage() {
 
     };
 
+const handleFilter = () => {
+console.log(allHistory);
+    if (!fromDate || !toDate) {
 
+        alert("Vui lòng chọn đầy đủ ngày.");
+
+        return;
+
+    }
+
+    const from = new Date(fromDate);
+from.setHours(0, 0, 0, 0);
+
+const to = new Date(toDate);
+to.setHours(23, 59, 59, 999);
+    if (to < from) {
+
+        alert("Đến ngày phải lớn hơn Từ ngày.");
+
+        return;
+
+    }
+
+    const diffDays =
+
+        (to - from)
+
+        / (1000 * 60 * 60 * 24);
+
+    if (diffDays > 30) {
+
+        alert("Chỉ được lọc tối đa 30 ngày.");
+
+        return;
+
+    }
+
+    const filtered = allHistory.filter(item => {
+          console.log(item.refill_date);
+        const refillDate = new Date(
+    item.refill_date.replace(" ", "T")
+);
+        console.log(refillDate);
+        return refillDate >= from && refillDate <= to;
+
+    });
+
+    setHistory(filtered);
+
+};
+const resetFilter = () => {
+
+    setHistory(allHistory);
+
+    setFromDate("");
+
+    setToDate("");
+
+};
 
 
 
@@ -48,7 +109,7 @@ function RefillHistoryPage() {
 
     useEffect(() => {
 
-        fetchHistories();
+        fetchHistory();
 
     }, []);
 
@@ -58,10 +119,8 @@ function RefillHistoryPage() {
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
-
-            <div className="max-w-6xl mx-auto relative">
-            <button
+        <div className="max-full mx-auto min-h-screen bg-gradient-to-br from-green-200 via-white to-green-500 bg-gray-100 p-6">
+ <button
     onClick={() => navigate(-1)}
     className="
         w-fit
@@ -84,18 +143,135 @@ function RefillHistoryPage() {
     Quay lại
 
 </button>
+
+            <div className="max-w-6xl mx-auto relative p-5">
+           
                 <h1 className="text-5xl font-extrabold text-center text-green-600 mb-12">
 
                     📜 Lịch sử Refill
 
                 </h1>
+        <div className="flex justify-end mb-5">
+
+      <div className=" w-fit
+                            bg-gray
+                            border
+                            border-gray-300
+                            rounded-2xl
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
 
 
+">
+
+    
+
+    <div className="flex flex-wrap items-center gap-4">
+        
+       <span className="font-semibold">
+        Từ ngày:
+    </span>
+        <input
+
+            type="date"
+
+            value={fromDate}
+
+            onChange={(e)=>setFromDate(e.target.value)}
+
+            className="
+                w-fit
+                border
+                rounded-xl
+                px-1
+                py-2
+            "
+
+        />
+
+        <span className="text-xl">
+
+            →
+
+        </span>
+        <span className="font-semibold">
+        Đến ngày:
+    </span>
+
+        <input
+
+            type="date"
+
+            value={toDate}
+
+            onChange={(e)=>setToDate(e.target.value)}
+
+            className="
+            w-fit
+                border
+                rounded-xl
+                px-1
+                py-2
+            "
+
+        />
+
+        <button
+
+            onClick={handleFilter}
+
+            className="
+                bg-green-500
+                hover:bg-green-600
+                text-white
+                px-4
+                py-3
+                rounded-xl
+                font-semibold
+            "
+
+        >
+
+            🔍 Lọc
+
+        </button>
+
+        <button
+
+            onClick={resetFilter}
+
+            className="
+            text-white
+                bg-gray-400
+                hover:bg-gray-500
+                px-4
+                py-3
+                rounded-xl
+                font-semibold
+            "
+
+        >
+
+            Tất cả
+
+        </button>
+
+    </div>
+
+</div>
+</div>
+<p className="text-3xl text-black mb-5">
+
+    Số lần refill: <span className="font-bold text-green-600 mx-2">{history.length}</span>
 
 
-
+</p>
                 {
-                    histories.length === 0 ? (
+                    history.length === 0 ? (
 
                         <div className="bg-white rounded-3xl p-10 text-center shadow-md">
 
@@ -112,7 +288,7 @@ function RefillHistoryPage() {
                         <div className="space-y-6">
 
                             {
-                                histories.map((item) => (
+                                history.map((item) => (
 
                                     <div
                                         key={item.history_id}
@@ -170,8 +346,8 @@ function RefillHistoryPage() {
 
 
                                             <p className="text-gray-500">
-    🕒 {item.refill_date}
-</p>
+                                                🕒 {item.refill_date_display}
+                                            </p>
 
                                         </div>
 

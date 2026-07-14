@@ -39,9 +39,19 @@ const getReviewsByStation = async (req, res) => {
 
         const result = await sql.query`
             SELECT
-                reviews.*,
-                users.full_name,
-                products.product_name
+    reviews.review_id,
+    reviews.user_id,
+    reviews.station_id,
+    reviews.rating,
+    reviews.comment,
+    reviews.product_id,
+    reviews.owner_reply,
+
+    FORMAT(reviews.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at,
+    FORMAT(reviews.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
+
+    users.full_name,
+    products.product_name
             FROM reviews
 
             JOIN users
@@ -51,6 +61,7 @@ const getReviewsByStation = async (req, res) => {
             ON reviews.product_id = products.product_id
 
             WHERE reviews.station_id = ${stationId}
+            AND rs.status = 'active'
 
             ORDER BY reviews.created_at DESC
         `;

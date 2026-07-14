@@ -268,9 +268,9 @@ function OwnerStationsPage() {
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
              
-            <div className="max-w-7xl mx-auto">
+           
      {/* BACK BUTTON */}
                     <button
             onClick={() => navigate('/owner')}
@@ -294,6 +294,7 @@ function OwnerStationsPage() {
             <IoChevronBack size={22} />
             Quay lại
         </button>
+         <div className="max-w-6xl mx-auto">
                 <h1 className="text-5xl font-bold text-center text-green-700 mb-8">
 
                     🏪 Quản lý trạm
@@ -315,7 +316,19 @@ function OwnerStationsPage() {
 
                     <input
                         placeholder="Tên trạm"
-                        className="border p-2 w-full mb-2"
+                        className=" 
+                        w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
+"
                         value={stationForm.station_name}
                         onChange={(e) =>
                             setStationForm({
@@ -328,7 +341,17 @@ function OwnerStationsPage() {
 
                     <input
                         placeholder="Địa chỉ"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.address}
                         onChange={(e) =>
                             setStationForm({
@@ -342,14 +365,35 @@ function OwnerStationsPage() {
                     <button
                         type="button"
                         onClick={getCurrentLocation}
-                        className="bg-blue-500 text-white px-4 py-2 rounded mb-3"
+                        className="border
+                            border-gray-300
+                            rounded-2xl
+                            bg-blue-500
+                            text-white
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-blue-400"
                     >
                         📍 Lấy vị trí hiện tại
                     </button>
 
                     <input
                         placeholder="Latitude"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.latitude}
                         onChange={(e) =>
                             setStationForm({
@@ -362,7 +406,17 @@ function OwnerStationsPage() {
 
                     <input
                         placeholder="Longitude"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.longitude}
                         onChange={(e) =>
                             setStationForm({
@@ -375,7 +429,17 @@ function OwnerStationsPage() {
 
                     <input
                         type="time"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.open_time}
                         onChange={(e) =>
                             setStationForm({
@@ -388,7 +452,17 @@ function OwnerStationsPage() {
 
                     <input
                         type="time"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.close_time}
                         onChange={(e) =>
                             setStationForm({
@@ -401,7 +475,17 @@ function OwnerStationsPage() {
 
                     <textarea
                         placeholder="Mô tả"
-                        className="border p-2 w-full mb-2"
+                        className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                         value={stationForm.description}
                         onChange={(e) =>
                             setStationForm({
@@ -414,7 +498,8 @@ function OwnerStationsPage() {
 
                     <div className="mb-4">
 
-    <label className="block font-semibold mb-2">
+    <label className="
+                        block font-semibold mb-2">
         Hình ảnh trạm
     </label>
 
@@ -423,10 +508,16 @@ function OwnerStationsPage() {
     accept="image/*"
     className="
         w-full
-        border
-        border-gray-300
-        rounded-lg
-        p-2
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
     "
     onChange={(e) => {
 
@@ -521,11 +612,17 @@ function OwnerStationsPage() {
     type="text"
     placeholder="🔍 Tìm theo tên trạm..."
     className="
-        border
-        p-2
         w-full
-        mb-4
-        rounded-lg
+                            bg-white
+                            border
+                            border-gray-200
+                            rounded-2xl
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
     "
     value={searchStation}
     onChange={(e) =>

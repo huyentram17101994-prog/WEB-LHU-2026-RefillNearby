@@ -12,8 +12,18 @@ const {
     getAllReviews,
     deleteReview,
     getAllRefills,
+    getTopStations,
+    getRefillSummary,
     getRefillStatistics,
-    getAllFavorites
+    getRefillQuantityByDate,
+    getAllFavorites,
+    getTopFavoriteStations,
+    getTopFavoriteProducts,
+    getFavoriteStationCount,
+    getFavoriteProductCount,
+    toggleUserStatus,
+    getStationDetail,
+    getTopRefillProducts
 } = require('../controllers/admin.controller');
 
 const {
@@ -42,7 +52,12 @@ router.delete(
     authorizeRoles('admin'),
     deleteUser
 );
-
+router.put(
+    '/users/:id/toggle-status',
+    verifyToken,
+    authorizeRoles('admin'),
+    toggleUserStatus
+);
 router.get(
     '/stations',
     verifyToken,
@@ -87,7 +102,12 @@ router.get(
     authorizeRoles('admin'),
     getAllRefills
 );
-
+router.get(
+    '/refills/summary',
+    verifyToken,
+    authorizeRoles('admin'),
+    getRefillSummary
+);
 router.get(
     '/refills/statistics',
     verifyToken,
@@ -95,9 +115,66 @@ router.get(
     getRefillStatistics
 );
 router.get(
+    '/refill-statistics/filter',
+    verifyToken,
+    authorizeRoles('admin'),
+    getRefillQuantityByDate
+);
+
+router.get(
     '/favorites',
     verifyToken,
     authorizeRoles('admin'),
     getAllFavorites
 );
+
+router.get(
+    '/favorites/top-stations',
+    verifyToken,
+    authorizeRoles('admin'),
+    getTopFavoriteStations
+);
+
+router.get(
+    '/favorites/top-products',
+    verifyToken,
+    authorizeRoles('admin'),
+    getTopFavoriteProducts
+);
+router.get(
+    '/favorites/station-count',
+    verifyToken,
+    authorizeRoles('admin'),
+    getFavoriteStationCount
+);
+
+router.get(
+    '/favorites/product-count',
+    verifyToken,
+    authorizeRoles('admin'),
+    getFavoriteProductCount
+);
+router.get(
+    '/stations/:id',
+    verifyToken,
+    authorizeRoles('admin'),
+    getStationDetail
+);
+
+router.get(
+    '/refill-statistics/top-products',
+    verifyToken,
+    authorizeRoles('admin'),
+    getTopRefillProducts
+);
+router.get(
+    '/refill-statistics/top-stations',
+    verifyToken,
+    authorizeRoles('admin'),
+    getTopStations
+);
+
+
+
+
 module.exports = router;

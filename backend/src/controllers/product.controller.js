@@ -11,10 +11,33 @@ const getAllProducts = async (req, res) => {
         await sql.connect(config);
 
         const result = await sql.query`
-            SELECT *
-            FROM products
-        `;
 
+            SELECT
+
+    MIN(p.product_id) AS product_id,
+
+    p.product_name,
+
+    MIN(p.price) AS min_price,
+
+    COUNT(*) AS total_stations,
+
+    MIN(p.image_url) AS image_url
+
+FROM products p
+
+INNER JOIN refill_stations rs
+ON p.station_id = rs.station_id
+
+WHERE rs.status = 'active'
+
+GROUP BY
+    p.product_name
+
+ORDER BY
+    p.product_name
+    
+    `;
         res.json(result.recordset);
 
     } catch (error) {
@@ -26,7 +49,6 @@ const getAllProducts = async (req, res) => {
     }
 
 };
-
 
 
 // ================= CREATE PRODUCT =================
@@ -157,7 +179,7 @@ const getProductsByStation = async (req, res) => {
 
     try {
 
-        const stationId = req.params.stationId;
+        const { stationId } = req.params;
 
         await sql.connect(config);
 
@@ -175,15 +197,66 @@ const getProductsByStation = async (req, res) => {
             error: error.message
         });
 
+    
     }
 
 };
+const getProductStations = async (req, res) => {
 
+    try {
+
+        const productName = decodeURIComponent(req.params.productName);
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+                p.product_id,
+                p.product_name,
+                p.price,
+                p.image_url,
+                p.stock_status,
+
+                rs.station_id,
+                rs.station_name,
+                rs.address,
+                rs.latitude,
+                rs.longitude
+
+            FROM products p
+
+            JOIN refill_stations rs
+
+            ON p.station_id = rs.station_id
+
+            WHERE p.product_name = ${productName}
+            AND rs.status = 'active'
+
+            ORDER BY p.price ASC
+
+        `;
+
+        res.json(result.recordset);
+
+    }
+
+    catch(error){
+
+        res.status(500).json({
+            error:error.message
+        });
+
+    }
+
+};
 
 module.exports = {
     getAllProducts,
     getProductsByStation,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductStations
 };
+   

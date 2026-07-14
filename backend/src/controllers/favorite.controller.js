@@ -30,6 +30,7 @@ const getFavorites = async (req, res) => {
         ON f.station_id = rs.station_id
 
     WHERE f.user_id = ${userId}
+    AND rs.status = 'active'
 
 `;
 
@@ -45,7 +46,155 @@ const getFavorites = async (req, res) => {
 
 };
 
+const getFavoriteProducts = async (req, res) => {
 
+    try {
+
+        const userId = req.user.user_id;
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+    fp.favorite_product_id,
+
+    p.product_id,
+
+    p.product_name,
+
+    MIN(p.price) AS min_price,
+
+    COUNT(*) AS total_stations,
+
+    MIN(p.image_url) AS image_url
+
+FROM favorite_products fp
+
+JOIN products p
+ON fp.product_id = p.product_id
+
+WHERE fp.user_id = ${userId}
+
+GROUP BY
+
+    fp.favorite_product_id,
+
+    p.product_id,
+
+    p.product_name
+
+ORDER BY
+
+    p.product_name
+    `;
+
+        res.json(result.recordset);
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+// =======================
+// Thêm yêu thích
+// =======================
+
+const addFavoriteProduct = async(req,res)=>{
+    console.log(req.body);
+    console.log(req.body.product_id);
+   
+
+    try{
+
+        const userId = req.user.user_id;
+
+        const {product_id}=req.body;
+
+        await sql.connect(config);
+
+        await sql.query`
+
+        INSERT INTO favorite_products
+
+        (
+            user_id,
+            product_id
+        )
+
+        VALUES
+
+        (
+            ${userId},
+            ${product_id}
+        )
+
+        `;
+
+        res.json({
+            message:"Add success"
+        });
+
+    }catch(error){
+
+    console.log("===== FAVORITE PRODUCT ERROR =====");
+    console.log(error);
+
+    res.status(500).json({
+        error:error.message
+    });
+
+}
+
+};
+
+
+
+
+// =======================
+// Xóa yêu thích
+// =======================
+
+const deleteFavoriteProduct = async (req, res) => {
+
+    try {
+
+        const favoriteProductId = req.params.id;
+
+        await sql.connect(config);
+
+        await sql.query`
+
+            DELETE FROM favorite_products
+
+            WHERE favorite_product_id = ${favoriteProductId}
+
+        `;
+
+        res.json({
+            message: "Delete success"
+        });
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
 
 // ================= ADD FAVORITE =================
 const addFavorite = async (req, res) => {
@@ -122,5 +271,9 @@ const deleteFavorite = async (req, res) => {
 module.exports = {
     getFavorites,
     addFavorite,
-    deleteFavorite
+    deleteFavorite,
+    getFavoriteProducts,
+    addFavoriteProduct,
+    deleteFavoriteProduct
+   
 };

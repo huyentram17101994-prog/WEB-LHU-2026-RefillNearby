@@ -7,6 +7,8 @@ function OwnerReviewsPage() {
 const [ratingFilter, setRatingFilter] = useState('');
 const [search, setSearch] = useState('');
 const [dashboard, setDashboard] = useState({});
+const [reply, setReply] = useState({});
+const [editingReview, setEditingReview] = useState(null);
 useEffect(() => {
 
     loadReviews();
@@ -56,12 +58,61 @@ dashboard.stationRatings?.forEach((station) => {
     ] = station;
 
 });
+const handleReplyChange = (reviewId, value) => {
+
+    setReply(prev => ({
+        ...prev,
+        [reviewId]: value
+    }));
+
+};
+const startEditReply = (review) => {
+
+    setEditingReview(review.review_id);
+
+    setReply(prev => ({
+        ...prev,
+        [review.review_id]: review.owner_reply
+    }));
+
+};
+const replyReview = async (reviewId) => {
+
+    try {
+
+        await api.put(
+    `/owner/reviews/${reviewId}/reply`,
+    {
+        owner_reply: reply[reviewId]
+    }
+);
+
+alert("Đã lưu phản hồi.");
+
+setReply(prev => ({
+    ...prev,
+    [reviewId]: ""
+}));
+
+setEditingReview(null);
+
+loadReviews();
+
+    } catch (error) {
+
+        console.log(error);
+
+        alert("Phản hồi thất bại.");
+
+    }
+
+};
 
 return (
 
-<div className="min-h-screen bg-gray-100 p-8">
+<div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
 
-    <div className="max-w-6xl mx-auto">
+    
 <button
     onClick={() => navigate('/owner')}
     className="
@@ -76,6 +127,7 @@ return (
     <IoChevronBack size={22} />
     Quay lại
 </button>
+<div className="max-w-5xl mx-auto">
      <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
 
                     ⭐ Quản lý đánh giá
@@ -262,14 +314,31 @@ return (
 .map((review) => (
                         <div
                             key={review.review_id}
-                            className="border rounded-xl p-4 bg-gray-50"
+                            className="
+    bg-white
+    rounded-2xl
+    shadow-md
+    border
+    border-gray-100
+    p-5
+"
                         >
 
-                            <div className="font-semibold">
+                            <div className="flex justify-between items-center">
 
-                                👤 {review.full_name}
+    <div className="font-semibold">
 
-                            </div>
+        👤 {review.full_name}
+
+    </div>
+
+    <div className="text-sm text-gray-500">
+
+        {review.created_at}
+
+    </div>
+
+</div>
 
                             <div className="text-yellow-500 font-bold">
 
@@ -282,12 +351,171 @@ return (
                                 {review.comment}
 
                             </div>
-
+                          
                             <div className="text-sm text-gray-500 mt-2">
 
                                 📦 {review.product_name}
 
                             </div>
+                            
+
+{/* ================= PHẢN HỒI ĐÃ GỬI ================= */}
+
+{review.owner_reply && (
+
+    <div
+        className="
+            mt-5
+            rounded-2xl
+            border
+            border-green-200
+            bg-green-50
+            p-4
+        "
+    >
+
+        <div className="flex justify-between items-center">
+
+            <div className="font-semibold text-green-700">
+
+                🏪 Phản hồi của trạm
+
+            </div>
+
+            <button
+                onClick={() => startEditReply(review)}
+                className="
+                    text-blue-600
+                    hover:underline
+                    text-sm
+                "
+            >
+                ✏️ Chỉnh sửa
+            </button>
+
+        </div>
+
+        <div className="text-xs text-gray-500 mt-1">
+
+            {review.replied_at}
+
+        </div>
+
+        <div className="mt-3 whitespace-pre-line text-gray-700">
+
+            {review.owner_reply}
+
+        </div>
+
+    </div>
+
+)}
+{editingReview === review.review_id && (
+
+<div className="mt-4 ml-6">
+
+    <textarea
+        rows={4}
+        value={reply[review.review_id] || ""}
+        onChange={(e)=>
+            handleReplyChange(
+                review.review_id,
+                e.target.value
+            )
+        }
+        className="
+            w-full
+            border
+            rounded-xl
+            p-3
+            resize-none
+            focus:ring-2
+            focus:ring-green-400
+        "
+    />
+
+    <div className="flex gap-3 mt-3">
+
+        <button
+            onClick={() =>
+                replyReview(review.review_id)
+            }
+            className="
+                bg-green-600
+                text-white
+                px-5
+                py-2
+                rounded-lg
+            "
+        >
+            Lưu
+        </button>
+
+        <button
+            onClick={() =>
+                setEditingReview(null)
+            }
+            className="
+                bg-gray-300
+                px-5
+                py-2
+                rounded-lg
+            "
+        >
+            Hủy
+        </button>
+
+    </div>
+
+</div>
+
+)}
+{!review.owner_reply && (
+
+<div className="mt-4">
+
+    <textarea
+    rows={4}
+    value={reply[review.review_id] || ""}
+    onChange={(e)=>
+        handleReplyChange(
+            review.review_id,
+            e.target.value
+        )
+    }
+    placeholder="Nhập phản hồi..."
+
+    className="
+        w-full
+        border
+        border-gray-300
+        rounded-xl
+        p-3
+        resize-none
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-400
+    "
+/>
+<button
+            onClick={() =>
+                replyReview(review.review_id)
+            }
+            className="
+                mt-3
+                bg-green-600
+                hover:bg-green-700
+                text-white
+                px-5
+                py-2
+                rounded-xl
+            "
+        >
+            Gửi phản hồi
+        </button>
+</div>
+
+)}
 
                         </div>
 

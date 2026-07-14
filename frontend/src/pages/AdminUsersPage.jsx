@@ -55,6 +55,25 @@ const filteredUsers = users.filter(user => {
     return matchSearch && matchRole;
 
 });
+const toggleStatus = async (user) => {
+
+    try {
+
+        await api.put(
+            `/admin/users/${user.user_id}/toggle-status`
+        );
+
+        loadUsers();
+
+    } catch (error) {
+
+        console.log(error);
+
+        alert("Không thể cập nhật trạng thái.");
+
+    }
+
+};
 const deleteUser = async (id) => {
 
     if (!window.confirm('Xóa người dùng này?')) {
@@ -78,10 +97,8 @@ const deleteUser = async (id) => {
 };
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
-
-            <div className="max-w-7xl mx-auto">
-            {/* BACK BUTTON */}
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
+ {/* BACK BUTTON */}
                     <button
             onClick={() => navigate(-1)}
             className="
@@ -104,6 +121,8 @@ const deleteUser = async (id) => {
             <IoChevronBack size={22} />
             Quay lại
         </button>
+            <div className="max-w-7xl mx-auto">
+           
                 <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
 
                     👤 Quản lý người dùng
@@ -189,6 +208,7 @@ const deleteUser = async (id) => {
 <th className="p-4 text-left">Họ tên</th>
 <th className="p-4 text-left">Email</th>
 <th className="p-4 text-left">Vai trò</th>
+<th className="p-4 text-left">Trạng thái</th>
 <th className="p-4 text-left">Ngày tạo</th>
 
 <th className="p-4 text-ri">Thao tác</th>
@@ -205,16 +225,17 @@ const deleteUser = async (id) => {
     key={user.user_id}
     className="
         border-b
-        hover:bg-green-50
+border-gray-200
+hover:bg-green-50
         transition
     "
 >
 
-                <td>{user.user_id}</td>
+                <td className="p-4">{user.user_id}</td>
 
-                <td>{user.full_name}</td>
+                <td className="p-4">{user.full_name}</td>
 
-                <td>{user.email}</td>
+                <td className="p-4">{user.email}</td>
 
                 <td className="p-4">
 
@@ -265,38 +286,107 @@ const deleteUser = async (id) => {
 
 </td>
 <td className="p-4">
+
+    {user.status === "active" ? (
+
+        <span className="
+            bg-green-100
+            text-green-700
+            px-3
+            py-1
+            rounded-full
+            text-sm
+            font-semibold
+        ">
+            🟢 Hoạt động
+        </span>
+
+    ) : (
+
+        <span className="
+            bg-red-100
+            text-red-700
+            px-3
+            py-1
+            rounded-full
+            text-sm
+            font-semibold
+        ">
+            🔴 Đã khóa
+        </span>
+
+    )}
+
+</td>
+<td className="p-4">
     {
         new Date(user.created_at)
         .toLocaleDateString('vi-VN')
     }
 </td>
-             <td className="text-center">
+             <td className="p-4 text-center">
 
-{
-    user.role === 'admin'
-    ? (
-        <span className="text-gray-400">
-            Không thể xóa
+    {user.role === "admin" ? (
+
+        <span className="text-gray-400 italic">
+
+            Không thể thao tác
+
         </span>
-    )
-    : (
-        <button
-            onClick={() =>
-                deleteUser(user.user_id)
-            }
-            className="
-                bg-red-500
-                hover:bg-red-600
-                text-white
-                px-4 py-2
-                rounded-xl
-                font-semibold
-            "
-        >
-            🗑 Xóa
-        </button>
-    )
-}
+
+    ) : (
+
+        <div className="flex justify-center items-center gap-2">
+
+            <button
+
+                onClick={() => toggleStatus(user)}
+
+                className={`
+                    px-4
+                    py-2
+                    rounded-xl
+                    text-white
+                    font-semibold
+                    ${
+                        user.status === "active"
+                            ? "bg-yellow-500 hover:bg-yellow-600"
+                            : "bg-green-500 hover:bg-green-600"
+                    }
+                `}
+            >
+
+                {user.status === "active"
+
+                    ? "Khóa "
+
+                    : "Mở khóa"}
+
+            </button>
+
+            <button
+
+                onClick={() => deleteUser(user.user_id)}
+
+                className="
+                    bg-red-500
+                    hover:bg-red-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-xl
+                    font-semibold
+                "
+
+            >
+
+                 Xóa
+
+            </button>
+
+        </div>
+
+    )}
 
 </td>
             </tr>

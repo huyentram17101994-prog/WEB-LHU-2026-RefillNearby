@@ -1,158 +1,253 @@
-import { useEffect, useState } from 'react';
-
-import { useNavigate } from 'react-router-dom';
-
-import api from '../services/api';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
+import api from "../services/api";
+import useFavorite from "../hooks/useFavorite";
 
 function FavoritesPage() {
 
-    const [favorites, setFavorites] = useState([]);
-
     const navigate = useNavigate();
 
+    // Danh sách
+    const [stations, setStations] = useState([]);
+    const [products, setProducts] = useState([]);
 
+    // Mở / đóng
+    const [showStations, setShowStations] = useState(false);
+    const [showProducts, setShowProducts] = useState(false);
 
-
-
-    // ================= FETCH FAVORITES =================
-
-    const fetchFavorites = async () => {
-
-        try {
-
-            const token = localStorage.getItem('token');
-
-            const response = await api.get(
-                '/favorites',
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            setFavorites(response.data);
-
-        } catch (error) {
-
-            console.log(error);
-
-        }
-
-    };
-
-
-
-
-
-    // ================= REMOVE FAVORITE =================
-
-    const removeFavorite = async (favoriteId) => {
-
-        try {
-
-            const token = localStorage.getItem('token');
-
-            await api.delete(
-                `/favorites/${favoriteId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-
-
-
-
-            // cập nhật lại danh sách
-
-            setFavorites(
-                favorites.filter(
-                    (item) =>
-                        item.favorite_id !== favoriteId
-                )
-            );
-
-        } catch (error) {
-
-            console.log(error);
-
-            alert('Xóa yêu thích thất bại');
-
-        }
-
-    };
-
-
-
-
-
-    // ================= USE EFFECT =================
+    // ==========================
+    // LOAD DATA
+    // ==========================
 
     useEffect(() => {
 
-        fetchFavorites();
+        fetchData();
 
     }, []);
 
+    const fetchData = async () => {
 
+        try {
 
+            const token =
+                localStorage.getItem("token");
 
+            const stationRes =
+                await api.get(
 
+                    "/favorites",
+
+                    {
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${token}`
+
+                        }
+
+                    }
+
+                );
+
+            const productRes =
+                await api.get(
+
+                    "/favorites/products",
+
+                    {
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${token}`
+
+                        }
+
+                    }
+
+                );
+
+            setStations(stationRes.data);
+
+            setProducts(productRes.data);
+
+        }
+
+        catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+
+    
+    // REMOVE STATION
+const {
+
+    removeFavorite
+
+} = useFavorite("stations");
+
+const {
+
+    removeFavorite: removeProductFavorite
+
+} = useFavorite("products");
+    
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-pink-100 via-white to-pink-300 p-8">
 
+            {/* BACK */}
 
+            <button
 
+                onClick={() => navigate(-1)}
+
+                className="
+                flex items-center
+                gap-2
+                mb-8
+                px-5 py-3
+                bg-white
+                rounded-full
+                shadow-md
+                hover:shadow-lg
+                transition
+                "
+
+            >
+
+                <IoChevronBack size={22} />
+
+                Quay lại
+
+            </button>
 
             {/* TITLE */}
-            {/* BACK BUTTON */}
-            <button
-    onClick={() => navigate(-1)}
-    className="
-        flex items-center gap-2
-        mb-8
-        ml-2
-        px-5 py-3
-        bg-white
-        rounded-full
-        shadow-md
-        hover:shadow-lg
-        hover:bg-gray-50
-        transition-all
-        duration-200
-        text-base
-        font-semibold
-        text-gray-700
-    "
->
-    <IoChevronBack size={22} />
-    Quay lại
-</button>
-            <h1 className="text-5xl font-extrabold text-center text-pink-600 mb-12">
+
+            <h1 className="text-5xl font-bold text-center text-pink-600 mb-14">
 
                 ❤️ Danh sách yêu thích
 
             </h1>
 
+            {/* SUMMARY */}
 
+            <div className="grid md:grid-cols-2 gap-8 mb-10">
 
+                {/* STATION */}
 
+                <div
 
-            {/* FAVORITES */}
+                    onClick={() =>
+                        setShowStations(!showStations)
+                    }
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    className="
+                    bg-white
+                    rounded-3xl
+                    shadow-xl
+                    p-8
+                    cursor-pointer
+                    hover:scale-105
+                    transition
+                    "
+
+                >
+
+                    <h2 className="text-3xl font-bold">
+
+                        🏪 Trạm refill yêu thích
+
+                    </h2>
+
+                    <p className="mt-4 text-xl">
+
+                        Đã lưu
+
+                        <span className="font-bold text-pink-600 mx-2">
+
+                            {stations.length}
+
+                        </span>
+
+                        trạm
+
+                    </p>
+
+                </div>
+
+                {/* PRODUCT */}
+
+                <div
+
+                    onClick={() =>
+                        setShowProducts(!showProducts)
+                    }
+
+                    className="
+                    bg-white
+                    rounded-3xl
+                    shadow-xl
+                    p-8
+                    cursor-pointer
+                    hover:scale-105
+                    transition
+                    "
+
+                >
+
+                    <h2 className="text-3xl font-bold">
+
+                        📦 Sản phẩm yêu thích
+
+                    </h2>
+
+                    <p className="mt-4 text-xl">
+
+                        Đã lưu
+
+                        <span className="font-bold text-pink-600 mx-2">
+
+                            {products.length}
+
+                        </span>
+
+                        sản phẩm
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            {/* TRẠM YÊU THÍCH */}
+            {/* ===================== */}
+
+            {
+                showStations && (
+
+                    <>
+
+                        <h2 className="text-4xl font-bold text-pink-600 mb-8">
+
+                            🏪 Trạm refill yêu thích
+
+                        </h2>
+   {/* STATIONS */}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {
-                    favorites.map((favorite) => (
+                    stations.map((station) => (
 
                         <div
-                            key={favorite.favorite_id}
-                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300"
+                            key={station.station_id}
+                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto"
                         >
 
 
@@ -163,20 +258,58 @@ function FavoritesPage() {
                             <div className="relative">
 
                                 <img
-    src={
-        favorite.image_url?.startsWith('/uploads')
-            ? `http://localhost:5000${favorite.image_url}`
-            : favorite.image_url
-    }
-    alt={favorite.station_name}
-    className="w-full h-64 object-cover rounded-lg mb-2"
-/>
+                                    src={
+
+                                    station.image_url.startsWith('/uploads')
+
+                                    ? `http://localhost:5000${station.image_url}`
+
+                                    : station.image_url
+
+                                    }
+
+                            alt={station.station_name}
+                            className="w-full h-64 object-cover rounded-lg mb-2"
+                            />
 
 
 
 
+                                {/* OVERLAY */}
 
                                 <div className="absolute inset-0 bg-black/20"></div>
+
+
+
+
+
+                                {/* FAVORITE */}
+
+                               <button
+    onClick={async()=>{
+
+    await removeFavorite(station.station_id);
+
+    fetchData();
+
+}}
+    
+    className="
+        absolute
+        top-4
+        right-4
+        bg-white/80
+        backdrop-blur-md
+        rounded-full
+        w-12
+        h-12
+        text-2xl
+        hover:scale-110
+        transition
+    "
+>
+    ❤️
+</button>
 
                             </div>
 
@@ -188,9 +321,9 @@ function FavoritesPage() {
 
                             <div className="p-6">
 
-                                <h2 className="text-3xl font-bold text-gray-800 mb-3">
+                                <h2 className="text-3xl font-bold text-gray-800 mb-2">
 
-                                    {favorite.station_name}
+                                    {station.station_name}
 
                                 </h2>
 
@@ -198,9 +331,9 @@ function FavoritesPage() {
 
 
 
-                                <p className="text-gray-600 mb-3 text-lg">
+                                <p className="text-black-800 mb-3">
 
-                                    📍 {favorite.address}
+                                    - Địa chỉ: {station.address}
 
                                 </p>
 
@@ -208,17 +341,11 @@ function FavoritesPage() {
 
 
 
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-green-600 mb-4">
 
-                                    🕒
-                                    {
-                                        favorite.open_time.replace(':', 'h')
-                                    }
+                                    - Mở cửa: {station.open_time}
                                     {' - '}
-                                    {
-                                        favorite.close_time.replace(':', 'h')
-                                    }
-
+                                    {station.close_time}
 
                                 </p>
 
@@ -228,7 +355,7 @@ function FavoritesPage() {
 
                                 <p className="text-gray-700 leading-7 mb-6">
 
-                                    {favorite.description}
+                                    {station.description}
 
                                 </p>
 
@@ -236,41 +363,16 @@ function FavoritesPage() {
 
 
 
-                                {/* BUTTONS */}
+                                <button
+                                    onClick={() =>
+                                        navigate(`/stations/${station.station_id}`)
+                                    }
+                                    className="w-full bg-green-400 hover:bg-green-600 text-white py-2 rounded-2xl text-lg font-semibold shadow-md transition"
+                                >
 
-                                <div className="flex gap-4">
+                                    Xem chi tiết
 
-                                    {/* DETAIL */}
-
-                                    <button
-                                        onClick={() =>
-                                            navigate(`/stations/${favorite.station_id}`)
-                                        }
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl text-lg font-semibold shadow-md transition"
-                                    >
-
-                                        Xem chi tiết
-
-                                    </button>
-
-
-
-
-
-                                    {/* REMOVE */}
-
-                                    <button
-                                        onClick={() =>
-                                            removeFavorite(favorite.favorite_id)
-                                        }
-                                        className="bg-red-500 hover:bg-red-600 text-white px-5 rounded-2xl text-2xl transition"
-                                    >
-
-                                        🗑️Xóa
-
-                                    </button>
-
-                                </div>
+                                </button>
 
                             </div>
 
@@ -281,6 +383,187 @@ function FavoritesPage() {
 
             </div>
 
+                    </>
+
+                )
+
+            }
+
+   
+            {/* ===================== */}
+            {/* SẢN PHẨM YÊU THÍCH */}
+            {/* ===================== */}
+
+            {
+                showProducts && (
+
+                    <>
+                        <h2 className="text-4xl font-bold text-pink-600 mb-8">
+
+                            📦 Sản phẩm yêu thích
+
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+
+                            {
+                                products.map((product) => (
+
+                                    <div
+                                        key={product.favorite_product_id}
+                                        className="
+                                        bg-white/80
+backdrop-blur-lg
+rounded-[30px]
+overflow-hidden
+shadow-xl
+hover:shadow-2xl
+hover:-translate-y-2
+transition
+duration-300
+w-70
+mx-auto
+                                        "
+                                    >
+
+                                        {/* IMAGE */}
+                                        <div className="relative">
+                                        <img
+
+                                            src={
+                                                product.image_url?.startsWith("/uploads")
+
+                                                    ? `http://localhost:5000${product.image_url}`
+
+                                                    : product.image_url
+
+                                            }
+
+                                            alt={product.product_name}
+
+                                            className="w-full h-60 object-cover"
+
+                                        />
+                                         {/* OVERLAY */}
+                    <div className="absolute inset-0 bg-black/20"></div>
+                                            <button
+
+        onClick={async()=>{
+
+    await removeProductFavorite(product.product_id);
+
+    fetchData();
+
+}}
+        className="
+            absolute
+            top-4
+            right-4
+            bg-white/80
+            rounded-full
+            w-12
+            h-12
+            text-2xl
+            hover:scale-110
+            transition
+        "
+
+    >
+
+        ❤️
+
+    </button>
+
+</div>
+                                        {/* CONTENT */}
+
+                                        <div className="p-5">
+
+                                            <h3 className="text-2xl font-bold mb-3">
+
+                                                {product.product_name}
+
+                                            </h3>
+
+                                            <p className="text-lg text-gray-700 mb-2">
+
+                                                💰 Giá từ: {Number(product.min_price).toLocaleString()} đ
+
+
+                                            </p>
+
+                                            <p className="text-gray-600 mb-5">
+
+                                                📍 Có tại: {product.total_stations} trạm refill
+
+                                
+                                               
+
+                                            </p>
+
+                                            <div className="flex gap-3">
+
+                                                <button
+
+                                                    onClick={() =>
+
+                                                        navigate(
+
+                                                            `/products/${encodeURIComponent(
+
+                                                                product.product_name
+
+                                                            )}`
+
+                                                        )
+
+                                                    }
+
+                                                    className="
+
+                                                    flex-1
+
+                                                    bg-green-500
+
+                                                    hover:bg-green-600
+
+                                                    text-white
+
+                                                    py-3
+
+                                                    rounded-xl
+
+                                                    font-semibold
+
+                                                    "
+
+                                                >
+
+                                                    Xem chi tiết
+
+                                                </button>
+
+                                               
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                ))
+
+                            }
+
+                        </div>
+
+                    </>
+
+                )
+
+            }
+
+
+           
         </div>
 
     );

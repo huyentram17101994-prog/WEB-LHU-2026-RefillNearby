@@ -5,7 +5,11 @@ const router = express.Router();
 const {
     getFavorites,
     addFavorite,
-    deleteFavorite
+    deleteFavorite,
+    getFavoriteProducts,
+    addFavoriteProduct,
+    deleteFavoriteProduct
+    
 } = require('../controllers/favorite.controller');
 
 const {
@@ -14,29 +18,42 @@ const {
 
 
 
-// ================= GET FAVORITES =================
+// ===== Trạm yêu thích =====
 router.get(
     '/',
     verifyToken,
     getFavorites
 );
 
-
-
-// ================= ADD FAVORITE =================
 router.post(
     '/',
     verifyToken,
     addFavorite
 );
 
-
-
-// ================= DELETE FAVORITE =================
 router.delete(
     '/:id',
     verifyToken,
     deleteFavorite
+);
+
+// ===== Sản phẩm yêu thích =====
+router.get(
+    '/products',
+    verifyToken,
+    getFavoriteProducts
+);
+
+router.post(
+    '/products',
+    verifyToken,
+    addFavoriteProduct
+);
+
+router.delete(
+    '/products/:id',
+    verifyToken,
+    deleteFavoriteProduct
 );
 
 

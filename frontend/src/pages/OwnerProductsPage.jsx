@@ -5,6 +5,7 @@ import { IoChevronBack } from "react-icons/io5";
 
 function OwnerProductsPage() {
     const [searchProduct, setSearchProduct] =useState('');
+    const [stockFilter, setStockFilter] = useState('all');
     const [previewImage, setPreviewImage] =useState('');
 
     const navigate = useNavigate();
@@ -263,9 +264,9 @@ catch (error) {
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
              
-            <div className="max-w-7xl mx-auto">
+            
 
                  {/* BACK BUTTON */}
             <button
@@ -290,7 +291,7 @@ catch (error) {
     <IoChevronBack size={22} />
     Quay lại
 </button>
-
+<div className="max-w-5xl mx-auto">
                 <h1 className="text-5xl font-bold text-center text-green-700 mb-8">
                     📦 Quản lý sản phẩm
                 </h1>
@@ -308,7 +309,17 @@ catch (error) {
                 </h2>
 
                 <select
-    className="border p-2 w-full mb-2"
+    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
     value={productForm.station_id}
     onChange={(e) =>
         setProductForm({
@@ -336,7 +347,17 @@ catch (error) {
 </select>
 
                 <select
-    className="border p-2 w-full mb-2"
+    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
     value={productForm.category_id}
     onChange={(e) =>
         setProductForm({
@@ -364,7 +385,17 @@ catch (error) {
 </select>
                 <input
                     placeholder="Tên sản phẩm"
-                    className="border p-2 w-full mb-2"
+                    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                     value={productForm.product_name}
                     onChange={(e) =>
                         setProductForm({
@@ -377,7 +408,17 @@ catch (error) {
 
                 <input
                     placeholder="Thương hiệu"
-                    className="border p-2 w-full mb-2"
+                    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                     value={productForm.brand}
                     onChange={(e) =>
                         setProductForm({
@@ -390,7 +431,17 @@ catch (error) {
 
                 <input
                     placeholder="Giá"
-                    className="border p-2 w-full mb-2"
+                    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                     value={productForm.price}
                     onChange={(e) =>
                         setProductForm({
@@ -401,7 +452,17 @@ catch (error) {
                     }
                 />
     <select
-    className="border p-2 w-full mb-2"
+    className="bw-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
     value={productForm.stock_status}
     onChange={(e) =>
         setProductForm({
@@ -426,7 +487,17 @@ catch (error) {
 </select>
                 <textarea
                     placeholder="Mô tả"
-                    className="border p-2 w-full mb-2"
+                    className="w-full
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400"
                     value={productForm.description}
                     onChange={(e) =>
                         setProductForm({
@@ -448,10 +519,16 @@ catch (error) {
     accept="image/*"
     className="
         w-full
-        border
-        border-gray-300
-        rounded-lg
-        p-2
+                        border
+                            border-gray-300
+                            rounded-2xl
+                            mb-2
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
     "
     onChange={(e) => {
 
@@ -566,17 +643,23 @@ catch (error) {
                 )}
 
             </div>
-       
-            <div className="bg-white p-6 rounded-xl shadow">
+  <div className="bg-white p-6 rounded-xl shadow mb-8">
+           <div className="flex gap-3 mb-4">
                 <input
     type="text"
     placeholder="🔍 Tìm theo tên sản phẩm/tên trạm..."
     className="
-        border
-        p-2
         w-full
-        mb-4
-        rounded-lg
+                            bg-white
+                            border
+                            border-gray-200
+                            rounded-2xl
+                            px-4
+                            py-3
+                            shadow-sm
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
     "
     value={searchProduct}
     onChange={(e) =>
@@ -585,6 +668,45 @@ catch (error) {
         )
     }
 />
+
+
+    <select
+        className="text-center
+        bg-white
+        border
+        border-gray-200
+        rounded-2xl
+        px-4
+        py-3
+        shadow-sm
+        text-gray-700
+        appearance-none
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-400
+        focus:border-green-400
+        min-w-[110px]"
+        value={stockFilter}
+        onChange={(e) =>
+            setStockFilter(e.target.value)
+        }
+    >
+        <option value="all">
+            Tất cả
+        </option>
+
+        <option value="1">
+            Còn hàng
+        </option>
+
+        <option value="0">
+            Hết hàng
+        </option>
+
+    </select>
+
+</div>
+
                 <h2 className="text-2xl font-bold mb-5">
 
                     📦 Danh sách sản phẩm
@@ -592,26 +714,31 @@ catch (error) {
                 </h2>
 
                 <div className="space-y-4">
-
-                    {products
+                    {
+products
 .filter((product) => {
 
     const keyword =
         searchProduct.toLowerCase();
 
-    return (
+    const matchSearch =
         product.product_name
             ?.toLowerCase()
             .includes(keyword)
-
-       
 
         ||
 
         product.station_name
             ?.toLowerCase()
-            .includes(keyword)
-    );
+            .includes(keyword);
+
+    const matchStock =
+    stockFilter === "all"
+        ? true
+        : stockFilter === "1"
+            ? product.stock_status === true
+            : product.stock_status === false;
+    return matchSearch && matchStock;
 
 })
 .map(product => (
@@ -730,7 +857,7 @@ catch (error) {
             </div>
 
         </div>
-</div>
+   </div>
     );
 
 }

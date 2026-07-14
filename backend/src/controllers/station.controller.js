@@ -10,6 +10,7 @@ const getAllStations = async (req, res) => {
     SELECT
         rs.station_id,
         rs.owner_id,
+        rs.status,
         rs.station_name,
         rs.address,
         rs.latitude,
@@ -22,6 +23,7 @@ const getAllStations = async (req, res) => {
         rs.image_url
 
     FROM refill_stations rs
+    WHERE rs.status = 'active'
 `;
 
         res.json(result.recordset);
@@ -162,6 +164,43 @@ const deleteStation = async (req, res) => {
     }
 
 };
+const toggleStationStatus = async (req, res) => {
+
+    try {
+
+        const stationId = req.params.id;
+
+        const { status } = req.body;
+
+        await sql.connect(config);
+
+        await sql.query`
+
+            UPDATE refill_stations
+
+            SET status = ${status}
+
+            WHERE station_id = ${stationId}
+
+        `;
+
+        res.json({
+
+            message: "Cập nhật trạng thái thành công"
+
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+
+            error: error.message
+
+        });
+
+    }
+
+};
 const getStationById = async (req, res) => {
 
     try {
@@ -192,6 +231,9 @@ const getStationById = async (req, res) => {
     ON rs.station_id = p.station_id
 
     WHERE rs.station_id = ${stationId}
+    AND
+
+rs.status='active'
 `;
 
         if (result.recordset.length === 0) {
@@ -237,7 +279,12 @@ const searchStations = async (req, res) => {
         image_url
 
     FROM refill_stations
-    WHERE station_name LIKE ${'%' + keyword + '%'}
+    WHERE
+    status='active'
+
+AND
+
+    station_name LIKE ${'%' + keyword + '%'}
 `;
 
         res.json(result.recordset);
@@ -257,5 +304,6 @@ module.exports = {
     searchStations,
     createStation,
     updateStation,
-    deleteStation
+    deleteStation,
+    toggleStationStatus
 };

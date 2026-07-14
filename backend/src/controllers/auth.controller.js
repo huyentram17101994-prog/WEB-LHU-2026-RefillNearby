@@ -70,7 +70,14 @@ const login = async (req, res) => {
         }
 
         const user = result.recordset[0];
+        // kiểm tra tài khoản có bị khóa không
+if (user.status === 'inactive') {
 
+    return res.status(403).json({
+        message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'
+    });
+
+}
         // kiểm tra password
         const isMatch = await bcrypt.compare(password, user.password);
 
@@ -99,7 +106,8 @@ const login = async (req, res) => {
                 user_id: user.user_id,
                 full_name: user.full_name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                badge: user.badge
             }
         });
 
@@ -116,10 +124,22 @@ const profile = async (req, res) => {
 
     try {
 
-        res.json({
-            message: 'Thông tin người dùng',
-            user: req.user
-        });
+        await sql.connect(config);
+
+        const result = await sql.query`
+            SELECT
+                user_id,
+                full_name,
+                email,
+                role,
+                badge
+            FROM users
+            WHERE user_id = ${req.user.user_id}
+        `;
+
+        res.json(
+            result.recordset[0]
+        );
 
     } catch (error) {
 
@@ -128,7 +148,6 @@ const profile = async (req, res) => {
         });
 
     }
-
 };
 
 const forgotPassword = async (req, res) => {

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
+import useFavorite from "../hooks/useFavorite";
 
 function ProductsPage() {
 
@@ -12,8 +13,14 @@ function ProductsPage() {
     const [search, setSearch] = useState('');
 
     const navigate = useNavigate();
+   const {
 
+    toggleFavorite,
+    isFavorite
 
+   
+
+} = useFavorite("products");
 
 
 
@@ -36,9 +43,6 @@ function ProductsPage() {
     };
 
 
-
-
-
     // ================= SEARCH =================
 
     const filteredProducts = products.filter((product) =>
@@ -51,13 +55,12 @@ function ProductsPage() {
 
 
 
-
-
     // ================= USE EFFECT =================
 
     useEffect(() => {
 
         fetchProducts();
+        
 
     }, []);
 
@@ -67,13 +70,12 @@ function ProductsPage() {
 
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-50 p-6">
-
-
+        <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-500 p-6">
 
             {/* HEADER */}
 
-            <div className="flex items-center gap-5 mb-10">
+           
+                <div className="relative mb-10">
         <button
                     onClick={() => navigate(-1)}
                     className="
@@ -97,7 +99,7 @@ function ProductsPage() {
                     Quay lại
                 </button>
 
-                <h1 className="text-5xl text center font-extrabold text-center text-green-600 mb-12">
+                <h1 className="text-5xl text-center font-extrabold text-center text-green-600 mb-12">
 
                             📦 Sản phẩm Refill
 
@@ -120,7 +122,7 @@ function ProductsPage() {
                     onChange={(e) =>
                         setSearch(e.target.value)
                     }
-                    className="w-full p-5 rounded-3xl border border-gray-200 shadow-lg focus:outline-none focus:ring-3 focus:ring-green-400 text-lg"
+                    className="w-full p-4 rounded-3xl border border-gray-100 shadow-lg focus:outline-none focus:ring-3 focus:ring-green-400 text-lg"
                 />
 
             </div>
@@ -131,80 +133,117 @@ function ProductsPage() {
 
             {/* PRODUCTS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {
                     filteredProducts.map((product) => (
 
                         <div
                             key={product.product_id}
-                            className="bg-white rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300"
+                            className="
+bg-white/80
+backdrop-blur-lg
+rounded-[30px]
+overflow-hidden
+shadow-xl
+hover:shadow-2xl
+hover:-translate-y-2
+transition
+duration-300
+w-70
+mx-auto
+"
                         >
 
 
 
 
                             {/* IMAGE */}
-
+                            <div className="relative">
                             <img
                                 src={`http://localhost:5000${product.image_url}`}
     alt={product.product_name}
                                 className="w-full h-64 object-cover"
                             />
+                            {/* OVERLAY */}
+                    <div className="absolute inset-0 bg-black/20"></div>
 
+                                {/* FAVORITE */}
+
+                                <button
+    onClick={() => toggleFavorite(product.product_id)}
+    
+    className="
+        absolute
+        top-4
+        right-4
+        bg-white/80
+        backdrop-blur-md
+        rounded-full
+        w-12
+        h-12
+        text-2xl
+        shadow-lg
+        hover:scale-125
+        active:scale-90
+        transition-all
+        duration-200
+    "
+>
+
+    {
+        isFavorite(product.product_id)
+
+        ?
+
+        "❤️"
+
+        :
+
+        "🤍"
+    }
+
+</button>
+
+                                  </div>
 
 
 
 
                             {/* CONTENT */}
 
-                            <div className="p-6">
+                            <div className="p-4">
+    <h3 className="text-xl font-semibold mb-3">
+        {product.product_name}
+    </h3>
 
-                                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+    <p className="text-gray-700 mb-2">
+        💰 Giá từ: {Number(product.min_price).toLocaleString()} đ
+    </p>
 
-                                    {product.product_name}
+    <p className="text-gray-600 mb-4">
+        📍 Có tại: {product.total_stations} trạm refill
+    </p>
 
-                                </h2>
-
-
-
-
-
-                                <p className="text-2xl text-green-600 font-bold mb-4">
-
-                                    {Number(product.price).toLocaleString('vi-VN')}
-                                    {' '}
-                                    VNĐ
-
-                                </p>
-
-
-
-
-
-                                <p className="text-lg text-gray-600 mb-6">
-
-                                    {product.description}
-
-                                </p>
-
-
-
-
-
-                                <button
-                                    onClick={() =>
-                                        navigate(`/stations/${product.station_id}`)
-                                    }
-                                    className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl text-lg font-semibold transition"
-                                >
-
-                                    Xem trạm bán
-
-                                </button>
-
-                            </div>
-
+    <button
+    onClick={() =>
+        navigate(
+            `/products/${encodeURIComponent(product.product_name)}`
+        )
+    }
+        className="
+            w-full
+            bg-green-500
+            hover:bg-green-600
+            text-white
+            py-3
+            rounded-xl
+            font-semibold
+        "
+    >
+        Xem chi tiết
+    </button>
+</div>
                         </div>
 
                     ))
@@ -219,3 +258,4 @@ function ProductsPage() {
 }
 
 export default ProductsPage;
+    

@@ -7,7 +7,8 @@ const {
     getProductsByStation,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductStations
 } = require('../controllers/product.controller');
 
 const {
@@ -53,6 +54,9 @@ router.delete(
     deleteProduct
 );
 
-
+router.get(
+    '/stations/:productName',
+    getProductStations
+);
 
 module.exports = router;

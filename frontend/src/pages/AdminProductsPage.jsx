@@ -48,7 +48,12 @@ const filteredProducts = products.filter(product => {
 
         product.station_name
             ?.toLowerCase()
-            .includes(search.toLowerCase());
+            .includes(search.toLowerCase())
+        ||
+
+        product.owner_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase())
 
     const matchStatus =
 
@@ -87,10 +92,8 @@ const deleteProduct = async (id) => {
 };
     return (
 
-    <div className="min-h-screen bg-gray-100 p-8">
-
-        <div className="max-w-7xl mx-auto">
-         <button
+    <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
+<button
                     onClick={() => navigate(-1)}
                     className="
                         flex items-center gap-2
@@ -104,8 +107,10 @@ const deleteProduct = async (id) => {
                     <IoChevronBack size={22} />
                     Quay lại
                 </button>
+        <div className="max-w-8xl mx-auto">
+         
 
-            <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
+            <h1 className="text-5xl text-center text-green-500 font-bold mb-8">
 
                 📦 Quản lý sản phẩm
 
@@ -115,7 +120,7 @@ const deleteProduct = async (id) => {
 
                 <input
                     type="text"
-                    placeholder="🔍 Tìm sản phẩm, thương hiệu hoặc trạm..."
+                    placeholder="🔍 Tìm sản phẩm/thương hiệu/trạm/chủ sở hữu..."
                     value={search}
                     onChange={(e) =>
                         setSearch(e.target.value)
@@ -197,7 +202,9 @@ const deleteProduct = async (id) => {
                             <th className="p-4 text-left">
                                 Giá
                             </th>
-
+                            <th className="p-4 text-left">
+                                 Chủ sở hữu
+                            </th>
                             <th className="p-4 text-left">
                                 Trạm
                             </th>
@@ -222,6 +229,7 @@ const deleteProduct = async (id) => {
                                 key={product.product_id}
                                 className="
                                     border-b
+                                    border-gray-200
                                     hover:bg-green-50
                                     transition
                                 "
@@ -265,7 +273,11 @@ const deleteProduct = async (id) => {
                                     ).toLocaleString('vi-VN')} VNĐ
 
                                 </td>
+                                <td className="p-4">
 
+                                    {product.owner_name}
+
+                                </td>
                                 <td className="p-4">
 
                                     {product.station_name}
@@ -321,7 +333,7 @@ const deleteProduct = async (id) => {
                                             font-semibold
                                         "
                                     >
-                                        🗑 Xóa
+                                        Xóa
                                     </button>
 
                                 </td>

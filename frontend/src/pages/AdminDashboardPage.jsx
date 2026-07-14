@@ -57,7 +57,7 @@ const logout = () => {
     };
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
 
              <div className="max-w-7xl mx-auto">
                 <div className="flex items justify-between mb-10">

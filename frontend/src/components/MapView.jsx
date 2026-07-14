@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-
+import VietnamSovereigntyLayer from "./VietnamSovereigntyLayer";
 import {
     MapContainer,
     TileLayer,
     Marker,
-    Popup
+    Popup,
+    
+    
+
 } from 'react-leaflet';
 
 import L from 'leaflet';
@@ -12,7 +15,18 @@ import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 
 
+const userIcon = new L.Icon({
+    iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
 
+    shadowUrl:
+        'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
 // FIX ICON
 
@@ -119,46 +133,59 @@ function MapView({ stations }) {
         <div className="rounded-3xl overflow-hidden shadow-2xl">
 
             <MapContainer
-                center={
+    center={
                     userLocation || [10.9804, 108.2615]
                 }
-                zoom={13}
-                scrollWheelZoom={true}
-                className="h-[500px] w-full"
-                style={{ zIndex: 1 }}
-            >
+
+    zoom={6}
+    minZoom={5}
+    maxZoom={18}
+
+    maxBounds={[
+
+    [6.5,101],
+
+    [24.5,118]
+
+]}
+
+    maxBoundsViscosity={1.0}
+
+    style={{
+    height: "550px",
+    width: "100%"
+}}
+>
 
                 {/* MAP TILE */}
 
                 <TileLayer
-                    attribution='&copy; OpenStreetMap contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+    attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+    subdomains="abcd"
+/>
 
-
+<VietnamSovereigntyLayer />
 
 
                 {/* USER MARKER */}
+{
+    userLocation && (
 
-                {
-                    userLocation && (
+        <Marker
+            position={userLocation}
+            
+            icon={userIcon} 
+        >
 
-                        <Marker
-                            position={userLocation}
-                        >
+            <Popup>
+                📍 Vị trí của bạn
+            </Popup>
 
-                            <Popup>
+        </Marker>
 
-                                📍 Bạn đang ở đây
-
-                            </Popup>
-
-                        </Marker>
-
-                    )
-                }
-
-
+    )
+}
 
 
                 {/* STATIONS */}
@@ -174,7 +201,7 @@ function MapView({ stations }) {
                             ]}
                         >
 
-                            <Popup>
+                          <Popup>
 
                                 <div className="space-y-2">
 
@@ -184,19 +211,11 @@ function MapView({ stations }) {
 
                                     </h2>
 
-
-
-
-
                                     <p>
 
                                         📍 {station.address}
 
                                     </p>
-
-
-
-
 
                                     <p className="text-green-600 font-semibold">
 
@@ -213,10 +232,6 @@ function MapView({ stations }) {
                                         km
 
                                     </p>
-
-
-
-
 
                                     <button
                                         onClick={() =>
@@ -249,8 +264,6 @@ function MapView({ stations }) {
                                 </div>
 
                             </Popup>
-
-
                         </Marker>
 
                     ))

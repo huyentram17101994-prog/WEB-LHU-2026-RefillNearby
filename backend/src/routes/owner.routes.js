@@ -23,6 +23,7 @@ const {
     updateMyProduct,
     deleteMyProduct,
     getOwnerDashboard,
+    replyReview,
     uploadProductImage,
     uploadStationImage,
     toggleProductStatus,
@@ -102,6 +103,12 @@ router.put(
     verifyToken,
     authorizeRoles('store_owner'),
     toggleProductStatus
+);
+router.put(
+'/reviews/:id/reply',
+verifyToken,
+authorizeRoles('store_owner'),
+replyReview
 );
 router.get(
     '/categories',

@@ -107,31 +107,29 @@ const fetchMonthlyStatistics = async () => {
 
   return (
 
-    <div className="min-h-screen bg-green-50 p-8">
-            {/* BACK BUTTON */}
+    <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-500  p-8">
+             {/* BACK BUTTON */}
 
                 <button
-                onClick={() => navigate(-1)}
-                className="
-                    absolute
-                    top-0
-                    left-0
-                    flex items-center gap-2
-                    bg-white
-                    px-5 py-3
-                    rounded-full
-                    shadow-md
-                    hover:shadow-lg
-                    transition
-                    font-semibold
-                "
-            >
-
-                <IoChevronBack size={22} />
-
-                Quay lại
-
-            </button>
+                    onClick={() => navigate(-1)}
+                    className="
+                        flex items-center gap-2
+                        mb-8
+                        px-5 py-3
+                        bg-white
+                        rounded-full
+                        shadow-md
+                        hover:shadow-lg
+                        hover:bg-gray-50
+                        transition-all
+                        duration-200
+                        font-semibold
+                        text-gray-700
+                    "
+                >
+                    <IoChevronBack size={22} />
+                    Quay lại
+                </button>
         <div className="max-w-5xl mx-auto relative">
 
             

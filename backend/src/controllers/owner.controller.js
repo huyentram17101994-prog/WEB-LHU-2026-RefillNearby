@@ -378,12 +378,14 @@ const updateMyProduct = async (req, res) => {
         const productResult = await sql.query`
             SELECT
                 p.*,
-                rs.owner_id
+                rs.owner_id,
+                rs.station_name,
+                rs.address,
+                rs.open_time,
+                rs.close_time
             FROM products p
-
             JOIN refill_stations rs
             ON p.station_id = rs.station_id
-
             WHERE p.product_id = ${productId}
         `;
 
@@ -399,6 +401,11 @@ const updateMyProduct = async (req, res) => {
 
         const product =
             productResult.recordset[0];
+        const oldStockStatus = product.stock_status;
+        console.log("oldStockStatus =", oldStockStatus);
+console.log("newStockStatus =", stock_status);
+console.log(typeof oldStockStatus);
+console.log(typeof stock_status);
 
         if (
             product.owner_id !== ownerId
@@ -422,6 +429,73 @@ const updateMyProduct = async (req, res) => {
                 image_url = ${image_url}
             WHERE product_id = ${productId}
         `;
+        if (Number(oldStockStatus) === 0 && Number(stock_status) === 1) {
+
+    // lấy danh sách người đăng ký
+
+    const waitingUsers = await sql.query`
+
+        SELECT user_id
+
+        FROM product_notification_requests
+
+        WHERE
+
+            station_id = ${product.station_id}
+
+            AND product_id = ${productId}
+
+            AND status = 'waiting'
+
+    `;
+
+    for (const item of waitingUsers.recordset) {
+
+        await sql.query`
+
+    EXEC sp_CreateNotification
+
+        @user_id = ${item.user_id},
+
+        @station_id = ${product.station_id},
+
+        @product_id = ${productId},
+
+        @title = ${"Sản phẩm đã có hàng"},
+
+        @content = ${product_name + " tại " + product.station_name + " đã có hàng trở lại."},
+
+        @product_name = ${product_name},
+
+        @station_name = ${product.station_name},
+
+        @station_address = ${product.address},
+
+        @open_time = ${product.open_time},
+
+        @close_time = ${product.close_time},
+
+        @image_url = ${image_url};
+
+`;
+
+    }
+await sql.query`
+
+    UPDATE product_notification_requests
+
+    SET status = 'done'
+
+    WHERE
+
+        station_id = ${product.station_id}
+
+        AND product_id = ${productId}
+
+        AND status = 'waiting'
+
+`;
+}
 
         res.json({
             message: 'Cập nhật sản phẩm thành công'
@@ -513,8 +587,17 @@ const toggleProductStatus = async (req, res) => {
         const result = await sql.query`
             SELECT
                 p.product_id,
+                p.product_name,
+                p.image_url,
+                p.station_id,
                 p.stock_status,
-                rs.owner_id
+
+                rs.owner_id,
+                rs.station_name,
+                rs.address,
+                rs.open_time,
+                rs.close_time
+
 
             FROM products p
 
@@ -552,7 +635,75 @@ const toggleProductStatus = async (req, res) => {
             SET stock_status = ${newStatus}
             WHERE product_id = ${productId}
         `;
+        if (Number(product.stock_status) === 0 && Number(newStatus) === 1) {
 
+    // Lấy danh sách người đang chờ
+
+    const waitingUsers = await sql.query`
+
+        SELECT user_id
+
+        FROM product_notification_requests
+
+        WHERE
+
+            station_id = ${product.station_id}
+
+            AND product_id = ${productId}
+
+            AND status = 'waiting'
+
+    `;
+
+    for (const item of waitingUsers.recordset) {
+
+        await sql.query`
+
+            EXEC sp_CreateNotification
+
+                @user_id = ${item.user_id},
+
+                @station_id = ${product.station_id},
+
+                @product_id = ${productId},
+
+                @title = ${"Sản phẩm đã có hàng"},
+
+                @content = ${product.product_name + " tại " + product.station_name + " đã có hàng trở lại."},
+
+                @product_name = ${product.product_name},
+
+                @station_name = ${product.station_name},
+
+                @station_address = ${product.address},
+
+                @open_time = ${product.open_time},
+
+                @close_time = ${product.close_time},
+
+                @image_url = ${product.image_url};
+
+        `;
+
+    }
+
+    await sql.query`
+
+        UPDATE product_notification_requests
+
+        SET status = 'done'
+
+        WHERE
+
+            station_id = ${product.station_id}
+
+            AND product_id = ${productId}
+
+            AND status = 'waiting'
+
+    `;
+
+}
         res.json({
             message: 'Cập nhật trạng thái thành công'
         });
@@ -615,31 +766,68 @@ const stationFavoriteResult = await sql.query`
         rs.station_id,
         rs.station_name
 
+    HAVING COUNT(f.favorite_id) > 0
+
     ORDER BY totalFavorites DESC
 `;
-const stationRatingResult = await sql.query`
+const totalStationFavorites =
+    stationFavoriteResult.recordset.reduce(
+
+        (sum, item) =>
+
+            sum + item.totalFavorites,
+
+        0
+
+    );
+const productFavoriteResult = await sql.query`
+
 SELECT
-    rs.station_id,
-    rs.station_name,
-    AVG(CAST(r.rating AS FLOAT)) AS averageRating,
-    COUNT(r.review_id) AS totalReviews
+    p.product_id,
+    p.product_name,
+    COUNT(fp.favorite_product_id) AS totalFavorites
 
-FROM refill_stations rs
+FROM products p
 
-LEFT JOIN reviews r
-ON rs.station_id = r.station_id
+INNER JOIN favorite_products fp
+ON p.product_id = fp.product_id
+
+JOIN refill_stations rs
+ON p.station_id = rs.station_id
 
 WHERE rs.owner_id = ${ownerId}
 
 GROUP BY
-    rs.station_id,
-    rs.station_name
+    p.product_id,
+    p.product_name
+
+ORDER BY totalFavorites DESC
+
+`;
+const totalProductFavorites =
+    productFavoriteResult.recordset.reduce(
+
+        (sum, item) =>
+
+            sum + item.totalFavorites,
+
+        0
+
+    );
+const stationRatingResult = await sql.query`
+SELECT *
+FROM vw_StationRatings
+WHERE owner_id = ${ownerId}
 `;
 const reviewResult = await sql.query`
 SELECT
     r.review_id,
     r.rating,
     r.comment,
+    r.owner_reply,
+   
+    FORMAT(r.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at,
+    FORMAT(r.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
     u.full_name,
     p.product_name,
     rs.station_name
@@ -666,12 +854,16 @@ ORDER BY r.review_id DESC
 
     totalProducts:
         productResult.recordset[0].totalProducts,
+        totalProductFavorites,
+        totalStationFavorites,
 
     totalFavorites:
         favoriteResult.recordset[0].totalFavorites,
 
     stationFavorites:
         stationFavoriteResult.recordset,
+    productFavorites:
+        productFavoriteResult.recordset,
 
     stationRatings:
         stationRatingResult.recordset,
@@ -680,6 +872,39 @@ ORDER BY r.review_id DESC
         reviewResult.recordset
 
 });
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const replyReview = async (req, res) => {
+
+    try {
+
+        const reviewId = req.params.id;
+
+        const { owner_reply } = req.body;
+
+        await sql.connect(config);
+
+        await sql.query`
+
+            EXEC sp_ReplyReview
+
+                @ReviewID = ${reviewId},
+
+                @OwnerReply = ${owner_reply};
+
+        `;
+
+        res.json({
+            message: "Phản hồi thành công"
+        });
 
     } catch (error) {
 
@@ -761,5 +986,6 @@ module.exports = {
     uploadStationImage,
     uploadProductImage,
     toggleProductStatus,
-    getCategories
+    getCategories,
+    replyReview
 };

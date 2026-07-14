@@ -4,13 +4,14 @@ const sql = require('mssql');
 const config = require('../config/db.config');
 function removeVietnameseTones(str) {
 
+    if (!str) return '';
+
     return str
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'D')
         .toLowerCase();
-
 }
 const analyzeInvoice = async (req, res) => {
 
@@ -47,14 +48,15 @@ const cleanText =
         const productResult = await sql.query`
             SELECT
                 product_id,
-                product_name
+                product_name,
+                  image_url
             FROM products
         `;
 
         const products =
             productResult.recordset;
 
-    const detectedProducts = [];
+const detectedProducts = [];
 
 
 products.forEach(product => {
@@ -86,9 +88,8 @@ products.forEach(product => {
         score / words.length;
 
     if (
-    percent >= 0.8 &&
-    words.length >= 3
-) {
+    percent === 1
+){
 
         detectedProducts.push({
             ...product,
@@ -99,39 +100,136 @@ products.forEach(product => {
 
 });
             
-        let suggestions = [];
+       let suggestions = [];
 
-        if (detectedProducts.length > 0) {
+if (detectedProducts.length > 0) {
 
-            const ids =
-                detectedProducts
-                    .map(p => p.product_id)
-                    .join(',');
+    const allProducts =
+        productResult.recordset;
 
-            const suggestionResult =
-                await sql.query(`
-                    SELECT
-                        products.product_id,
-                        products.product_name,
-                        products.price,
+    detectedProducts.forEach(detected => {
 
-                        refill_stations.station_id,
-                        refill_stations.station_name,
-                        refill_stations.address
+        const detectedName =
+            removeVietnameseTones(
+                detected.product_name
+            );
 
-                    FROM products
+        const keywords =
+            detectedName
+                .split(' ')
+                .filter(word => word.length > 2);
 
-                    JOIN refill_stations
-                    ON products.station_id =
-                    refill_stations.station_id
+        allProducts.forEach(product => {
 
-                    WHERE products.product_id IN (${ids})
-                `);
+            if (
+                product.product_id ===
+                detected.product_id
+            ) {
+                return;
+            }
 
-            suggestions =
-                suggestionResult.recordset;
+            const productName =
+                removeVietnameseTones(
+                    product.product_name
+                );
 
-        }
+            let score = 0;
+
+            keywords.forEach(keyword => {
+
+                if (
+                    productName.includes(
+                        keyword
+                    )
+                ) {
+                    score++;
+                }
+
+            });
+
+            if (score > 0) {
+
+                suggestions.push({
+                    ...product,
+                    similarity: score
+                });
+
+            }
+
+        });
+
+    });
+
+    suggestions.sort(
+        (a, b) =>
+            b.similarity -
+            a.similarity
+    );
+
+    suggestions =
+        suggestions.slice(0, 10);
+}
+if (suggestions.length > 0) {
+
+    const ids =
+        suggestions
+            .map(
+                item =>
+                item.product_id
+            )
+            .join(',');
+
+    const stationResult =
+        await sql.query(`
+            SELECT
+                p.product_id,
+                p.product_name,
+                p.price,
+
+                rs.station_id,
+                rs.station_name,
+                rs.address
+
+            FROM products p
+
+            JOIN refill_stations rs
+            ON p.station_id =
+            rs.station_id
+
+            WHERE p.product_id IN (${ids})
+            AND rs.status = 'active'
+        `);
+
+    suggestions =
+        stationResult.recordset;
+}
+let detectedWithStations = [];
+
+for (const product of detectedProducts) {
+
+    const stationResult = await sql.query`
+        SELECT
+            COUNT(*) totalStations
+        FROM products
+        WHERE product_name = ${product.product_name}
+    `;
+
+    detectedWithStations.push({
+
+        product_id:
+            product.product_id,
+
+        product_name:
+            product.product_name,
+            image_url: product.image_url,
+
+        total_stations:
+            stationResult.recordset[0]
+                .totalStations
+
+    });
+
+}
 console.log('===== DETECTED =====');
 
 detectedProducts.forEach(item => {
@@ -142,18 +240,15 @@ detectedProducts.forEach(item => {
 });
         res.json({
 
-            detected_products:
-                detectedProducts.map(
-                    p => p.product_name
-                ),
+    detected_products:
+        detectedWithStations,
 
-            suggestions,
+    suggestions: [],
 
-            raw_text:
-                ocrResult.data.text
+    raw_text:
+        ocrResult.data.text
 
-        });
-
+});
     } catch (error) {
 
         console.log(error);

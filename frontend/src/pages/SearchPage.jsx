@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 
 import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
+import useFavorite from "../hooks/useFavorite";
 
 function SearchPage() {
 
@@ -14,6 +15,13 @@ function SearchPage() {
     const keyword = searchParams.get('keyword');
 
     const navigate = useNavigate();
+    const {
+    
+        toggleFavorite,
+    
+        isFavorite
+    
+    } = useFavorite("stations");
 
 
 
@@ -39,64 +47,17 @@ function SearchPage() {
 
     };
 
-
-
-
-
-    // ================= FAVORITE =================
-
-    const addFavorite = async (stationId) => {
-
-        try {
-
-            const token = localStorage.getItem('token');
-
-            await api.post(
-                '/favorites',
-                {
-                    station_id: stationId
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            alert('Đã thêm vào yêu thích ❤️');
-
-        } catch (error) {
-
-            console.log(error);
-
-            alert('Thêm yêu thích thất bại');
-
-        }
-
-    };
-
-
-
-
-
     useEffect(() => {
 
         searchStation();
 
     }, []);
 
-
-
-
-
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-50 p-6">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
 
-
-
-
-         <div className="max-w-7xl mx-auto mb-10">
+         
 
     {/* BACK BUTTON */}
 
@@ -122,6 +83,7 @@ function SearchPage() {
     </button>
 
     {/* TITLE */}
+        <div className="max-w-5xl mx-auto mb-10">
 
     <div className="text-center">
 
@@ -136,14 +98,14 @@ function SearchPage() {
 
             {/* STATIONS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {
                     stations.map((station) => (
 
                         <div
                             key={station.station_id}
-                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300"
+                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto"
                         >
 
 
@@ -168,12 +130,15 @@ function SearchPage() {
 
                                 <button
                                     onClick={() =>
-                                        addFavorite(station.station_id)
+                                        toggleFavorite(station.station_id)
                                     }
                                     className="absolute top-4 right-4 bg-white/80 backdrop-blur-md rounded-full w-12 h-12 text-2xl hover:scale-110 transition"
                                 >
 
-                                    ❤️
+                                  {isFavorite(station.station_id)
+        ? "❤️"
+        : "🤍"}
+
 
                                 </button>
 
@@ -197,9 +162,9 @@ function SearchPage() {
 
 
 
-                                <p className="text-gray-600 mb-3 text-lg">
+                                <p className="text-black-800 mb-3 text-lg">
 
-                                    📍 {station.address}
+                                    - Địa chỉ:  {station.address}
 
                                 </p>
 
@@ -207,9 +172,9 @@ function SearchPage() {
 
 
 
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-green-600 mb-4">
 
-                                    🕒 {station.open_time}
+                                    - Mở cửa:  {station.open_time}
                                     {' - '}
                                     {station.close_time}
 
@@ -242,7 +207,7 @@ function SearchPage() {
 
                             </div>
 
-                        </div>
+                       </div>
 
                     ))
                 }

@@ -31,6 +31,8 @@ import AdminRefillHistoryPage from '../pages/AdminRefillHistoryPage';
 import AdminRefillStatisticsPage from '../pages/AdminRefillStatisticsPage';
 import AdminFavoritesPage from '../pages/AdminFavoritesPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ProductStationsPage from '../pages/ProductStationsPage';
+import NotificationPage from "../pages/NotificationPage";
 function AppRoutes() {
 
     return (
@@ -188,7 +190,16 @@ function AppRoutes() {
                     path="/forgot-password"
                     element={<ForgotPasswordPage />}
                 />
-            </Routes>
+                <Route
+                    path="/products/:productName"
+                    element={<ProductStationsPage />}
+                    />
+                <Route
+                    path="/notifications"
+                element={<NotificationPage />}
+                />
+                </Routes>
+                
 
         </BrowserRouter>
 

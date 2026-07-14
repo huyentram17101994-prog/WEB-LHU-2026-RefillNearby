@@ -7,62 +7,14 @@ const getDashboard = async (req, res) => {
 
         await sql.connect(config);
 
-        const users = await sql.query`
-            SELECT COUNT(*) AS total
-            FROM users
-        `;
+const result =
+    await sql.query(
+        'EXEC sp_GetAdminDashboard'
+    );
 
-        const stations = await sql.query`
-            SELECT COUNT(*) AS total
-            FROM refill_stations
-        `;
-
-        const products = await sql.query`
-            SELECT COUNT(*) AS total
-            FROM products
-        `;
-
-        const refills = await sql.query`
-            SELECT
-                COUNT(*) AS total_refills,
-                ISNULL(SUM(quantity),0)
-                AS total_quantity
-            FROM refill_history
-        `;
-
-        const favorites = await sql.query`
-            SELECT COUNT(*) AS total
-            FROM favorites
-        `;
-        const reviewResult = await sql.query`
-    SELECT COUNT(*) AS totalReviews
-    FROM reviews
-`;
-
-        res.json({
-
-            totalUsers:
-                users.recordset[0].total,
-
-            totalStations:
-                stations.recordset[0].total,
-
-            totalProducts:
-                products.recordset[0].total,
-
-            totalRefills:
-                refills.recordset[0].total_refills,
-
-            totalQuantity:
-                refills.recordset[0].total_quantity,
-
-            totalFavorites:
-                favorites.recordset[0].total,
-
-            totalReviews:
-                reviewResult.recordset[0].totalReviews
-
-        });
+res.json(
+    result.recordset[0]
+);
 
     } catch (error) {
 
@@ -85,6 +37,7 @@ const getAllUsers = async (req, res) => {
                 full_name,
                 email,
                 role,
+                status,
                 created_at
             FROM users
             ORDER BY user_id DESC
@@ -197,10 +150,13 @@ const getAllProducts = async (req, res) => {
                 p.price,
                 p.stock_status,
                 p.image_url,
-                s.station_name
+                s.station_name,
+                u.full_name AS owner_name
             FROM products p
             LEFT JOIN refill_stations s
                 ON p.station_id = s.station_id
+            LEFT JOIN users u
+                ON s.owner_id = u.user_id
             ORDER BY p.product_id DESC
         `;
 
@@ -305,7 +261,26 @@ const getAllRefills = async (req, res) => {
     try {
 
         await sql.connect(config);
+        const { fromDate, toDate } = req.query;
+        if (fromDate && toDate) {
 
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+
+    const diffDays =
+        (to - from) / (1000 * 60 * 60 * 24);
+
+    if (diffDays > 30) {
+
+        return res.status(400).json({
+            message: "Chỉ được lọc tối đa trong khoảng 30 ngày."
+        });
+
+    }
+
+}
+        const from = fromDate || null;
+        const to = toDate || null;
         const result = await sql.query`
             SELECT
                 rh.refill_id,
@@ -313,26 +288,87 @@ const getAllRefills = async (req, res) => {
                 rh.refill_date,
 
                 u.full_name,
-
+                owner.full_name AS owner_name,
                 s.station_name,
+               
 
                 p.product_name
 
             FROM refill_history rh
 
-            LEFT JOIN users u
-                ON rh.user_id = u.user_id
+LEFT JOIN users u
+    ON rh.user_id = u.user_id
 
-            LEFT JOIN refill_stations s
-                ON rh.station_id = s.station_id
+LEFT JOIN refill_stations s
+    ON rh.station_id = s.station_id
+LEFT JOIN users owner
+    ON s.owner_id = owner.user_id
 
-            LEFT JOIN products p
-                ON rh.product_id = p.product_id
+LEFT JOIN products p
+    ON rh.product_id = p.product_id
 
-            ORDER BY rh.refill_id DESC
+WHERE
+(
+    ${from} IS NULL
+    OR CAST(rh.refill_date AS DATE) >= ${from}
+)
+AND
+(
+    ${to} IS NULL
+    OR CAST(rh.refill_date AS DATE) <= ${to}
+)
+
+ORDER BY rh.refill_id DESC
         `;
 
         res.json(result.recordset);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getRefillSummary = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+    COUNT(*) AS total_refills,
+
+    SUM(
+        CASE
+            WHEN CAST(refill_date AS DATE)
+                = CAST(GETDATE() AS DATE)
+            THEN 1
+            ELSE 0
+        END
+    ) AS today_refills,
+
+    SUM(
+        CASE
+            WHEN
+                MONTH(refill_date) = MONTH(GETDATE())
+                AND
+                YEAR(refill_date) = YEAR(GETDATE())
+            THEN 1
+            ELSE 0
+        END
+    ) AS month_refills
+
+FROM refill_history
+
+        `;
+
+        res.json(result.recordset[0]);
 
     } catch (error) {
 
@@ -349,14 +385,10 @@ const getRefillStatistics = async (req, res) => {
 
         await sql.connect(config);
 
-        const totalResult = await sql.query`
-            SELECT
-                ISNULL(SUM(quantity),0) AS totalQuantity
-            FROM refill_history
-        `;
+      
 
         const topProducts = await sql.query`
-            SELECT
+            SELECT TOP 5
                 p.product_name,
                 SUM(r.quantity) AS totalQuantity
             FROM refill_history r
@@ -365,16 +397,113 @@ const getRefillStatistics = async (req, res) => {
             GROUP BY p.product_name
             ORDER BY totalQuantity DESC
         `;
+     const statistics = await sql.query`
 
+SELECT
+
+    ISNULL(SUM(quantity),0) AS totalQuantity,
+
+    ISNULL(
+
+        SUM(
+
+            CASE
+
+                WHEN CAST(refill_date AS DATE)=CAST(GETDATE() AS DATE)
+
+                THEN quantity
+
+                ELSE 0
+
+            END
+
+        ),0
+
+    ) AS todayQuantity,
+
+    ISNULL(
+
+        SUM(
+
+            CASE
+
+                WHEN MONTH(refill_date)=MONTH(GETDATE())
+
+                AND YEAR(refill_date)=YEAR(GETDATE())
+
+                THEN quantity
+
+                ELSE 0
+
+            END
+
+        ),0
+
+    ) AS monthQuantity
+
+FROM refill_history
+
+`;
         res.json({
 
-            totalQuantity:
-                totalResult.recordset[0].totalQuantity,
+    totalQuantity:
+        statistics.recordset[0].totalQuantity,
 
-            topProducts:
-                topProducts.recordset
+    todayQuantity:
+        statistics.recordset[0].todayQuantity,
 
+    monthQuantity:
+        statistics.recordset[0].monthQuantity,
+
+    topProducts:
+        topProducts.recordset
+
+});
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
         });
+
+    }
+
+};
+const getRefillQuantityByDate = async (req, res) => {
+
+    try {
+
+        const { fromDate, toDate } = req.query;
+
+        if (!fromDate || !toDate) {
+
+            return res.status(400).json({
+                message: "Vui lòng chọn khoảng thời gian."
+            });
+
+        }
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+                ISNULL(SUM(quantity), 0) AS total_quantity
+
+            FROM refill_history
+
+            WHERE
+
+                CAST(refill_date AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+        `;
+
+        res.json(result.recordset[0]);
 
     } catch (error) {
 
@@ -390,19 +519,396 @@ const getAllFavorites = async (req, res) => {
     try {
 
         await sql.connect(config);
+        const { fromDate, toDate } = req.query;
+        if (fromDate && toDate) {
+
+    const result = await sql.query`
+
+        SELECT
+
+            f.favorite_id,
+
+            u.full_name,
+
+            s.station_name,
+
+            owner.full_name AS owner_name,
+
+            FORMAT(f.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at
+
+        FROM favorites f
+
+        INNER JOIN users u
+            ON f.user_id = u.user_id
+
+        INNER JOIN refill_stations s
+            ON f.station_id = s.station_id
+
+        LEFT JOIN users owner
+            ON s.owner_id = owner.user_id
+
+        WHERE
+            CAST(f.created_at AS DATE)
+            BETWEEN CAST(${fromDate} AS DATE)
+            AND CAST(${toDate} AS DATE)
+
+        ORDER BY
+            f.favorite_id DESC
+
+    `;
+
+    return res.json(result.recordset);
+
+}
+        const result = await sql.query`
+
+            SELECT
+
+                f.favorite_id,
+
+                u.full_name,
+
+                s.station_name,
+
+                owner.full_name AS owner_name,
+
+                FORMAT(f.created_at, 'dd/MM/yyyy HH:mm:ss') AS created_at
+
+            FROM favorites f
+
+            INNER JOIN users u
+                ON f.user_id = u.user_id
+
+            INNER JOIN refill_stations s
+                ON f.station_id = s.station_id
+
+            LEFT JOIN users owner
+                ON s.owner_id = owner.user_id
+
+            ORDER BY
+                f.favorite_id DESC
+
+        `;
+
+        res.json(result.recordset);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getFavoriteStationCount = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+                COUNT(*) AS totalFavorites
+
+            FROM favorites
+
+        `;
+
+        res.json(result.recordset[0]);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getFavoriteProductCount = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+                COUNT(*) AS totalFavorites
+
+            FROM favorite_products
+
+        `;
+
+        res.json(result.recordset[0]);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getTopFavoriteStations = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT TOP 5
+
+                s.station_name,
+
+                COUNT(*) AS totalFavorites
+
+            FROM favorites f
+
+            INNER JOIN refill_stations s
+                ON f.station_id = s.station_id
+
+            GROUP BY
+                s.station_name
+
+            ORDER BY
+                totalFavorites DESC
+
+        `;
+
+        res.json(result.recordset);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+
+const getTopFavoriteProducts = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT TOP 5
+
+                p.product_name,
+
+                COUNT(*) AS totalFavorites
+
+            FROM favorite_products fp
+
+            INNER JOIN products p
+                ON fp.product_id = p.product_id
+
+            GROUP BY
+
+                p.product_name
+
+            ORDER BY
+
+                totalFavorites DESC
+
+        `;
+
+        res.json(result.recordset);
+
+    } catch (error) {
+
+        res.status(500).json({
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+const toggleUserStatus = async (req, res) => {
+
+    try {
+
+        const userId = req.params.id;
+
+        await sql.connect(config);
+
+        // Lấy trạng thái hiện tại
 
         const result = await sql.query`
             SELECT
-                f.favorite_id,
-                u.full_name,
-                s.station_name,
-                f.created_at
-            FROM favorites f
-            INNER JOIN users u
-                ON f.user_id = u.user_id
-            INNER JOIN refill_stations s
-                ON f.station_id = s.station_id
-            ORDER BY f.favorite_id DESC
+                user_id,
+                status
+            FROM users
+            WHERE user_id = ${userId}
+        `;
+
+        if (result.recordset.length === 0) {
+
+            return res.status(404).json({
+                message: "Không tìm thấy người dùng"
+            });
+
+        }
+
+        const user = result.recordset[0];
+
+        const newStatus =
+            user.status === "active"
+            ? "inactive"
+            : "active";
+
+        await sql.query`
+            UPDATE users
+            SET status = ${newStatus}
+            WHERE user_id = ${userId}
+        `;
+
+        res.json({
+            message: "Cập nhật trạng thái thành công"
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getStationDetail = async (req, res) => {
+
+    try {
+
+        const stationId = req.params.id;
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+                rs.station_id,
+                rs.owner_id,
+                rs.station_name,
+                rs.address,
+                rs.latitude,
+                rs.longitude,
+
+                CONVERT(VARCHAR(5), rs.open_time, 108) AS open_time,
+
+                CONVERT(VARCHAR(5), rs.close_time, 108) AS close_time,
+
+                rs.description,
+                rs.image_url,
+
+                u.full_name AS owner_name,
+                u.email AS owner_email
+
+            FROM refill_stations rs
+
+            LEFT JOIN users u
+            ON rs.owner_id = u.user_id
+
+            WHERE rs.station_id = ${stationId}
+
+        `;
+
+        if (result.recordset.length === 0) {
+
+            return res.status(404).json({
+                message: "Không tìm thấy trạm."
+            });
+
+        }
+
+        res.json(result.recordset[0]);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getTopRefillProducts = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT TOP 5
+
+                p.product_name,
+
+                SUM(rh.quantity) AS total_quantity
+
+            FROM refill_history rh
+
+            INNER JOIN products p
+                ON rh.product_id = p.product_id
+
+            GROUP BY
+                p.product_name
+
+            ORDER BY
+                total_quantity DESC
+
+        `;
+
+        res.json(result.recordset);
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getTopStations = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT TOP 5
+
+                rs.station_name,
+
+                SUM(rh.quantity) AS totalQuantity
+
+            FROM refill_history rh
+
+            INNER JOIN refill_stations rs
+                ON rh.station_id = rs.station_id
+
+            GROUP BY
+                rs.station_name
+
+            ORDER BY
+                totalQuantity DESC
+
         `;
 
         res.json(result.recordset);
@@ -421,12 +927,22 @@ module.exports = {
     getAllUsers,
     deleteUser,
     getAllStations,
+    getTopStations,
     deleteStation,
     getAllProducts,
     deleteProduct,
     getAllReviews,
     deleteReview,
     getAllRefills,
+    getRefillSummary,
     getRefillStatistics,
-    getAllFavorites
+    getRefillQuantityByDate,
+    getAllFavorites,
+    getTopFavoriteStations, 
+    getTopFavoriteProducts,
+    getFavoriteStationCount,
+    getFavoriteProductCount,
+    toggleUserStatus,
+    getStationDetail,
+    getTopRefillProducts
 };

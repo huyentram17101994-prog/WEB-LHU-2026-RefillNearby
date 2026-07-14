@@ -93,11 +93,8 @@ function AdminReviewsPage() {
 });
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
-
-            <div className="max-w-7xl mx-auto">
-
-                <button
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
+ <button
                     onClick={() => navigate(-1)}
                     className="
                         flex items-center gap-2
@@ -116,6 +113,9 @@ function AdminReviewsPage() {
                     <IoChevronBack size={22} />
                     Quay lại
                 </button>
+            <div className="max-w-7xl mx-auto">
+
+               
 
                 <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
 
@@ -305,7 +305,7 @@ function AdminReviewsPage() {
                                                 font-semibold
                                             "
                                         >
-                                            🗑 Xóa
+                                            Xóa
                                         </button>
 
                                     </td>

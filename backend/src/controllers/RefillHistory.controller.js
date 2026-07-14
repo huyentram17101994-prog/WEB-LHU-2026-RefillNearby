@@ -19,25 +19,23 @@ const createRefillHistory = async (req, res) => {
 
         await sql.connect(config);
 
-        
-await sql.query`
-    INSERT INTO refill_history
-    (
-        user_id,
-        station_id,
-        product_id,
-        quantity
-        
-    )
-    VALUES
-    (
-        ${user_id},
-        ${station_id},
-        ${product_id},
-        ${quantity}
-        
-    )
-`;
+        await sql.query`
+            INSERT INTO refill_history
+            (
+                user_id,
+                station_id,
+                product_id,
+                quantity
+            )
+            VALUES
+            (
+                ${user_id},
+                ${station_id},
+                ${product_id},
+                ${quantity}
+            )
+        `;
+
         res.status(201).json({
             message: 'Refill history created'
         });
@@ -49,10 +47,7 @@ await sql.query`
         });
 
     }
-
 };
-
-
 
 // ================= GET MY REFILL HISTORY =================
 
@@ -70,9 +65,13 @@ const getMyRefillHistory = async (req, res) => {
         refill_history.quantity,
 
         FORMAT(
+        refill_history.refill_date,
+        'yyyy-MM-dd HH:mm:ss'
+    ) AS refill_date,
+        FORMAT(
             refill_history.refill_date,
             'dd/MM/yyyy HH:mm'
-        ) AS refill_date,
+        ) AS refill_date_display,
 
         refill_stations.station_name,
         products.product_name

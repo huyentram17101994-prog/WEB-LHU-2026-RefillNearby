@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
+import useFavorite from "../hooks/useFavorite";
 
 function StationDetailPage() {
 
@@ -21,6 +22,13 @@ function StationDetailPage() {
 
     const [selectedProduct, setSelectedProduct] = useState('');
     const [quantity, setQuantity] = useState('');
+    const {
+    
+        toggleFavorite,
+    
+        isFavorite
+    
+    } = useFavorite("stations");
 
     // ================= STATION DETAIL =================
 
@@ -197,7 +205,7 @@ function StationDetailPage() {
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="ax-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
  <button
                     onClick={() => navigate(-1)}
                     className="
@@ -242,15 +250,31 @@ function StationDetailPage() {
 
 
                     {/* IMAGE */}
+                    <div className="relative">
 
                     <img
                         src={`http://localhost:5000${station.image_url}`}
     alt={station.station_name}
-                        className="w-full h-[450px] object-cover"
+                        className="w-full h-[550px] object-cover"
                     />
 
+                    {/* OVERLAY */}
+                    <div className="absolute inset-0 bg-black/20"></div>
 
+                                {/* FAVORITE */}
 
+                                <button
+                                    onClick={() =>
+                                        toggleFavorite(station.station_id)
+                                    }
+                                    className="absolute top-4 right-4 bg-white/80 backdrop-blur-md rounded-full w-12 h-12 text-2xl hover:scale-110 transition"
+                                >
+
+                                    {isFavorite(station.station_id) ? '❤️' : '🤍'}
+
+                                </button>
+
+                                  </div>
 
 
                     {/* CONTENT */}
@@ -269,7 +293,7 @@ function StationDetailPage() {
 
                         <p className="text-xl text-gray-600 mb-4">
 
-                            📍 {station.address}
+                            📍Địa chỉ:  {station.address}
 
                         </p>
 
@@ -277,9 +301,9 @@ function StationDetailPage() {
 
 
 
-                        <p className="text-lg text-gray-600 mb-6">
+                        <p className="text-lg text-green-600 mb-6">
 
-                            🕒 {
+                            🕒 Giờ mở cửa: {
                                 station.open_time.replace(':', 'h')
                             }
 
@@ -623,7 +647,36 @@ function StationDetailPage() {
                         {review.comment}
 
                     </p>
+                    <span className="text-xs text-gray-500">
+                    {review.created_at}
+                </span>
+               {
+    review.owner_reply && (
 
+        <div className="mt-4 ml-8 rounded-2xl bg-green-50 border-l-4 border-green-500 p-4">
+
+            <div className="flex justify-between">
+
+                <span className="font-bold text-green-700">
+                    🏪 Chủ trạm phản hồi
+                </span>
+
+                <span className="text-xs text-gray-500">
+                    {review.replied_at}
+                </span>
+
+            </div>
+
+            <div className="mt-2 text-gray-700 whitespace-pre-line">
+
+                {review.owner_reply}
+
+            </div>
+
+        </div>
+
+    )
+}
                 </div>
 
             ))

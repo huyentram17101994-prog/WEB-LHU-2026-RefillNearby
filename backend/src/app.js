@@ -13,10 +13,12 @@ const statisticsRoutes =require('./routes/statistics.routes');
 const ocrRoutes = require('./routes/ocr.routes');
 const adminRoutes =require('./routes/admin.routes');
 const ownerRoutes =require('./routes/owner.routes');
+const productNotificationRoutes =require("./routes/productNotification.routes");
+const notificationRoutes = require("./routes/notification.routes");
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 app.use('/uploads',
     express.static(path.join(__dirname, 'uploads'))
 );
@@ -34,4 +36,7 @@ app.use('/api/ocr', ocrRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/owner',ownerRoutes);
 app.use('/uploads',express.static('uploads'));
+app.use("/api/product-notifications",productNotificationRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 module.exports = app;

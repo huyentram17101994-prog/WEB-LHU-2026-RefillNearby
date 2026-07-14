@@ -44,7 +44,10 @@ function LoginPage() {
     'role',
     response.data.user.role
 );
-
+localStorage.setItem(
+    'user',
+    JSON.stringify(response.data.user)
+);
 console.log(
     'Role:',
     response.data.user.role

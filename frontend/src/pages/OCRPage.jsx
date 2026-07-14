@@ -1,43 +1,58 @@
-import { useState } from 'react';
-
-import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
- 
 
 function OCRPage() {
-
-    
-    const [image, setImage] = useState(null);
-
-    const [result, setResult] = useState(null);
     const navigate = useNavigate();
+
+    const [image, setImage] = useState(null);
+    const [result, setResult] = useState(null);
+
+    useEffect(() => {
+        const saved = localStorage.getItem("ocr_result");
+
+        if (saved) {
+            setResult(JSON.parse(saved));
+        }
+    }, []);
+
     const analyzeInvoice = async () => {
+        if (!image) {
+            alert("Vui lòng chọn hóa đơn");
+            return;
+        }
 
         try {
-
             const formData = new FormData();
-
-            formData.append('image', image);
+            formData.append("image", image);
 
             const response = await api.post(
-                '/ocr/analyze',
+                "/ocr/analyze",
                 formData
             );
 
             setResult(response.data);
 
-        } catch (error) {
+            localStorage.setItem(
+                "ocr_result",
+                JSON.stringify(response.data)
+            );
 
-            console.log(error);
-
+        } catch (err) {
+            console.log(err);
         }
+    };
 
+    const clearResult = () => {
+
+        setImage(null);
+        setResult(null);
+        localStorage.removeItem("ocr_result");
     };
 
     return (
-
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
                 <button
     onClick={() => navigate(-1)}
     className="
@@ -60,180 +75,152 @@ function OCRPage() {
     <IoChevronBack size={22} />
     Quay lại
 </button>
-            <div className="max-w-6xl mx-auto bg-white rounded-3xl p-8 shadow-lg">
 
-                <h1 className="text-4xl text-center font-bold mb-8 text-green-700">
 
+            <div className="max-w-6xl mx-auto p-8">
+
+                
+
+                <h1 className="text-center text-5xl font-bold text-green-700 mt-6">
                     🧾 Phân tích hóa đơn
-
                 </h1>
 
-                <div className="mb-6">
+                {/* Preview */}
 
-    <label
-        className="
-            inline-block
-            bg-green-500
-            hover:bg-green-600
-            text-white
-            px-6 py-4
-            rounded-2xl
-            cursor-pointer
-            font-bold
-            transition
-            shadow-md
-        "
-    >
+                {image && (
 
-        📷 Chọn ảnh hóa đơn
+                    <div className="flex justify-center mt-10">
 
-        <input
-            type="file"
-            onChange={(e) =>
-                setImage(e.target.files[0])
-            }
-            className="hidden"
-        />
+                        <div className="bg-white p-5 rounded-3xl shadow-xl">
 
-    </label>
+                            <img
+                                src={URL.createObjectURL(image)}
+                                alt="invoice"
+                                className="w-70 max-h-[400px] object-contain rounded-2xl"
+                            />
 
-
-
-
-
-    {
-        image && (
-
-            <p className="mt-4 text-gray-700 font-semibold">
-
-                ✅ {image.name}
-
-            </p>
-
-        )
-    }
-
-</div>
-
-                <button
-                    onClick={analyzeInvoice}
-                    className="bg-green-500 text-white px-8 py-4 rounded-2xl font-bold"
-                >
-
-                    Phân tích hóa đơn
-
-                </button>
-
-                {
-    result && (
-
-        <div className="mt-10">
-
-            <h2 className="text-2xl font-bold mb-4">
-
-                📦 Sản phẩm phát hiện
-
-            </h2>
-
-            <ul className="space-y-3">
-
-                {
-                    result.detected_products.map(
-                        (item, index) => (
-
-                            <li
-                                key={index}
-                                className="bg-green-100 p-4 rounded-2xl"
-                            >
-
-                                {item}
-
-                            </li>
-
-                        )
-                    )
-                }
-
-            </ul>
-
-
-
-
-
-            {/* GỢI Ý REFILL */}
-
-            {
-                result.suggestions?.length > 0 && (
-
-                    <div className="mt-10">
-
-                        <h2 className="text-2xl font-bold mb-5">
-
-                            ♻️ Gợi ý refill phù hợp
-
-                        </h2>
-
-                        <div className="space-y-4">
-
-                            {
-                                result.suggestions.map(
-                                    (item, index) => (
-
-                                        <div
-                                            key={index}
-                                            className="bg-green-100 p-5 rounded-2xl"
-                                        >
-
-                                            <h3 className="text-xl font-bold">
-
-                                                {item.product_name}
-
-                                            </h3>
-
-                                            <p>
-
-                                                📍 {item.station_name}
-
-                                            </p>
-
-                                            <p>
-
-                                                💰 {Number(item.price).toLocaleString('vi-VN')} vnđ/lít
-
-                                            </p>
-                                            <button
-    onClick={() =>
-        navigate(`/stations/${item.station_id}`)
-    }
-    className="mt-3 bg-green-500 text-white px-4 py-2 rounded-xl"
->
-    Xem trạm refill
-</button>
-                                        </div>
-
-                                    )
-                                )
-                            }
+                            <p className="mt-4 font-semibold text-center">
+                                📄 {image.name}
+                            </p>
 
                         </div>
 
                     </div>
 
-                )
-            }
+                )}
 
-        </div>
+                {/* Buttons */}
 
-    )
-}
+                <div className="flex justify-center gap-5 mt-10 flex-wrap">
 
+                    <label className="bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-2xl cursor-pointer font-bold">
+
+                        📷 Chọn ảnh
+
+                        <input
+                            hidden
+                            type="file"
+                            onChange={(e) =>
+                                setImage(e.target.files[0])
+                            }
+                        />
+
+                    </label>
+
+                    <button
+                        onClick={analyzeInvoice}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-2xl font-bold"
+                    >
+                        🔍 Phân tích
+                    </button>
+
+                    <button
+                        onClick={clearResult}
+                        className="bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-bold"
+                    >
+                         Xóa kết quả
+                    </button>
+
+                </div>
+
+                {/* RESULT */}
+
+                {result && (
+
+                    <div className="mt-16">
+
+                        <h2 className="text-3xl font-bold text-center mb-10">
+
+                            📦 Sản phẩm gợi ý: 
+
+                            <span className="text-green-600 ml-2">
+
+                                {result.detected_products.length}
+
+                            </span>
+
+                            {" "}sản phẩm
+
+                        </h2>
+
+                        <div className="space-y-6">
+
+                            {result.detected_products.map(product => (
+
+                                <div
+                                    key={product.product_id}
+                                    className="flex items-center gap-6 bg-white rounded-3xl shadow-lg p-6"
+                                >
+
+                                    <img
+                                        src={`http://localhost:5000${product.image_url}`}
+                                        alt={product.product_name}
+                                        className="w-24 h-24 rounded-2xl object-cover"
+                                    />
+
+                                    <div className="flex-1">
+
+                                        <h3 className="text-xl font-bold">
+                                            {product.product_name}
+                                        </h3>
+
+                                        <p className="mt-2 text-gray-600">
+                                            Có tại
+
+                                            <span className="font-bold text-green-600 mx-1">
+                                                {product.total_stations}
+                                            </span>
+
+                                            trạm refill
+                                        </p>
+
+                                        <button
+                                            onClick={() =>
+                                                navigate(
+                                                    `/products/${encodeURIComponent(product.product_name)}`
+                                                )
+                                            }
+                                            className="mt-4 bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl"
+                                        >
+                                            Xem chi tiết
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                )}
 
             </div>
 
         </div>
-
     );
-
 }
 
 export default OCRPage;

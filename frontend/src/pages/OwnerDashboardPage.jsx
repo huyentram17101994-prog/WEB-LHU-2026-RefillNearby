@@ -45,7 +45,7 @@ function OwnerDashboardPage() {
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
 
             <div className="max-w-7xl mx-auto">
 
@@ -74,7 +74,7 @@ function OwnerDashboardPage() {
 
                 {/* Statistics */}
 
-                <div className="grid md:grid-cols-4 gap-6 mb-10">
+                <div className="grid md:grid-cols-3 gap-6 mb-10">
 
                     <div
                         onClick={() => navigate('/owner/stations')}
@@ -130,31 +130,29 @@ function OwnerDashboardPage() {
 
                     </div>
 
-                    <div className="bg-white p-6 rounded-3xl shadow">
-
-                        <h2 className="text-xl font-bold">
-                            ❤️ Tổng lượt yêu thích
-                        </h2>
-
-                        <p className="text-4xl mt-3 font-bold text-pink-500">
-                            {dashboard.totalFavorites || 0}
-                        </p>
-
-                    </div>
+                    
 
                 </div>
 
                 {/* Favorites by station */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
-                <div className="bg-white p-6 rounded-3xl shadow">
+
+                <div className="bg-white rounded-3xl shadow-lg p-8 h-[420px] flex flex-col">
 
                     <h2 className="text-2xl font-semibold mb-5">
 
                         ❤️ Lượt yêu thích theo trạm
-
+        <span className="text-pink-500 text-2xl font-bold">
+        ({dashboard.totalStationFavorites || 0})
+    </span>
                     </h2>
+                    
 
-                    <div className="space-y-3">
+                    <div className="space-y-3
+        overflow-y-auto
+        flex-1
+        pr-2">
 
                         {dashboard.stationFavorites?.map((station) => (
 
@@ -162,11 +160,15 @@ function OwnerDashboardPage() {
                                 key={station.station_id}
                                 className="
                                     flex
-                                    justify-between
-                                    items-center
-                                    bg-pink-50
-                                    p-4
-                                    rounded-xl
+justify-between
+items-center
+bg-pink-50
+rounded-xl
+p-4
+transition-all
+duration-200
+hover:bg-pink-100
+hover:shadow-md
                                 "
                             >
 
@@ -189,7 +191,60 @@ function OwnerDashboardPage() {
                     </div>
 
                 </div>
+<div className="bg-white rounded-3xl shadow-lg p-8 h-[420px] flex flex-col">
 
+    <h2 className="text-2xl font-semibold mb-5">
+
+        ❤️ Lượt yêu thích theo sản phẩm 
+ <span className="text-pink-500 text-2xl font-bold">
+        ({dashboard.totalProductFavorites || 0})
+    </span>
+    </h2>
+
+    <div className="space-y-3
+        overflow-y-auto
+        flex-1
+        pr-2">
+
+        {dashboard.productFavorites?.map(product => (
+
+            <div
+                key={product.product_id}
+                className="
+                    flex
+justify-between
+items-center
+bg-pink-50
+rounded-xl
+p-4
+transition-all
+duration-200
+hover:bg-pink-100
+hover:shadow-md
+                "
+            >
+
+                <span className="font-semibold">
+
+                    {product.product_name}
+
+                </span>
+
+                <span className="text-pink-600 font-bold">
+
+                    ❤️ {product.totalFavorites}
+
+                </span>
+
+            </div>
+
+        ))}
+
+    </div>
+
+</div>
+
+</div>
             </div>
 
         </div>

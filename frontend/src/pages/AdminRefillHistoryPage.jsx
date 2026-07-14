@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
+import { FaRecycle } from "react-icons/fa";
+
 
 function AdminRefillHistoryPage() {
 
@@ -10,30 +12,105 @@ function AdminRefillHistoryPage() {
     const [refills, setRefills] = useState([]);
 
     const [search, setSearch] = useState('');
+    const [summary, setSummary] = useState({
+    total_refills: 0,
+    today_refills: 0,
+    month_refills: 0
+});
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
 
     useEffect(() => {
 
         loadRefills();
+        fetchSummary();
 
     }, []);
 
     const loadRefills = async () => {
 
         try {
+           if (fromDate && toDate) {
 
-            const res =
-                await api.get('/admin/refills');
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
 
-            setRefills(res.data);
+    const diffDays =
+        (to - from) / (1000 * 60 * 60 * 24);
 
-        } catch (error) {
+    if (diffDays < 0) {
 
-            console.log(error);
+        alert("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+        return;
 
-        }
+    }
 
-    };
+    if (diffDays > 30) {
 
+        alert("Chỉ được lọc tối đa trong khoảng 30 ngày.");
+        return;
+
+    }
+
+}
+
+        const res = await api.get(
+            "/admin/refills",
+            {
+                params: {
+                    fromDate,
+                    toDate
+                }
+            }
+        );
+
+        setRefills(res.data);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
+const handleRefresh = async () => {
+
+    setFromDate('');
+    setToDate('');
+    setSearch('');
+
+    try {
+
+        const res = await api.get(
+            "/admin/refills"
+        );
+
+        setRefills(res.data);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
+const fetchSummary = async () => {
+
+    try {
+
+        const res = await api.get(
+            "/admin/refills/summary"
+        );
+
+        setSummary(res.data);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
     const filteredRefills = refills.filter(refill =>
 
         refill.full_name
@@ -47,20 +124,21 @@ function AdminRefillHistoryPage() {
             .includes(search.toLowerCase())
 
         ||
+        refill.owner_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase()) ||
 
         refill.product_name
             ?.toLowerCase()
             .includes(search.toLowerCase())
+        
 
     );
 
     return (
 
-        <div className="min-h-screen bg-gray-100 p-8">
-
-            <div className="max-w-7xl mx-auto">
-
-                <button
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
+  <button
                     onClick={() => navigate(-1)}
                     className="
                         flex items-center gap-2
@@ -80,36 +158,295 @@ function AdminRefillHistoryPage() {
                     Quay lại
                 </button>
 
-                <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
+            <div className="max-w-7xl mx-auto">
+
+              
+                <h1 className="text-5xl text-center text-green-500 font-bold mb-8">
 
                     ♻️ Quản lý lượt refill
 
                 </h1>
+                <div className="max-w-5xl mx-auto">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    <div
+    className="
+        w-[300px]
+        bg-white
+        rounded-3xl
+        shadow-md
+        px-5
+        py-4
+        flex
+        items-center
+        gap-2
+        mb-8 flex-wrap
+    "
+>
+
+    <div
+        className="
+            w-12
+            h-12
+            text-2xl
+            rounded-full
+            bg-green-100
+            flex
+            items-center
+            justify-center
+           
+        "
+    >
+        ♻️
+    </div>
+
+    <div>
+
+        <p
+            className="
+                text-gray-600
+                text-lg
+                font-medium
+            "
+        >
+            Tổng lượt refill
+        </p>
+
+        <h2
+            className="
+                text-5xl
+                font-bold
+                text-green-600
+            "
+        >
+            {summary.total_refills}
+        </h2>
+
+    </div>
+
+</div>
+
+   <div
+    className="
+        w-[300px]
+        bg-white
+        rounded-3xl
+        shadow-md
+        px-5
+        py-4
+        flex
+        items-center
+        gap-2
+        mb-8 ex-wrap
+    "
+>
+
+    <div
+        className="
+            w-12
+            h-12
+            text-2xl
+            rounded-full
+            bg-green-100
+            flex
+            items-center
+            justify-center
+        "
+    >
+        ☀️
+    </div>
+
+    <div>
+
+        <p
+            className="
+                text-gray-600
+                text-lg
+                font-medium
+            "
+        >
+            Hôm nay
+        </p>
+
+        <h2
+            className="
+                text-5xl
+                font-bold
+                text-blue-600
+            "
+        >
+            {summary.today_refills}
+        </h2>
+
+    </div>
+
+</div>
+    <div
+    className="
+        w-[300px]
+        bg-white
+        rounded-3xl
+        shadow-md
+        px-5
+        py-4
+        flex
+        items-center
+        gap-2
+        mb-8 flex-wrap
+    "
+>
+
+    <div
+        className="
+            w-12
+            h-12
+            text-2xl
+            rounded-full
+            bg-green-100
+            flex
+            items-center
+            justify-center
+        "
+    >
+        📆
+    </div>
+
+    <div>
+
+        <p
+            className="
+                text-gray-600
+                text-lg
+                font-medium
+            "
+        >
+            Tháng này
+        </p>
+
+        <h2
+            className="
+                text-5xl
+                font-bold
+                text-orange-500
+            "
+        >
+            {summary.month_refills}
+        </h2>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
 
                 <div className="mb-6">
+                
+                    <div className="flex flex-wrap items-end gap-4 mb-6">
+ <div className="flex-1 min-w-[300px]">
 
-                    <input
-                        type="text"
-                        placeholder="🔍 Tìm người dùng, trạm hoặc sản phẩm..."
-                        value={search}
-                        onChange={(e) =>
-                            setSearch(e.target.value)
-                        }
-                        className="
-                            w-full
-                            bg-white
-                            border
-                            border-gray-200
-                            rounded-2xl
-                            px-4
-                            py-3
-                            shadow-sm
-                            focus:outline-none
-                            focus:ring-2
-                            focus:ring-green-400
-                        "
-                    />
+        
+        <input
+            type="text"
+            placeholder="🔍Tìm người dùng/trạm/chủ sở hữu/sản phẩm..."
+            value={search}
+            onChange={(e) =>
+                setSearch(e.target.value)
+            }
+            className="
+                w-full
+                bg-white
+                border
+                border-gray-200
+                rounded-2xl
+                px-4
+                py-3
+                shadow-sm
+                focus:outline-none
+                focus:ring-2
+                focus:ring-green-400
+            "
+        />
 
+    </div>
+    <div>
+        <label className="block font-semibold mb-2">
+            📅 Từ ngày
+        </label>
+
+        <input
+            type="date"
+            value={fromDate}
+            onChange={(e) =>
+                setFromDate(e.target.value)
+            }
+            className="
+                border
+                rounded-xl
+                px-4
+                py-3
+            "
+        />
+    </div>
+
+    <div>
+        <label className="block font-semibold mb-2">
+            📅 Đến ngày
+        </label>
+
+        <input
+            type="date"
+            value={toDate}
+            onChange={(e) =>
+                setToDate(e.target.value)
+            }
+            className="
+                border
+                rounded-xl
+                px-4
+                py-3
+            "
+        />
+    </div>
+<div className="flex gap-3">
+
+            <button
+                onClick={loadRefills}
+                className="
+                    bg-green-500
+                    hover:bg-green-600
+                    text-white
+                    px-5
+                    py-3
+                    rounded-xl
+                    font-semibold
+                "
+            >
+                🔍 Lọc
+            </button>
+
+            <button
+                onClick={handleRefresh}
+                className="
+                    bg-gray-500
+                    hover:bg-gray-600
+                    text-white
+                    px-5
+                    py-3
+                    rounded-xl
+                    font-semibold
+                "
+            >
+                Làm mới
+            </button>
+
+        </div>
+
+   
+
+</div>
                 </div>
 
                 <div className="bg-white rounded-3xl shadow-lg p-6 overflow-x-auto">
@@ -130,6 +467,10 @@ function AdminRefillHistoryPage() {
 
                                 <th className="p-4 text-left">
                                     Trạm refill
+                                </th>
+
+                                <th className="p-4 text-left">
+                                    Chủ sở hữu
                                 </th>
 
                                 <th className="p-4 text-left">
@@ -172,7 +513,9 @@ function AdminRefillHistoryPage() {
                                     <td className="p-4">
                                         {refill.station_name}
                                     </td>
-
+                                    <td className="p-4">
+                                        {refill.owner_name}
+                                    </td>
                                     <td className="p-4">
                                         {refill.product_name}
                                     </td>

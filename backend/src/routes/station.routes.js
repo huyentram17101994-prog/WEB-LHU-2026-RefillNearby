@@ -8,7 +8,8 @@ const {
     searchStations,
     createStation,
     updateStation,
-    deleteStation
+    deleteStation,
+    toggleStationStatus
 } = require('../controllers/station.controller');
 const {
     verifyToken,
@@ -34,6 +35,12 @@ router.delete(
     verifyToken,
     authorizeRoles('admin', 'store_owner'),
     deleteStation
+);
+router.put(
+    '/:id/status',
+    verifyToken,
+    authorizeRoles('admin'),
+    toggleStationStatus
 );
 
 module.exports = router;
