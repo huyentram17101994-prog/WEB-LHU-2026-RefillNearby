@@ -8,8 +8,6 @@ import MapView from '../components/MapView';
 import { RiLogoutCircleRLine } from "react-icons/ri";
 import useFavorite from "../hooks/useFavorite";
 
-
-
 function HomePage() {
    
     const [stations, setStations] = useState([]);
@@ -73,10 +71,6 @@ const [favoriteStations, setFavoriteStations] = useState([]);
         }
 
     };
-
-
-
-
 
     // ================= FAVORITE =================
 
@@ -183,27 +177,71 @@ const calculateDistance = (
 
     return R * c;
 
-};
-const showNearestStations = () => {
+};const showNearestStations = () => {
 
-    if (!userLocation) {
+    const permission = localStorage.getItem("locationPermission");
 
-        alert("Không lấy được vị trí");
+    if (permission !== "granted") {
+
+        const allow = window.confirm(
+            "Bạn cần cho phép truy cập vị trí để sử dụng chức năng Trạm gần tôi.\n\nBạn có muốn cấp quyền không?"
+        );
+
+        if (!allow) return;
+
+        navigator.geolocation.getCurrentPosition(
+
+            (position) => {
+
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                localStorage.setItem("latitude", latitude);
+                localStorage.setItem("longitude", longitude);
+                localStorage.setItem("locationPermission", "granted");
+                window.location.reload();
+
+                setUserLocation([latitude, longitude]);
+
+                const nearby = allStations.filter((station) => {
+
+                    const distance = calculateDistance(
+                        latitude,
+                        longitude,
+                        station.latitude,
+                        station.longitude
+                    );
+
+                    return distance <= 30;
+
+                });
+
+                setStations(nearby);
+
+            },
+
+            () => {
+
+                alert("Không thể lấy vị trí hiện tại.");
+
+            }
+
+        );
 
         return;
 
     }
 
+    const latitude = Number(localStorage.getItem("latitude"));
+    const longitude = Number(localStorage.getItem("longitude"));
+
     const nearby = allStations.filter((station) => {
 
         const distance = calculateDistance(
-
-            userLocation[0],
-            userLocation[1],
-
+            latitude,
+            longitude,
             station.latitude,
             station.longitude
-
         );
 
         return distance <= 30;
@@ -257,27 +295,7 @@ const fetchUnreadCount = async () => {
     fetchFavoriteStations();
     loadProfile();
     fetchUnreadCount();
-    navigator.geolocation.getCurrentPosition(
-
-        (position) => {
-
-            setUserLocation([
-
-                position.coords.latitude,
-
-                position.coords.longitude
-
-            ]);
-
-        },
-
-        (error) => {
-
-            console.log(error);
-
-        }
-
-    );
+    
 
 }, []);
 
@@ -292,21 +310,13 @@ const logout = () => {
 
 };
 
-
     return (
 
         <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
 
-
-
-
             {/* HEADER */}
 
             <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-5">
-
-
-
-
                 {/* LEFT */}
 
                 <div>
@@ -317,10 +327,6 @@ const logout = () => {
 
                     </h1>
 
-
-
-
-
                     <p className="text-gray-600 text-lg">
 
                         Tìm trạm refill gần bạn dễ dàng.
@@ -328,11 +334,6 @@ const logout = () => {
                     </p>
               
                 </div>
-
-
-
-
-
                 {/* RIGHT MENU */}
             <div className="flex items-center gap-4">
                
@@ -404,10 +405,6 @@ const logout = () => {
 
                         </summary>
 
-
-
-
-
                         <div className="absolute right-0  z-[9999] mt-4 w-80 bg-white rounded-3xl shadow-2xl p-4 bg-white">
 
 
@@ -422,7 +419,6 @@ const logout = () => {
 
                             </button>
 
-
                             <button
                                 onClick={() =>
                                 navigate('/ocr')
@@ -433,7 +429,6 @@ const logout = () => {
                              🧾 Chụp hóa đơn phân tích
 
                             </button>
-
 
                             <button
                                 onClick={() =>
@@ -456,10 +451,6 @@ const logout = () => {
                                 ❤️ Danh sách yêu thích
 
                             </button>
-
-
-
-
 
                             <button
                                 onClick={() =>
@@ -498,9 +489,6 @@ const logout = () => {
 
             </div>
     </div>
-
-
-
 
             {/* SEARCH */}
 
@@ -576,13 +564,10 @@ const logout = () => {
 
 </div>
 
-                
-                <MapView
+              <MapView
     stations={stations}
 />
             </div>
-
-
             {/* STATIONS */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -594,9 +579,6 @@ const logout = () => {
                             key={station.station_id}
                             className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto"
                         >
-
-
-
 
                             {/* IMAGE */}
 
@@ -617,16 +599,9 @@ const logout = () => {
                             className="w-full h-64 object-cover rounded-lg mb-2"
                             />
 
-
-
-
                                 {/* OVERLAY */}
 
                                 <div className="absolute inset-0 bg-black/20"></div>
-
-
-
-
 
                                 {/* FAVORITE */}
 
@@ -657,10 +632,6 @@ const logout = () => {
 
                             </div>
 
-
-
-
-
                             {/* CONTENT */}
 
                             <div className="p-6">
@@ -671,19 +642,11 @@ const logout = () => {
 
                                 </h2>
 
-
-
-
-
                                 <p className="text-black-800 mb-3">
 
                                     - Địa chỉ: {station.address}
 
                                 </p>
-
-
-
-
 
                                 <p className="text-green-600 mb-4">
 
@@ -693,19 +656,11 @@ const logout = () => {
 
                                 </p>
 
-
-
-
-
                                 <p className="text-gray-700 leading-7 mb-6">
 
                                     {station.description}
 
                                 </p>
-
-
-
-
 
                                 <button
                                     onClick={() =>
@@ -727,11 +682,6 @@ const logout = () => {
 
             </div>
 
-
-
-
-
-           
             </div>
 
 

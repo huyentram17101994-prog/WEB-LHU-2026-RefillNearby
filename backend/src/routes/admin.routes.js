@@ -15,7 +15,10 @@ const {
     getTopStations,
     getRefillSummary,
     getRefillStatistics,
+    getRatingStatistics,
+    getRatingStatisticsByDate,
     getRefillQuantityByDate,
+    getDashboardStatisticsByDate,
     getAllFavorites,
     getTopFavoriteStations,
     getTopFavoriteProducts,
@@ -109,10 +112,22 @@ router.get(
     getRefillSummary
 );
 router.get(
-    '/refills/statistics',
+    '/refill-statistics',
     verifyToken,
     authorizeRoles('admin'),
     getRefillStatistics
+);
+router.get(
+    "/rating-statistics",
+    verifyToken,
+    authorizeRoles("admin"),
+    getRatingStatistics
+);
+router.get(
+    "/rating-statistics/filter",
+    verifyToken,
+    authorizeRoles("admin"),
+    getRatingStatisticsByDate
 );
 router.get(
     '/refill-statistics/filter',
@@ -120,7 +135,12 @@ router.get(
     authorizeRoles('admin'),
     getRefillQuantityByDate
 );
-
+router.get(
+    '/dashboard-statistics/filter',
+    verifyToken,
+    authorizeRoles('admin'),
+    getDashboardStatisticsByDate
+);
 router.get(
     '/favorites',
     verifyToken,

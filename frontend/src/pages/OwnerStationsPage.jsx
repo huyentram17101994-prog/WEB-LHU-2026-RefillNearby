@@ -13,6 +13,7 @@ function OwnerStationsPage() {
 
     const [editingStationId, setEditingStationId] = useState(null);
 
+
     const [stationForm, setStationForm] = useState({
 
         station_name: '',
@@ -294,7 +295,7 @@ function OwnerStationsPage() {
             <IoChevronBack size={22} />
             Quay lại
         </button>
-         <div className="max-w-6xl mx-auto">
+         <div className="max-w-5xl mx-auto">
                 <h1 className="text-5xl font-bold text-center text-green-700 mb-8">
 
                     🏪 Quản lý trạm

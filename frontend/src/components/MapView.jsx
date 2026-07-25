@@ -45,9 +45,6 @@ L.Icon.Default.mergeOptions({
 
 });
 
-
-
-
 // ================= DISTANCE FUNCTION =================
 
 const calculateDistance = (
@@ -87,47 +84,33 @@ const calculateDistance = (
     return R * c;
 };
 
-
-
-
-function MapView({ stations }) {
+function MapView({ stations })  {
 
     const navigate = useNavigate();
-
-    const [userLocation, setUserLocation] =
-        useState(null);
-
-
-
+    const [userLocation, setUserLocation] = useState(null);
 
     // ================= GET USER LOCATION =================
 
     useEffect(() => {
 
-        navigator.geolocation.getCurrentPosition(
+    const permission = localStorage.getItem("locationPermission");
 
-            (position) => {
+    if (permission === "granted") {
 
-                setUserLocation([
-                    position.coords.latitude,
-                    position.coords.longitude
-                ]);
+        const latitude = Number(localStorage.getItem("latitude"));
+        const longitude = Number(localStorage.getItem("longitude"));
 
-            },
+        if (!isNaN(latitude) && !isNaN(longitude)) {
 
-            (error) => {
+            setUserLocation([
+                latitude,
+                longitude
+            ]);
 
-                console.log(error);
+        }
+    }
 
-            }
-
-        );
-
-    }, []);
-
-
-
-
+}, []);
     return (
 
         <div className="rounded-3xl overflow-hidden shadow-2xl">

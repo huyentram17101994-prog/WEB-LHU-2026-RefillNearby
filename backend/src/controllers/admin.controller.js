@@ -205,18 +205,30 @@ const getAllReviews = async (req, res) => {
 
         const result = await sql.query`
             SELECT
-                r.review_id,
-                r.rating,
-                r.comment,
-                r.created_at,
-                u.full_name,
-                s.station_name
-            FROM reviews r
-            LEFT JOIN users u
-                ON r.user_id = u.user_id
-            LEFT JOIN refill_stations s
-                ON r.station_id = s.station_id
-            ORDER BY r.review_id DESC
+    r.review_id,
+    r.rating,
+    r.comment,
+    r.created_at,
+    r.owner_reply,
+    r.replied_at,
+    u.full_name,
+
+    s.station_name,
+
+    owner.full_name AS owner_name
+
+FROM reviews r
+
+LEFT JOIN users u
+    ON r.user_id = u.user_id
+
+LEFT JOIN refill_stations s
+    ON r.station_id = s.station_id
+
+LEFT JOIN users owner
+    ON s.owner_id = owner.user_id
+
+ORDER BY r.review_id DESC
         `;
 
         res.json(result.recordset);
@@ -444,6 +456,15 @@ SELECT
 FROM refill_history
 
 `;
+const refillByMonth = await sql.query`
+    SELECT
+        MONTH(refill_date) AS month,
+        SUM(quantity) AS totalQuantity
+    FROM refill_history
+    WHERE YEAR(refill_date) = YEAR(GETDATE())
+    GROUP BY MONTH(refill_date)
+    ORDER BY month
+`;
         res.json({
 
     totalQuantity:
@@ -456,7 +477,10 @@ FROM refill_history
         statistics.recordset[0].monthQuantity,
 
     topProducts:
-        topProducts.recordset
+        topProducts.recordset,
+        
+    refillByMonth:
+    refillByMonth.recordset
 
 });
 
@@ -468,6 +492,30 @@ FROM refill_history
 
     }
 
+};
+const getRatingStatistics = async (req, res) => {
+    try {
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+            SELECT
+                rating,
+                COUNT(*) AS total
+            FROM reviews
+            GROUP BY rating
+            ORDER BY rating ASC
+        `;
+
+        res.json(result.recordset);
+
+    } catch (err) {
+
+        res.status(500).json({
+            message: err.message
+        });
+
+    }
 };
 const getRefillQuantityByDate = async (req, res) => {
 
@@ -506,6 +554,220 @@ const getRefillQuantityByDate = async (req, res) => {
         res.json(result.recordset[0]);
 
     } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getDashboardStatisticsByDate = async (req, res) => {
+
+    try {
+
+        const { fromDate, toDate } = req.query;
+
+        if (!fromDate || !toDate) {
+
+            return res.status(400).json({
+                message: "Vui lòng chọn khoảng thời gian."
+            });
+
+        }
+
+        await sql.connect(config);
+
+        // ===================
+        // Tổng lượng refill
+        // ===================
+
+        const statistics = await sql.query`
+
+            SELECT
+
+                ISNULL(SUM(quantity),0) AS totalQuantity
+
+            FROM refill_history
+
+            WHERE
+
+                CAST(refill_date AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+        `;
+
+        // ===================
+        // Refill theo tháng
+        // ===================
+
+        const refillByMonth = await sql.query`
+
+            SELECT
+
+                MONTH(refill_date) AS month,
+
+                SUM(quantity) AS totalQuantity
+
+            FROM refill_history
+
+            WHERE
+
+                CAST(refill_date AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+            GROUP BY
+                MONTH(refill_date)
+
+            ORDER BY
+                MONTH(refill_date)
+
+        `;
+
+        // ===================
+        // Top sản phẩm
+        // ===================
+
+        const topProducts = await sql.query`
+
+            SELECT TOP 5
+
+                p.product_name,
+
+                SUM(rh.quantity) AS total_quantity
+
+            FROM refill_history rh
+
+            INNER JOIN products p
+                ON rh.product_id = p.product_id
+
+            WHERE
+
+                CAST(rh.refill_date AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+            GROUP BY
+                p.product_name
+
+            ORDER BY
+                total_quantity DESC
+
+        `;
+
+        // ===================
+        // Top trạm
+        // ===================
+
+        const topStations = await sql.query`
+
+            SELECT TOP 5
+
+                rs.station_name,
+
+                SUM(rh.quantity) AS totalQuantity
+
+            FROM refill_history rh
+
+            INNER JOIN refill_stations rs
+                ON rh.station_id = rs.station_id
+
+            WHERE
+
+                CAST(rh.refill_date AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+            GROUP BY
+                rs.station_name
+
+            ORDER BY
+                totalQuantity DESC
+
+        `;
+
+        res.json({
+
+            totalQuantity:
+                statistics.recordset[0].totalQuantity,
+
+            refillByMonth:
+                refillByMonth.recordset,
+
+            topProducts:
+                topProducts.recordset,
+
+            topStations:
+                topStations.recordset
+
+        });
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+
+};
+const getRatingStatisticsByDate = async (req, res) => {
+
+    try {
+
+        const { fromDate, toDate } = req.query;
+
+        if (!fromDate || !toDate) {
+
+            return res.status(400).json({
+                message: "Vui lòng chọn khoảng thời gian."
+            });
+
+        }
+
+        await sql.connect(config);
+
+        const result = await sql.query`
+
+            SELECT
+
+                rating,
+
+                COUNT(*) AS total
+
+            FROM reviews
+
+            WHERE
+
+                CAST(created_at AS DATE)
+
+                BETWEEN ${fromDate}
+
+                AND ${toDate}
+
+            GROUP BY rating
+
+            ORDER BY rating
+
+        `;
+
+        res.json(result.recordset);
+
+    }
+
+    catch (error) {
 
         res.status(500).json({
             error: error.message
@@ -936,7 +1198,10 @@ module.exports = {
     getAllRefills,
     getRefillSummary,
     getRefillStatistics,
+    getRatingStatistics,
+    getRatingStatisticsByDate,
     getRefillQuantityByDate,
+    getDashboardStatisticsByDate,
     getAllFavorites,
     getTopFavoriteStations, 
     getTopFavoriteProducts,

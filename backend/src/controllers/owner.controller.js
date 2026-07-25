@@ -826,7 +826,8 @@ SELECT
     r.comment,
     r.owner_reply,
    
-    FORMAT(r.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at,
+   r.created_at,
+    CONVERT(varchar(19), r.created_at, 120) AS created_at_display,
     FORMAT(r.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
     u.full_name,
     p.product_name,

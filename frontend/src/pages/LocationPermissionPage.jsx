@@ -20,10 +20,6 @@ function LocationPermissionPage() {
                 const longitude =
                     position.coords.longitude;
 
-
-
-
-
                 // save localStorage
 
                 localStorage.setItem(
@@ -36,19 +32,13 @@ function LocationPermissionPage() {
                     longitude
                 );
 
-
-
-
+                localStorage.setItem('locationPermission', 'granted');
 
                 alert('Đã cho phép truy cập vị trí  😄');
 
                 navigate('/home');
 
             },
-
-
-
-
 
             (error) => {
                 setLoading(false);
@@ -63,14 +53,9 @@ function LocationPermissionPage() {
         );
 
     };
-
-
-
-
-
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-green-200 flex items-center justify-center px-6">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8 flex items-center justify-center px-6">
 
             {/* CARD */}
 
@@ -81,11 +66,6 @@ function LocationPermissionPage() {
                 <div className="text-8xl mb-6">
                     📍
                 </div>
-
-
-
-
-
                 {/* TITLE */}
 
                 <h1 className="text-4xl font-extrabold text-green-700 mb-5">
@@ -97,22 +77,13 @@ function LocationPermissionPage() {
                     }
                 </h1>
 
-
-
-
-
                 {/* DESCRIPTION */}
 
                 <p className="text-gray-600 text-lg leading-relaxed mb-10">
 
                     Cho phép truy cập vị trí để tìm các trạm refill gần bạn.
                     
-
                 </p>
-
-
-
-
 
                 {/* BUTTON */}
 
@@ -125,19 +96,16 @@ function LocationPermissionPage() {
 
                 </button>
 
-
-
-
-
                 {/* SKIP */}
 
                 <button
-                    onClick={() => navigate('/home')}
+                    onClick={() => {
+                    localStorage.setItem('locationPermission', 'denied');
+                    navigate('/home');
+                    }}
                     className="mt-5 text-gray-500 hover:text-green-700"
                 >
-
                     Bỏ qua
-
                 </button>
 
             </div>

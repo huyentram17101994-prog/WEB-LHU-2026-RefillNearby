@@ -9,6 +9,113 @@ const [search, setSearch] = useState('');
 const [dashboard, setDashboard] = useState({});
 const [reply, setReply] = useState({});
 const [editingReview, setEditingReview] = useState(null);
+  const [fromDate, setFromDate] = useState('');
+    const MAX_DAYS = 30;
+
+const daysBetween = (start, end) => {
+
+    const diff =
+        new Date(end) - new Date(start);
+
+    return diff / (1000 * 60 * 60 * 24);
+
+};
+
+const [toDate, setToDate] = useState('');
+const filterReview = (review) => {
+
+    const matchRating =
+
+        ratingFilter === ''
+
+        ||
+
+        review.rating === Number(ratingFilter);
+
+    const matchSearch =
+
+        review.full_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase())
+
+        ||
+
+        review.station_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase())
+
+        ||
+
+        review.comment
+            ?.toLowerCase()
+            .includes(search.toLowerCase());
+
+const reviewDate = new Date(review.created_at);
+console.log({
+    created_at: review.created_at,
+    reviewDate,
+    fromDate,
+    toDate
+});
+const from = fromDate
+    ? new Date(fromDate)
+    : null;
+
+const to = toDate
+    ? new Date(toDate)
+    : null;
+
+let matchDate = true;
+
+if (fromDate && toDate) {
+
+    const diff = daysBetween(fromDate, toDate);
+
+    if (diff < 0) {
+        matchDate = false;
+    }
+    else if (diff > MAX_DAYS) {
+        matchDate = false;
+    }
+    else {
+
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+
+        matchDate =
+            reviewDate >= from &&
+            reviewDate <= to;
+    }
+
+}
+else if (fromDate) {
+
+    const from = new Date(fromDate);
+    from.setHours(0, 0, 0, 0);
+
+    matchDate = reviewDate >= from;
+
+}
+else if (toDate) {
+
+    const to = new Date(toDate);
+    to.setHours(23, 59, 59, 999);
+
+    matchDate = reviewDate <= to;
+
+}
+
+
+    return (
+    matchRating &&
+    matchSearch &&
+    matchDate
+);
+}
+
 useEffect(() => {
 
     loadReviews();
@@ -20,7 +127,7 @@ const loadReviews = async () => {
 
         const res =
             await api.get('/owner/dashboard');
-
+         console.log(res.data[0]);  
         setDashboard(
             res.data
         );
@@ -107,6 +214,15 @@ loadReviews();
     }
 
 };
+const filteredStations = Object.entries(reviewsByStation)
+    .filter(([_, reviews]) => reviews.some(filterReview));
+
+const hasFilter =
+    search ||
+    ratingFilter ||
+    fromDate ||
+    toDate;
+
 
 return (
 
@@ -127,14 +243,22 @@ return (
     <IoChevronBack size={22} />
     Quay lại
 </button>
-<div className="max-w-5xl mx-auto">
-     <h1 className="text-4xl text-center text-green-500 font-bold mb-8">
+<div className="max-w-6xl mx-auto">
+     <h1 className="text-5xl text-center text-green-500 font-bold mb-8">
 
                     ⭐ Quản lý đánh giá
 
                 </h1>
 
-                <div className="flex gap-4 mb-6">
+                <div
+    className="
+        flex
+        items-end
+        gap-4
+        mb-6
+    "
+>
+                     <div className="flex-1">
                     <input
                         type="text"
                         placeholder="🔍 Tìm người dùng, trạm hoặc nội dung..."
@@ -156,6 +280,7 @@ return (
                             focus:ring-green-400
                         "
                     />
+                    </div>
                     <select
     value={ratingFilter}
     onChange={(e) =>
@@ -204,50 +329,90 @@ return (
     </option>
 
 </select>
+<div>
+
+        <label className="  block mb-2 font-semibold">
+
+            📅 Từ ngày
+
+        </label>
+<input
+
+    type="date"
+    value={fromDate}
+   onChange={(e) => {
+    setFromDate(e.target.value);
+}}
+    className="
+        text-center
+        bg-white
+        border
+        border-gray-200
+        rounded-2xl
+        px-4
+        py-3
+        shadow-sm
+        text-gray-700
+        appearance-none
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-400
+        focus:border-green-400
+        
+    "
+/>
+
+</div>
+<div>
+
+        <label className="block mb-2 font-semibold">
+
+            📅 Đến ngày
+
+        </label>
+<input
+    type="date"
+    value={toDate}
+   onChange={(e) => {
+    setToDate(e.target.value);
+}}
+    className="
+        text-center
+        bg-white
+        border
+        border-gray-200
+        rounded-2xl
+        px-4
+        py-3
+        shadow-sm
+        text-gray-700
+        appearance-none
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-400
+        focus:border-green-400
+        
+    "
+/>
+</div>
+
                 </div>
+                {fromDate && toDate && daysBetween(fromDate, toDate) < 0 && (
+    <div className="mt-2 rounded-lg bg-red-100 border border-red-300 px-4 py-2 text-red-700 text-sm">
+        ⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.
+    </div>
+)}
+
+{fromDate && toDate && daysBetween(fromDate, toDate) > MAX_DAYS && (
+    <div className="mt-2 rounded-lg bg-red-100 border border-red-300 px-4 py-2 text-red-700 text-sm">
+        ⚠️ Chỉ được lọc tối đa trong khoảng 30 ngày.
+    </div>
+)}
     <div className="space-y-4">
 
-        {Object.entries(reviewsByStation).length > 0 ? (
+      {filteredStations.length > 0 ? (
 
-    Object.entries(reviewsByStation)
-.filter(([stationName, reviews]) => {
-
-    return reviews.some(review => {
-
-        const matchRating =
-
-            ratingFilter === ''
-
-            ||
-
-            review.rating === Number(ratingFilter);
-
-        const matchSearch =
-
-            review.full_name
-                ?.toLowerCase()
-                .includes(search.toLowerCase())
-
-            ||
-
-            review.station_name
-                ?.toLowerCase()
-                .includes(search.toLowerCase())
-
-            ||
-
-            review.comment
-                ?.toLowerCase()
-                .includes(search.toLowerCase());
-
-        return matchRating && matchSearch;
-
-    });
-
-})
-.map(
-
-        ([stationName, reviews]) => (
+    filteredStations.map(([stationName, reviews]) => (
 
             <div
                 key={stationName}
@@ -279,39 +444,9 @@ return (
 </div>
 
                 <div className="space-y-3">
-{reviews
-.filter(review => {
-
-    const matchRating =
-
-        ratingFilter === ''
-
-        ||
-
-        review.rating === Number(ratingFilter);
-
-    const matchSearch =
-
-        review.full_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
-
-        ||
-
-        review.station_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
-
-        ||
-
-        review.comment
-            ?.toLowerCase()
-            .includes(search.toLowerCase());
-
-    return matchRating && matchSearch;
-
-})
-.map((review) => (
+{
+reviews
+.filter(filterReview).map((review) => (
                         <div
                             key={review.review_id}
                             className="
@@ -334,7 +469,7 @@ return (
 
     <div className="text-sm text-gray-500">
 
-        {review.created_at}
+       {review.created_at_display}
 
     </div>
 
@@ -529,9 +664,49 @@ return (
 
     )
 
-) : (
+) :   (
 
-    <p>Chưa có đánh giá nào.</p>
+    <div className="bg-white rounded-2xl shadow p-10 text-center">
+
+        <div className="text-5xl mb-3">
+            🔍
+        </div>
+
+        <p className="text-lg font-semibold text-gray-700">
+
+            {hasFilter
+                ? "Không tìm thấy đánh giá nào phù hợp với điều kiện lọc."
+                : "Chưa có đánh giá nào."}
+
+        </p>
+
+        {hasFilter && (
+
+            <button
+                onClick={() => {
+
+                    setSearch("");
+                    setRatingFilter("");
+                    setFromDate("");
+                    setToDate("");
+
+                }}
+                className="
+                    mt-4
+                    bg-green-600
+                    hover:bg-green-700
+                    text-white
+                    px-4
+                    py-2
+                    rounded-xl
+                "
+            >
+                Xóa bộ lọc
+            </button>
+
+        )}
+
+    </div>
 
 )}
     </div>

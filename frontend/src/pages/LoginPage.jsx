@@ -89,7 +89,7 @@ else {
 
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-green-200 flex items-center justify-center px-6">
+        <div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8 flex items-center justify-center px-6">
 
             {/* CARD */}
 
@@ -259,7 +259,7 @@ else {
                         {
                             loading
                                 ? 'Loading...'
-                                : 'Login'
+                                : 'Đăng Nhập'
                         }
 
                     </button>

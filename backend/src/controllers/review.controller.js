@@ -61,7 +61,7 @@ const getReviewsByStation = async (req, res) => {
             ON reviews.product_id = products.product_id
 
             WHERE reviews.station_id = ${stationId}
-            AND rs.status = 'active'
+            
 
             ORDER BY reviews.created_at DESC
         `;
