@@ -10,8 +10,8 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL,
     avatar VARCHAR(255),
     created_at DATETIME DEFAULT GETDATE(),
-    badge NVARCHAR(50)
-    status NVARCHAR(20) DEFAULT 'active',
+    badge NVARCHAR(50),
+    status NVARCHAR(20) DEFAULT 'active'
 );
 
 select * from users
@@ -261,32 +261,6 @@ CREATE TABLE notifications
         REFERENCES users(user_id)
 );
 
-
-
-
-EXEC sp_CreateNotification
-
-@user_id = 1,
-
-@station_id = 1,
-
-@product_id = 1,
-
-@title = N'Sản phẩm đã có hàng',
-
-@content = N'Nước giặt OMO đã có hàng.',
-
-@product_name = N'Nước giặt OMO',
-
-@station_name = N'Refill Nearby Quận 7',
-
-@station_address = N'123 Nguyễn Văn Linh',
-
-@open_time = '08:00',
-
-@close_time = '20:00',
-
-@image_url = '/uploads/omo.jpg';
 
 SELECT * FROM vw_StationRatings
 SELECT * FROM [dbo].[favorites]

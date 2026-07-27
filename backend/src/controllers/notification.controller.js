@@ -24,6 +24,7 @@ const getMyNotifications = async (req, res) => {
         content,
 
         product_name,
+        station_id,
 
         station_name,
 

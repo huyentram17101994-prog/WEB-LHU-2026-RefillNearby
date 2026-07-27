@@ -133,7 +133,7 @@ function ProductsPage() {
 
             {/* PRODUCTS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
                 {
                     filteredProducts.map((product) => (
@@ -207,14 +207,11 @@ mx-auto
 
                                   </div>
 
-
-
-
                             {/* CONTENT */}
 
                             <div className="p-4">
-    <h3 className="text-xl font-semibold mb-3">
-        {product.product_name}
+    <h3 className="text-xl font-semibold mb-3 line-clamp-2 min-h-[56px]">
+    {product.product_name}
     </h3>
 
     <p className="text-gray-700 mb-2">
@@ -232,14 +229,8 @@ mx-auto
         )
     }
         className="
-            w-full
-            bg-green-500
-            hover:bg-green-600
-            text-white
-            py-3
-            rounded-xl
-            font-semibold
-        "
+            w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl font-semibold mt-auto"
+                         
     >
         Xem chi tiết
     </button>

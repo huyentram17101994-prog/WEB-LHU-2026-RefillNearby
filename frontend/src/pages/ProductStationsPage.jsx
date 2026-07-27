@@ -196,21 +196,89 @@ const registerNotification = async (stationId, productId) => {
 {
     stations.length > 0 && (
 
-        <img
-            src={
-                stations[0].image_url.startsWith('/uploads')
-                ? `http://localhost:5000${stations[0].image_url}`
-                : stations[0].image_url
-            }
-            alt={stations[0].product_name}
-            className="
-                w-72
-                h-72
-                object-cover
-                rounded-2xl
-                mx-auto
-            "
-        />
+       
+
+            <div className="
+    grid
+    grid-cols-1
+    md:grid-cols-[300px_1fr]
+gap-2
+    items-center
+">
+
+                {/* IMAGE */}
+
+               <div className="flex justify-center">
+
+                    <img
+                        src={
+                            stations[0].image_url.startsWith('/uploads')
+                            ? `http://localhost:5000${stations[0].image_url}`
+                            : stations[0].image_url
+                        }
+                        alt={stations[0].product_name}
+                        className="
+                            w-56
+                            h-56
+                            object-cover
+                            rounded-3xl
+                            shadow-lg
+                        "
+                    />
+
+                </div>
+
+
+                {/* DESCRIPTION */}
+
+                <div className="
+    bg-white/20
+    backdrop-blur-sm
+    border
+    border-white
+    rounded-2xl
+    p-5
+    mb-6
+">
+
+                    <h2 className="
+                        text-2xl
+                        font-bold
+                        text-gray-800
+                        mb-3
+                    ">
+                        📝 Giới thiệu sản phẩm
+                    </h2>
+
+                    <p className="
+                        text-gray-700
+                        text-lg
+                        leading-8
+                    ">
+                        {stations[0].description ||
+                            'Chưa có thông tin mô tả cho sản phẩm này.'}
+                    </p>
+
+                    <div className="
+                        mt-6
+                        flex
+                        items-center
+                        gap-3
+                        text-green-600
+                        font-semibold
+                    ">
+                        ♻️
+                        <span>
+                            Sản phẩm có thể refill
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        
+
     )
 }
             <div className="space-y-4 p-5">

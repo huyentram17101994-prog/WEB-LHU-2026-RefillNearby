@@ -5,26 +5,32 @@ const storage = multer.diskStorage({
 
     destination: (req, file, cb) => {
 
-        if (
-            req.originalUrl.includes(
-                'upload-product-image'
-            )
-        ) {
+       if (
+    req.originalUrl.includes('upload-product-image')
+) {
 
-            cb(
-                null,
-                'uploads/products/'
-            );
+    cb(
+        null,
+        'uploads/products/'
+    );
 
-        } else {
+} else if (
+    req.originalUrl.includes('upload/avatar')
+) {
 
-            cb(
-                null,
-                'uploads/stations/'
-            );
+    cb(
+        null,
+        'uploads/avatars/'
+    );
 
-        }
+} else {
 
+    cb(
+        null,
+        'uploads/stations/'
+    );
+
+}
     },
 
     filename: (req, file, cb) => {

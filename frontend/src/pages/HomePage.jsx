@@ -406,7 +406,12 @@ const logout = () => {
                         </summary>
 
                         <div className="absolute right-0  z-[9999] mt-4 w-80 bg-white rounded-3xl shadow-2xl p-4 bg-white">
-
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="w-full text-left p-4 rounded-2xl hover:bg-green-50 transition"
+                        >
+                            👤 Hồ sơ cá nhân
+                        </button>
 
                             <button
                                 onClick={() =>
@@ -570,14 +575,14 @@ const logout = () => {
             </div>
             {/* STATIONS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
                 {
                     stations.map((station) => (
 
                         <div
                             key={station.station_id}
-                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto"
+                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto h-full flex flex-col"
                         >
 
                             {/* IMAGE */}
@@ -634,21 +639,21 @@ const logout = () => {
 
                             {/* CONTENT */}
 
-                            <div className="p-6">
+                            <div className="p-6 flex flex-col flex-1">
 
-                                <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                                <h2 className="text-2xl font-bold text-gray-800  mb-3 line-clamp-2 min-h-[56px]">
 
                                     {station.station_name}
 
                                 </h2>
 
-                                <p className="text-black-800 mb-3">
+                                <p className="text-black-800 mb-3 line-clamp-2 min-h-[56px]">
 
                                     - Địa chỉ: {station.address}
 
                                 </p>
 
-                                <p className="text-green-600 mb-4">
+                                <p className="text-green-600 mb-3">
 
                                     - Mở cửa: {station.open_time}
                                     {' - '}
@@ -656,7 +661,7 @@ const logout = () => {
 
                                 </p>
 
-                                <p className="text-gray-700 leading-7 mb-6">
+                                <p className="text-gray-700 leading-7 mb-3 line-clamp-2 min-h-[56px]">
 
                                     {station.description}
 
@@ -666,7 +671,15 @@ const logout = () => {
                                     onClick={() =>
                                         navigate(`/stations/${station.station_id}`)
                                     }
-                                    className="w-full bg-green-400 hover:bg-green-600 text-white py-2 rounded-2xl text-lg font-semibold shadow-md transition"
+                                    className="w-full
+                                                    bg-green-500
+                                                    hover:bg-green-600
+                                                    text-white
+                                                    py-2
+                                                    rounded-xl
+                                                    font-semibold
+                                                     mt-auto
+"
                                 >
 
                                     Xem chi tiết

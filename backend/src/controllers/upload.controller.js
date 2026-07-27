@@ -10,11 +10,27 @@ const uploadImage = async (req, res) => {
 
         }
 
+        let folder = 'stations';
+
+        if (
+            req.originalUrl.includes('/upload/avatar')
+        ) {
+
+            folder = 'avatars';
+
+        } else if (
+            req.originalUrl.includes('upload-product-image')
+        ) {
+
+            folder = 'products';
+
+        }
+
         res.json({
 
             message: 'Upload success',
 
-            image_url: `/uploads/${req.file.filename}`
+            image_url: `/uploads/${folder}/${req.file.filename}`
 
         });
 
@@ -27,7 +43,6 @@ const uploadImage = async (req, res) => {
     }
 
 };
-
 
 
 module.exports = {

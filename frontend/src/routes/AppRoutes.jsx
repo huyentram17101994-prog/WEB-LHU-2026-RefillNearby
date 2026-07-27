@@ -33,6 +33,7 @@ import AdminFavoritesPage from '../pages/AdminFavoritesPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ProductStationsPage from '../pages/ProductStationsPage';
 import NotificationPage from "../pages/NotificationPage";
+import ProfilePage from '../pages/ProfilePage';
 function AppRoutes() {
 
     return (
@@ -198,6 +199,8 @@ function AppRoutes() {
                     path="/notifications"
                 element={<NotificationPage />}
                 />
+                <Route path="/profile" element={<ProfilePage />} />
+
                 </Routes>
                 
 

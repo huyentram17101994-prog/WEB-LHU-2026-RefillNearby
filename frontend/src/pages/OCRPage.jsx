@@ -113,19 +113,42 @@ function OCRPage() {
 
                 <div className="flex justify-center gap-5 mt-10 flex-wrap">
 
-                    <label className="bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-2xl cursor-pointer font-bold">
+                    {/* 📷 Chụp trực tiếp bằng camera */}
+<label className="bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-2xl cursor-pointer font-bold">
 
-                        📷 Chọn ảnh
+    📷 Chụp hóa đơn
 
-                        <input
-                            hidden
-                            type="file"
-                            onChange={(e) =>
-                                setImage(e.target.files[0])
-                            }
-                        />
+    <input
+        hidden
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+                setImage(e.target.files[0]);
+            }
+        }}
+    />
 
-                    </label>
+</label>
+
+{/* 🖼️ Chọn ảnh có sẵn */}
+<label className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-4 rounded-2xl cursor-pointer font-bold">
+
+    🖼️ Chọn ảnh
+
+    <input
+        hidden
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+                setImage(e.target.files[0]);
+            }
+        }}
+    />
+
+</label>
 
                     <button
                         onClick={analyzeInvoice}

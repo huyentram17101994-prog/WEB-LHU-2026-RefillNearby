@@ -14,6 +14,11 @@ function ForgotPasswordPage() {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
+        // Mật khẩu phải đúng 8 ký tự
+    if (newPassword.length !== 8) {
+        alert('Mật khẩu phải có đúng 8 ký tự');
+        return;
+    }
 
         try {
 
@@ -114,24 +119,42 @@ function ForgotPasswordPage() {
                 />
 
                 <input
-                    type="password"
-                    placeholder="Mật khẩu mới"
-                    value={newPassword}
-                    onChange={(e) =>
-                        setNewPassword(e.target.value)
-                    }
-                    className="
-                        w-full
-    border
-    border-gray-300
-    rounded-xl
-    p-3
-    mb-4
-    focus:outline-none
-    focus:ring-2
-    focus:ring-green-400
-                    "
-                />
+    type="password"
+    placeholder="Mật khẩu mới - đúng 8 ký tự"
+    value={newPassword}
+    onChange={(e) => {
+        const value = e.target.value;
+
+        if (value.length <= 8) {
+            setNewPassword(value);
+        }
+    }}
+    maxLength={8}
+    className="
+        w-full
+        border
+        border-gray-300
+        rounded-xl
+        p-3
+        mb-2
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-400
+    "
+    required
+/>
+{newPassword.length > 0 &&
+    newPassword.length < 8 && (
+        <p className="text-red-500 text-sm mb-4">
+            ⚠️ Mật khẩu phải có đúng 8 ký tự
+        </p>
+    )}
+
+{newPassword.length === 8 && (
+    <p className="text-green-600 text-sm mb-4">
+        ✓ Mật khẩu hợp lệ
+    </p>
+)}
 
                 <button
                     className="

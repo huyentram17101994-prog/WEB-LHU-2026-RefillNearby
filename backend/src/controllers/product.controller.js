@@ -217,7 +217,7 @@ const getProductStations = async (req, res) => {
                 p.price,
                 p.image_url,
                 p.stock_status,
-
+                p.description,
                 rs.station_id,
                 rs.station_name,
                 rs.address,

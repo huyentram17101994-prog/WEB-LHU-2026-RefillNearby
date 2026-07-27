@@ -240,18 +240,15 @@ const {
                         </h2>
    {/* STATIONS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
                 {
                     stations.map((station) => (
 
                         <div
                             key={station.station_id}
-                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto"
+                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto h-full flex flex-col"
                         >
-
-
-
 
                             {/* IMAGE */}
 
@@ -272,16 +269,9 @@ const {
                             className="w-full h-64 object-cover rounded-lg mb-2"
                             />
 
-
-
-
                                 {/* OVERLAY */}
 
                                 <div className="absolute inset-0 bg-black/20"></div>
-
-
-
-
 
                                 {/* FAVORITE */}
 
@@ -313,33 +303,21 @@ const {
 
                             </div>
 
-
-
-
-
                             {/* CONTENT */}
 
-                            <div className="p-6">
+                            <div className="p-6 flex flex-col flex-1">
 
-                                <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                                <h2 className="font-bold text-gray-800  text-2xl  mb-3 line-clamp-2 min-h-[56px]">
 
                                     {station.station_name}
 
                                 </h2>
 
-
-
-
-
-                                <p className="text-black-800 mb-3">
+                                <p className="text-gray-800 mb-3 line-clamp-2 min-h-[56px]">
 
                                     - Địa chỉ: {station.address}
 
                                 </p>
-
-
-
-
 
                                 <p className="text-green-600 mb-4">
 
@@ -349,25 +327,24 @@ const {
 
                                 </p>
 
-
-
-
-
-                                <p className="text-gray-700 leading-7 mb-6">
+                                <p className="text-gray-700 leading-7 mb-3  line-clamp-2 min-h-[56px]">
 
                                     {station.description}
 
                                 </p>
 
-
-
-
-
                                 <button
                                     onClick={() =>
                                         navigate(`/stations/${station.station_id}`)
                                     }
-                                    className="w-full bg-green-400 hover:bg-green-600 text-white py-2 rounded-2xl text-lg font-semibold shadow-md transition"
+                                    className=" mt-auto
+                                                    w-full
+                                                    bg-green-500
+                                                    hover:bg-green-600
+                                                    text-white
+                                                    py-2
+                                                    rounded-xl
+                                                    font-semibold"
                                 >
 
                                     Xem chi tiết
@@ -388,7 +365,6 @@ const {
                 )
 
             }
-
    
             {/* ===================== */}
             {/* SẢN PHẨM YÊU THÍCH */}
@@ -404,7 +380,7 @@ const {
 
                         </h2>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-14">
 
                             {
                                 products.map((product) => (
@@ -412,18 +388,18 @@ const {
                                     <div
                                         key={product.favorite_product_id}
                                         className="
-                                        bg-white/80
-backdrop-blur-lg
-rounded-[30px]
-overflow-hidden
-shadow-xl
-hover:shadow-2xl
-hover:-translate-y-2
-transition
-duration-300
-w-70
-mx-auto
-                                        "
+                                                bg-white/80
+                                                backdrop-blur-lg
+                                                rounded-[30px]
+                                                overflow-hidden
+                                                shadow-xl
+                                                hover:shadow-2xl
+                                                hover:-translate-y-2
+                                                transition
+                                                duration-300
+                                                w-70
+                                                mx-auto"
+                                        
                                     >
 
                                         {/* IMAGE */}
@@ -479,7 +455,7 @@ mx-auto
 
                                         <div className="p-5">
 
-                                            <h3 className="text-2xl font-bold mb-3">
+                                            <h3 className="text-xl font-semibold mb-3 line-clamp-2 min-h-[56px]">
 
                                                 {product.product_name}
 
@@ -529,7 +505,7 @@ mx-auto
 
                                                     text-white
 
-                                                    py-3
+                                                    py-2
 
                                                     rounded-xl
 

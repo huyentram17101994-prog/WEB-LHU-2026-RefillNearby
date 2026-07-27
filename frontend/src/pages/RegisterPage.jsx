@@ -21,13 +21,14 @@ function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
 
-
-
-
-
     const handleRegister = async (e) => {
 
         e.preventDefault();
+         // Mật khẩu phải đúng 8 ký tự
+    if (password.length !== 8) {
+        alert('Mật khẩu phải có đúng 8 ký tự');
+        return;
+    }
 
         try {
 
@@ -46,7 +47,7 @@ function RegisterPage() {
                 }
             );
 
-            alert('Register success 🎉');
+            alert('Đăng ký thành công 🎉');
 
             navigate('/login');
 
@@ -56,7 +57,7 @@ function RegisterPage() {
 
             alert(
                 error.response?.data?.message
-                || 'Register failed'
+                || 'Register faild'
             );
 
         } finally {
@@ -66,10 +67,6 @@ function RegisterPage() {
         }
 
     };
-
-
-
-
 
     return (
 
@@ -100,10 +97,6 @@ function RegisterPage() {
                     </p>
 
                 </div>
-
-
-
-
 
                 {/* FORM */}
 
@@ -136,10 +129,6 @@ function RegisterPage() {
 
                     </div>
 
-
-
-
-
                     {/* EMAIL */}
 
                     <div>
@@ -162,10 +151,6 @@ function RegisterPage() {
                         />
 
                     </div>
-
-
-
-
 
                     {/* PHONE */}
 
@@ -190,59 +175,70 @@ function RegisterPage() {
                         />
 
                     </div>
+{/* PASSWORD */}
+
+<div>
+
+    <label className="block mb-2 text-gray-700 font-medium">
+        Mật khẩu
+    </label>
+
+    <div className="relative">
+
+        <input
+            type={
+                showPassword
+                    ? 'text'
+                    : 'password'
+            }
+            placeholder="Nhập mật khẩu 8 ký tự"
+            value={password}
+            onChange={(e) => {
+    const value = e.target.value;
+
+    if (value.length <= 8) {
+        setPassword(value);
+    }
+}}
+            maxLength={8}
+            className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:outline-none focus:ring-4 focus:ring-green-200 bg-white/80"
+            required
+        />
+
+        <button
+            type="button"
+            onClick={() =>
+                setShowPassword(!showPassword)
+            }
+            className="absolute right-4 top-4 text-gray-500"
+        >
+
+            {
+                showPassword
+                    ? '🙈'
+                    : '👁️'
+            }
+
+        </button>
+
+    </div>
 
 
+    {/* KIỂM TRA MẬT KHẨU */}
 
+    {password.length > 0 && password.length < 8 && (
+        <p className="text-red-500 text-sm mt-2">
+            ⚠️ Mật khẩu phải có đúng 8 ký tự
+        </p>
+    )}
 
+    {password.length === 8 && (
+        <p className="text-green-600 text-sm mt-2">
+            ✓ Mật khẩu hợp lệ
+        </p>
+    )}
 
-                    {/* PASSWORD */}
-
-                    <div>
-
-                        <label className="block mb-2 text-gray-700 font-medium">
-
-                            Mật khẩu
-
-                        </label>
-
-                        <div className="relative">
-
-                            <input
-                                type={
-                                    showPassword
-                                        ? 'text'
-                                        : 'password'
-                                }
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) =>
-                                    setPassword(e.target.value)
-                                }
-                                className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:outline-none focus:ring-4 focus:ring-green-200 bg-white/80"
-                                required
-                            />
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowPassword(!showPassword)
-                                }
-                                className="absolute right-4 top-4 text-gray-500"
-                            >
-
-                                {
-                                    showPassword
-                                        ? '🙈'
-                                        : '👁️'
-                                }
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
+</div>
                             {/* OWNER CHECKBOX */}
 
 <div className="flex items-center gap-3">
@@ -264,7 +260,6 @@ function RegisterPage() {
 
 </div>
 
-
                     {/* BUTTON */}
 
                     <button
@@ -276,16 +271,12 @@ function RegisterPage() {
                         {
                             loading
                                 ? 'Loading...'
-                                : 'Register'
+                                : 'Đăng ký'
                         }
 
                     </button>
 
                 </form>
-
-
-
-
 
                 {/* LOGIN */}
 
@@ -298,7 +289,7 @@ function RegisterPage() {
                         className="text-green-700 font-semibold ml-2 hover:underline"
                     >
 
-                        Login
+                        Đăng nhập
 
                     </button>
 

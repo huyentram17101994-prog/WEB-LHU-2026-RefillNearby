@@ -12,8 +12,6 @@ const {
     verifyToken
 } = require('../middlewares/auth.middleware');
 
-
-
 // ================= UPLOAD IMAGE =================
 router.post(
     '/',
@@ -21,7 +19,10 @@ router.post(
     upload.single('image'),
     uploadImage
 );
-
-
-
+router.post(
+    '/avatar',
+    verifyToken,
+    upload.single('image'),
+    uploadImage
+);
 module.exports = router;

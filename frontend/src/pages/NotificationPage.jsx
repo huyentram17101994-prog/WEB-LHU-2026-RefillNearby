@@ -256,7 +256,7 @@ function NotificationPage() {
 
                                     {/* BODY */}
 
-                                    <div className="flex gap-5">
+                                    <div className="flex gap-5 items-center">
 
                                         {/* IMAGE */}
 
@@ -299,7 +299,29 @@ function NotificationPage() {
 
                                             </p>
 
-    
+                                        <button
+    onClick={(e) => {
+        e.stopPropagation();
+        markNotificationAsRead(item.notification_id);
+        navigate(`/stations/${item.station_id}`);
+    }}
+    className="
+        ml-auto
+        bg-green-500
+        hover:bg-green-600
+        text-white
+        px-6
+        py-2
+        rounded-xl
+        font-semibold
+        shadow-md
+        hover:shadow-lg
+        transition
+        whitespace-nowrap
+    "
+>
+    Xem trạm
+</button>
 
                                         </div>
 
