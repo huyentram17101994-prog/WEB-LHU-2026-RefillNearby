@@ -137,93 +137,168 @@ const {
 
             {/* SUMMARY */}
 
-            <div className="grid md:grid-cols-2 gap-8 mb-10">
+<div className="
+    flex
+    flex-col
+    md:flex-row
+    justify-center
+    items-center
+    gap-5
+    mb-10
+">
 
-                {/* STATION */}
+    {/* STATION */}
 
-                <div
+    <div
+        onClick={() =>
+            setShowStations(!showStations)
+        }
 
-                    onClick={() =>
-                        setShowStations(!showStations)
-                    }
+        className="
+            w-full
+            md:w-[380px]
+            bg-white
+            rounded-3xl
+            shadow-lg
+            p-6
+            cursor-pointer
+            hover:scale-[1.03]
+            transition
+        "
+    >
 
-                    className="
-                    bg-white
-                    rounded-3xl
-                    shadow-xl
-                    p-8
-                    cursor-pointer
-                    hover:scale-105
-                    transition
-                    "
+        <h2 className="text-2xl font-bold">
+            🏪 Trạm refill yêu thích
+        </h2>
 
-                >
+        <p className="mt-3 text-lg">
 
-                    <h2 className="text-3xl font-bold">
+            Đã lưu
 
-                        🏪 Trạm refill yêu thích
+            <span className="
+                font-bold
+                text-pink-600
+                mx-2
+            ">
+                {stations.length}
+            </span>
 
-                    </h2>
+            trạm
 
-                    <p className="mt-4 text-xl">
+        </p>
 
-                        Đã lưu
+    </div>
 
-                        <span className="font-bold text-pink-600 mx-2">
 
-                            {stations.length}
+    {/* PRODUCT */}
 
-                        </span>
+    <div
+        onClick={() =>
+            setShowProducts(!showProducts)
+        }
 
-                        trạm
+        className="
+            w-full
+            md:w-[380px]
+            bg-white
+            rounded-3xl
+            shadow-lg
+            p-6
+            cursor-pointer
+            hover:scale-[1.03]
+            transition
+        "
+    >
 
-                    </p>
+        <h2 className="text-2xl font-bold">
+            📦 Sản phẩm yêu thích
+        </h2>
 
-                </div>
+        <p className="mt-3 text-lg">
 
-                {/* PRODUCT */}
+            Đã lưu
 
-                <div
+            <span className="
+                font-bold
+                text-pink-600
+                mx-2
+            ">
+                {products.length}
+            </span>
 
-                    onClick={() =>
-                        setShowProducts(!showProducts)
-                    }
+            sản phẩm
 
-                    className="
-                    bg-white
-                    rounded-3xl
-                    shadow-xl
-                    p-8
-                    cursor-pointer
-                    hover:scale-105
-                    transition
-                    "
+        </p>
 
-                >
+    </div>
 
-                    <h2 className="text-3xl font-bold">
+</div>
+{/* EMPTY / GUIDE STATE */}
 
-                        📦 Sản phẩm yêu thích
+{!showStations && !showProducts && (
 
-                    </h2>
+    <div className="
+        flex
+        flex-col
+        items-center
+        justify-center
+        text-center
+        mt-10
+        mb-12
+        px-4
+    ">
 
-                    <p className="mt-4 text-xl">
+        {/* ICON */}
 
-                        Đã lưu
+        <div className="
+            w-20
+            h-20
+            rounded-full
+            bg-white/80
+            shadow-md
+            flex
+            items-center
+            justify-center
+            text-4xl
+            mb-5
+        ">
+            ❤️
+        </div>
 
-                        <span className="font-bold text-pink-600 mx-2">
 
-                            {products.length}
+        {/* TITLE */}
 
-                        </span>
+        <h3 className="
+            text-2xl
+            font-bold
+            text-gray-700
+            mb-2
+        ">
+            Hãy chọn mục yêu thích
+        </h3>
 
-                        sản phẩm
 
-                    </p>
+        {/* DESCRIPTION */}
 
-                </div>
+        <p className="
+            text-gray-500
+            text-lg
+            max-w-md
+            leading-relaxed
+        ">
+            Nhấn vào <span className="font-semibold text-pink-600">
+                Trạm refill yêu thích
+            </span>
+            {" "}hoặc{" "}
+            <span className="font-semibold text-pink-600">
+                Sản phẩm yêu thích
+            </span>
+            {" "}ở phía trên để xem danh sách của bạn.
+        </p>
 
-            </div>
+    </div>
+
+)}
 
             {/* TRẠM YÊU THÍCH */}
             {/* ===================== */}
@@ -240,14 +315,14 @@ const {
                         </h2>
    {/* STATIONS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-14">
 
                 {
                     stations.map((station) => (
 
                         <div
                             key={station.station_id}
-                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto h-full flex flex-col"
+                            className="bg-white/80 backdrop-blur-lg rounded-[30px] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition duration-300 w-72 mx-auto  h-full flex flex-col"
                         >
 
                             {/* IMAGE */}

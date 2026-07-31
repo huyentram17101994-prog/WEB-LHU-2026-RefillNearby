@@ -58,37 +58,37 @@ const getFavoriteProducts = async (req, res) => {
 
             SELECT
 
-    fp.favorite_product_id,
+                MIN(fp.favorite_product_id) AS favorite_product_id,
 
-    p.product_id,
+                p.product_name,
 
-    p.product_name,
+                MIN(p.price) AS min_price,
 
-    MIN(p.price) AS min_price,
+                COUNT(*) AS total_stations,
 
-    COUNT(*) AS total_stations,
+                MIN(p.image_url) AS image_url
 
-    MIN(p.image_url) AS image_url
+            FROM favorite_products fp
 
-FROM favorite_products fp
+            INNER JOIN products favoriteProduct
+                ON fp.product_id = favoriteProduct.product_id
 
-JOIN products p
-ON fp.product_id = p.product_id
+            INNER JOIN products p
+                ON p.product_name = favoriteProduct.product_name
 
-WHERE fp.user_id = ${userId}
+            INNER JOIN refill_stations rs
+                ON p.station_id = rs.station_id
 
-GROUP BY
+            WHERE fp.user_id = ${userId}
+                AND rs.status = 'active'
 
-    fp.favorite_product_id,
+            GROUP BY
+                p.product_name
 
-    p.product_id,
+            ORDER BY
+                p.product_name
 
-    p.product_name
-
-ORDER BY
-
-    p.product_name
-    `;
+        `;
 
         res.json(result.recordset);
 

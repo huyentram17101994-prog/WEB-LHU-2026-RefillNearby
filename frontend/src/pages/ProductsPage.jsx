@@ -107,13 +107,9 @@ function ProductsPage() {
 
             </div>
 
-
-
-
-
             {/* SEARCH */}
 
-            <div className="mb-10">
+            <div className="mb-10 flex justify-center ">
 
                 <input
                     type="text"
@@ -122,7 +118,7 @@ function ProductsPage() {
                     onChange={(e) =>
                         setSearch(e.target.value)
                     }
-                    className="w-full p-4 rounded-3xl border border-gray-100 shadow-lg focus:outline-none focus:ring-3 focus:ring-green-400 text-lg"
+                    className="w-200 p-4 rounded-3xl bg-white/80 border border-gray-100 shadow-lg focus:outline-none focus:ring-3 focus:ring-green-400 text-lg"
                 />
 
             </div>
@@ -229,7 +225,8 @@ mx-auto
         )
     }
         className="
-            w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl font-semibold mt-auto"
+                 w-full   bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl font-semibold m-auto
+                "
                          
     >
         Xem chi tiết

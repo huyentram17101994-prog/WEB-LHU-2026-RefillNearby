@@ -218,11 +218,14 @@ gap-2
                         }
                         alt={stations[0].product_name}
                         className="
-                            w-56
-                            h-56
+                            w-48
+                            h-48
                             object-cover
                             rounded-3xl
                             shadow-lg
+                            border
+                            border-green-500  
+                           
                         "
                     />
 
@@ -232,13 +235,13 @@ gap-2
                 {/* DESCRIPTION */}
 
                 <div className="
-    bg-white/20
+    bg-white/80
     backdrop-blur-sm
     border
-    border-white
+    border-white                 
     rounded-2xl
-    p-5
-    mb-6
+    p-2
+    mb-2
 ">
 
                     <h2 className="
@@ -260,7 +263,7 @@ gap-2
                     </p>
 
                     <div className="
-                        mt-6
+                        mt-3
                         flex
                         items-center
                         gap-3
@@ -277,106 +280,105 @@ gap-2
 
             </div>
 
-        
-
     )
 }
-            <div className="space-y-4 p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                {
+            {stations.map((item) => (
 
-                    stations.map((item) => (
+    <div
+        key={item.station_id}
+        className="
+           bg-white/30
+        backdrop-blur-lg
+        rounded-3xl
+        shadow-lg
+        p-5
+        hover:shadow-xl
+        hover:-translate-y-1
+        transition
+        flex
+        flex-col
+        h-full
+        border
+        border-white
+        "
+    >
 
-                        <div className="flex justify-between items-center  bg-white/80
-                                p-5
-                                rounded-3xl
-                                shadow
+        {/* TOP */}
+        <div className="flex justify-between items-center">
+             
+            <h2 className="
+    text-xl
+    font-bold
+    text-gray-800
+    mb-1
+
 ">
+    {item.station_name}
+</h2>
+</div>
+        {/* ADDRESS */}
+        <p className="
+    text-gray-600
+    mb-2
 
-                        <div>
-                            <h2 className="text-2xl font-bold">
-
-                                {item.station_name}
-
-                            </h2>
-
-                            <p>
-
-                                📍Địa chỉ: {item.address}
-
-                            </p>
-
-                            <p className="text-red-600 font-semibold">
-
-                                💰 {Number(item.price)
-                                    .toLocaleString()}
-                                đ
-
-                            </p>
-                     {
-item.stock_status ?
-
-<span
-className="
-text-green-600
-font-bold
-"
->
-🟢 Còn hàng
-</span>
-
-:
-
-<span
-className="
-text-red-600
-font-bold
-"
->
-🔴 Hết hàng
-</span>
-}
-
-{
-userLocation && (
-
-<p
-className="
-text-blue-600
-font-semibold
-"
->
-
-📏 Khoảng cách:   
-
- {
-
-calculateDistance(
-
-userLocation[0],
-
-userLocation[1],
-
-item.latitude,
-
-item.longitude
-
-)
-
-.toFixed(1)
-
-}
-
-km
-
+">
+    📍 {item.address}
 </p>
 
-)
-}
+
+       <div className="
+    flex
+    flex-wrap
+    items-center
+    gap-2
+    mb-3
+">
+
+    {/* PRICE */}
+    <span className="text-red-600 font-semibold">
+        💰 {Number(item.price).toLocaleString()} đ
+    </span>
+
+    {/* STOCK */}
+    {item.stock_status ? (
+
+        <span className="text-green-600 font-bold">
+            🟢 Còn hàng
+        </span>
+
+    ) : (
+
+        <span className="text-red-600 font-bold">
+            🔴 Hết hàng
+        </span>
+
+    )}
+
+    {/* DISTANCE */}
+    {userLocation && (
+
+        <span className="text-gray-600">
+            📏{' '}
+            {calculateDistance(
+                userLocation[0],
+                userLocation[1],
+                item.latitude,
+                item.longitude
+            ).toFixed(1)}
+            km
+        </span>
+
+    )}
+
 </div>
-<div className="mt-5 flex justify-center">
-{
-    !item.stock_status && (
+{/* BUTTONS */}
+
+<div className="flex justify-center gap-2">
+
+    {/* HẾT HÀNG */}
+    {!item.stock_status && (
 
         <button
             onClick={() =>
@@ -386,46 +388,49 @@ km
                 )
             }
             className="
+                flex-1
+                h-9
                 bg-orange-500
-            hover:bg-orange-600
-            text-white
-            px-5
-            py-3
-            rounded-xl
-            font-semibold
-                
+                hover:bg-orange-600
+                text-white
+                rounded-xl
+                font-semibold
+                transition
             "
         >
-            🔔 Thông báo khi có hàng
+            🔔 Nhận thông báo có hàng
         </button>
 
-    )
-}
+    )}
+
+    {/* XEM TRẠM */}
     <button
         onClick={() =>
             navigate(`/stations/${item.station_id}`)
         }
-        className="
+        className={`
+            h-9
             bg-green-500
             hover:bg-green-600
             text-white
-            px-6
-            py-3
             rounded-xl
             font-semibold
-        "
+            transition
+            ${
+                !item.stock_status
+                    ? 'flex-1'
+                    : 'w-56'
+            }
+        `}
     >
-         Xem trạm
+        Xem trạm
     </button>
 
 </div>
+    </div>
 
-                        </div>
-
-                    ))
-
-                }
-  </div>
+))}
+</div>
             </div>
 
         </div>

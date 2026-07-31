@@ -94,10 +94,7 @@ CREATE TABLE reviews (
     FOREIGN KEY (product_id)
     REFERENCES products(product_id);
 );
-SELECT
-review_id,
-owner_reply
-FROM reviews
+
 select * from [dbo].[reviews]
 -- =========================================
 -- TABLE: INVOICES
@@ -196,8 +193,7 @@ CREATE TABLE refill_history (
     REFERENCES products(product_id)
 
 );
-SELECT TOP 1 *
-FROM refill_history;
+
 --=====Tạo bảng đk nhận thông báo==============
 CREATE TABLE product_notification_requests
 (
@@ -275,6 +271,8 @@ SELECT * FROM [dbo].[products]
 SELECT * FROM refill_history
 SELECT * FROM [dbo].[notifications]
 SELECT * FROM [dbo].[product_notification_requests]
+
+
 
 
 

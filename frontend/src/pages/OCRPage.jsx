@@ -186,13 +186,17 @@ function OCRPage() {
 
                         </h2>
 
-                        <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                             {result.detected_products.map(product => (
 
                                 <div
                                     key={product.product_id}
-                                    className="flex items-center gap-6 bg-white rounded-3xl shadow-lg p-6"
+                                    className="flex items-center gap-6 bg-white/30 rounded-3xl shadow-lg p-6  hover:shadow-xl
+                                    hover:-translate-y-1
+                                    transition
+                                    border
+                            border-white   "
                                 >
 
                                     <img

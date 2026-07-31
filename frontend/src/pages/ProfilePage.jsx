@@ -553,7 +553,7 @@ const handleCancelChangePassword = () => {
                                     }
                                     className={`w-full p-4 rounded-xl border outline-none transition ${
                                         isEditing
-                                            ? "border-green-400 focus:ring-4 focus:ring-green-100"
+                                            ? "border-green-400 focus:ring-2 focus:ring-green-300"
                                             : "bg-gray-100 border-gray-200"
                                     }`}
                                 />
@@ -596,7 +596,7 @@ const handleCancelChangePassword = () => {
                                     }
                                     className={`w-full p-4 rounded-xl border outline-none transition ${
                                         isEditing
-                                            ? "border-green-400 focus:ring-4 focus:ring-green-100"
+                                            ? "border-green-400 focus:ring-2 focus:ring-green-300"
                                             : "bg-gray-100 border-gray-200"
                                     }`}
                                 />
@@ -622,7 +622,7 @@ const handleCancelChangePassword = () => {
                                     onClick={handleSaveProfile}
                                     className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold shadow transition"
                                 >
-                                    💾 Lưu
+                                    Lưu
                                 </button>
 
                             </div>
@@ -638,7 +638,7 @@ const handleCancelChangePassword = () => {
 
     <div className="flex justify-between items-center mb-6">
         <div>
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800">
                 🔐 Đổi mật khẩu
             </h2>
 
@@ -675,7 +675,7 @@ const handleCancelChangePassword = () => {
                     onChange={handleCurrentPasswordChange}
                     maxLength={8}
                     placeholder="Nhập đúng 8 ký tự"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-300"
+                    className="w-full px-4 py-3 rounded-xl border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
 
                 {/* Thông báo kiểm tra */}
@@ -736,7 +736,7 @@ const handleCancelChangePassword = () => {
                     placeholder="Nhập đúng 8 ký tự"
                     className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 ${
                         passwordVerified
-                            ? 'border-gray-300 focus:ring-green-300 bg-white'
+                            ? 'border-green-400 focus:ring-green-300 bg-white'
                             : 'border-gray-200 bg-gray-100 cursor-not-allowed'
                     }`}
                 />
@@ -784,7 +784,7 @@ const handleCancelChangePassword = () => {
                     placeholder="Nhập lại đúng 8 ký tự"
                     className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 ${
                         passwordVerified
-                            ? 'border-gray-300 focus:ring-green-300 bg-white'
+                            ? 'border-green-400 focus:ring-green-300 bg-white'
                             : 'border-gray-200 bg-gray-100 cursor-not-allowed'
                     }`}
                 />

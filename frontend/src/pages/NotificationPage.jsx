@@ -187,7 +187,7 @@ function NotificationPage() {
 
                 (
 
-                    <div className="max-w-5xl mx-auto space-y-5">
+                 <div className="max-w-4xl mx-auto space-y-5">
 
                         {
 
@@ -206,12 +206,15 @@ function NotificationPage() {
                                     className={`
                                         rounded-3xl
                                         shadow-lg
-                                        p-6
+                                        p-2.5
                                         cursor-pointer
                                         transition-all
                                         duration-300
                                         hover:shadow-2xl
                                         hover:-translate-y-1
+                                        w-auto
+                                        border
+                                        border-white
 
                                         ${
 
@@ -256,77 +259,73 @@ function NotificationPage() {
 
                                     {/* BODY */}
 
-                                    <div className="flex gap-5 items-center">
+<div className="flex items-center gap-4">
 
-                                        {/* IMAGE */}
+    {/* IMAGE */}
 
-                                        <img
+    <img
+        src={`http://localhost:5000${item.image_url}`}
+        alt={item.product_name}
+        className="
+            w-24
+            h-24
+            rounded-2xl
+            object-cover
+            shadow-md
+            border
+            flex-shrink-0
+        "
+    />
 
-                                            src={`http://localhost:5000${item.image_url}`}
+    {/* INFO */}
 
-                                            alt={item.product_name}
+    <div className="flex-1">
 
-                                            className="
-                                                w-32
-                                                h-32
-                                                rounded-2xl
-                                                object-cover
-                                                shadow-md
-                                                border
-                                                flex-shrink-0
-                                            "
+        <p className="text-lg font-bold text-green-700 mb-1">
+            {item.product_name}
+        </p>
 
-                                        />
+        <p className="text-gray-700 font-bold text-lg mb-1">
+            🏪 {item.station_name}
+        </p>
 
-                                        {/* INFO */}
+        {/* ADDRESS + BUTTON */}
 
-                                        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex items-center justify-between gap-4">
 
-                                            <p className="text-xl font-bold text-green-700 mb-2">
+            <p className="text-gray-700 text-lg">
+                - Địa chỉ: {item.station_address}
+            </p>
 
-                                         {item.product_name}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    markNotificationAsRead(item.notification_id);
+                    navigate(`/stations/${item.station_id}`);
+                }}
+                className="
+                    bg-green-500
+                    hover:bg-green-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-xl
+                    font-semibold
+                    shadow-md
+                    hover:shadow-lg
+                    transition
+                    whitespace-nowrap
+                    flex-shrink-0
+                "
+            >
+                Xem trạm
+            </button>
 
-                                            </p>
+        </div>
 
-                                            <p className="text-gray-700 font-bold mb-2 text-xl">
+    </div>
 
-                                            🏪 {item.station_name}
-
-                                            </p>
-                                            <p className="text-gray-700 mb-2 text-xl">
-
-                                            - Địa chỉ: {item.station_address}
-
-                                            </p>
-
-                                        <button
-    onClick={(e) => {
-        e.stopPropagation();
-        markNotificationAsRead(item.notification_id);
-        navigate(`/stations/${item.station_id}`);
-    }}
-    className="
-        ml-auto
-        bg-green-500
-        hover:bg-green-600
-        text-white
-        px-6
-        py-2
-        rounded-xl
-        font-semibold
-        shadow-md
-        hover:shadow-lg
-        transition
-        whitespace-nowrap
-    "
->
-    Xem trạm
-</button>
-
-                                        </div>
-
-                                    </div>
-
+</div>
                                 </div>
 
                             ))

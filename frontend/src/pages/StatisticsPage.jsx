@@ -1,100 +1,433 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 import { IoChevronBack } from "react-icons/io5";
 
-import api from '../services/api';
+import api from "../services/api";
+
 import {
     BarChart,
     Bar,
     XAxis,
     YAxis,
     Tooltip,
-    ResponsiveContainer
-} from 'recharts';
+    ResponsiveContainer,
+    CartesianGrid
+} from "recharts";
+
+
 function StatisticsPage() {
 
     const navigate = useNavigate();
 
-    const [stats, setStats] = useState(null);
-    const [monthlyData, setMonthlyData] = useState([]);
+
+    // ==================================================
+    // STATE
+    // ==================================================
+
+    const [stats, setStats] =
+        useState(null);
+
+    const [monthlyData, setMonthlyData] =
+        useState([]);
+
+    const [filter, setFilter] =
+        useState("all");
+
+    const [fromDate, setFromDate] =
+        useState("");
+
+    const [toDate, setToDate] =
+        useState("");
+
+    const [loading, setLoading] =
+        useState(true);
 
 
-    // ================= FETCH STATISTICS =================
+    // ==================================================
+    // FORMAT DATE
+    // ==================================================
+
+    const formatDate = (date) => {
+
+        const year =
+            date.getFullYear();
+
+        const month =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                date.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    };
+
+
+    // ==================================================
+    // LẤY KHOẢNG NGÀY
+    // ==================================================
+
+    const getDateRange = (selectedFilter) => {
+
+        const today =
+            new Date();
+
+        const end =
+            new Date(today);
+
+        let start =
+            new Date(today);
+
+
+        // =========================
+        // TẤT CẢ
+        // =========================
+
+        if (
+            selectedFilter === "all"
+        ) {
+
+            return {
+                from: "",
+                to: ""
+            };
+
+        }
+
+
+        // =========================
+        // 7 NGÀY
+        // =========================
+
+        if (
+            selectedFilter === "7days"
+        ) {
+
+            start.setDate(
+                today.getDate() - 6
+            );
+
+        }
+
+
+        // =========================
+        // 30 NGÀY
+        // =========================
+
+        if (
+            selectedFilter === "30days"
+        ) {
+
+            start.setDate(
+                today.getDate() - 29
+            );
+
+        }
+
+
+        // =========================
+        // 3 THÁNG
+        // =========================
+
+        if (
+            selectedFilter === "3months"
+        ) {
+
+            start.setMonth(
+                today.getMonth() - 3
+            );
+
+        }
+
+
+        // =========================
+        // 6 THÁNG
+        // =========================
+
+        if (
+            selectedFilter === "6months"
+        ) {
+
+            start.setMonth(
+                today.getMonth() - 6
+            );
+
+        }
+
+
+        // =========================
+        // NĂM NAY
+        // =========================
+
+        if (
+            selectedFilter === "year"
+        ) {
+
+            start =
+                new Date(
+                    today.getFullYear(),
+                    0,
+                    1
+                );
+
+        }
+
+
+        return {
+
+            from:
+                formatDate(start),
+
+            to:
+                formatDate(end)
+
+        };
+
+    };
+
+
+    // ==================================================
+    // FETCH STATISTICS
+    // ==================================================
 
     const fetchStatistics = async () => {
 
         try {
 
-            const token =
-                localStorage.getItem('token');
+            setLoading(true);
 
-            const response = await api.get(
-                '/statistics/my-statistics',
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+
+            const token =
+                localStorage.getItem(
+                    "token"
+                );
+
+
+            const range =
+                filter === "custom"
+
+                    ? {
+                        from: fromDate,
+                        to: toDate
                     }
-                }
+
+                    : getDateRange(filter);
+
+
+            const params = {};
+
+
+            if (range.from) {
+
+                params.from =
+                    range.from;
+
+            }
+
+
+            if (range.to) {
+
+                params.to =
+                    range.to;
+
+            }
+
+
+            // =========================
+            // THỐNG KÊ TỔNG
+            // =========================
+
+            const statsResponse =
+                await api.get(
+
+                    "/statistics/my-statistics",
+
+                    {
+                        params,
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${token}`
+
+                        }
+
+                    }
+
+                );
+
+
+            // =========================
+            // THỐNG KÊ BIỂU ĐỒ
+            // =========================
+
+            const monthlyResponse =
+                await api.get(
+
+                    "/statistics/monthly",
+
+                    {
+                        params,
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${token}`
+
+                        }
+
+                    }
+
+                );
+
+
+            setStats(
+                statsResponse.data
             );
 
-            setStats(response.data);
 
-        } catch (error) {
+            setMonthlyData(
+                monthlyResponse.data
+            );
 
-            console.log(error);
+        }
+
+        catch (error) {
+
+            console.log(
+                "Lỗi tải thống kê:",
+                error
+            );
+
+        }
+
+        finally {
+
+            setLoading(false);
 
         }
 
     };
 
-const fetchMonthlyStatistics = async () => {
 
-    try {
+    // ==================================================
+    // FILTER CHANGE
+    // ==================================================
 
-        const token =
-            localStorage.getItem('token');
+    const handleFilterChange = (value) => {
 
-        const response = await api.get(
-            '/statistics/monthly',
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
+        setFilter(value);
 
-        setMonthlyData(response.data);
 
-        console.log(response.data);
+        if (
+            value !== "custom"
+        ) {
 
-    } catch (error) {
+            setFromDate("");
 
-        console.log(error);
+            setToDate("");
 
-    }
+        }
 
-};
+    };
 
-    // ================= USE EFFECT =================
+
+    // ==================================================
+    // USE EFFECT
+    // ==================================================
 
     useEffect(() => {
 
+        if (
+            filter !== "custom"
+        ) {
+
+            fetchStatistics();
+
+        }
+
+    }, [filter]);
+
+
+    // ==================================================
+    // CUSTOM DATE
+    // ==================================================
+
+    const handleApplyCustomDate = () => {
+
+        if (
+            !fromDate ||
+            !toDate
+        ) {
+
+            alert(
+                "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            fromDate > toDate
+        ) {
+
+            alert(
+                "Ngày bắt đầu không được lớn hơn ngày kết thúc."
+            );
+
+            return;
+
+        }
+
+
         fetchStatistics();
-        fetchMonthlyStatistics();
-    }, []);
+
+    };
 
 
+    // ==================================================
+    // LOADING
+    // ==================================================
 
-
-    if (!stats) {
+    if (
+        loading &&
+        !stats
+    ) {
 
         return (
 
-            <div className="text-center mt-20 text-3xl">
+            <div
+                className="
+                    min-h-screen
+                    flex
+                    items-center
+                    justify-center
+                    bg-gradient-to-br
+                    from-green-100
+                    via-white
+                    to-green-300
+                "
+            >
 
-                Loading...
+                <p
+                    className="
+                        text-xl
+                        font-semibold
+                        text-green-700
+                    "
+                >
+
+                    Đang tải thống kê...
+
+                </p>
 
             </div>
 
@@ -103,189 +436,805 @@ const fetchMonthlyStatistics = async () => {
     }
 
 
+    // ==================================================
+    // RETURN
+    // ==================================================
+
+    return (
+
+        <div
+            className="
+                min-h-screen
+                bg-gradient-to-br
+                from-green-200
+                via-white
+                to-green-400
+                p-4
+                md:p-8
+            "
+        >
+
+            {/* ================================================= */}
+            {/* BACK BUTTON */}
+            {/* ================================================= */}
+
+            <button
+
+                onClick={() =>
+                    navigate(-1)
+                }
+
+                className="
+                    flex
+                    items-center
+                    gap-2
+                    mb-8
+                    px-5
+                    py-3
+                    bg-white
+                    rounded-full
+                    shadow-md
+                    hover:shadow-lg
+                    hover:bg-gray-50
+                    transition
+                    font-semibold
+                    text-gray-700
+                "
+            >
+
+                <IoChevronBack
+                    size={22}
+                />
+
+                Quay lại
+
+            </button>
 
 
-  return (
+            {/* ================================================= */}
+            {/* HEADER */}
+            {/* ================================================= */}
 
-    <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-500  p-8">
-             {/* BACK BUTTON */}
+            <div
+                className="
+                    max-w-5xl
+                    mx-auto
+                    text-center
+                    mb-8
+                "
+            >
 
-                <button
-                    onClick={() => navigate(-1)}
+                <h1
                     className="
-                        flex items-center gap-2
-                        mb-8
-                        px-5 py-3
-                        bg-white
-                        rounded-full
-                        shadow-md
-                        hover:shadow-lg
-                        hover:bg-gray-50
-                        transition-all
-                        duration-200
-                        font-semibold
-                        text-gray-700
+                        text-4xl
+                        md:text-5xl
+                        font-extrabold
+                        text-green-700
                     "
                 >
-                    <IoChevronBack size={22} />
-                    Quay lại
-                </button>
-        <div className="max-w-5xl mx-auto relative">
 
-            
+                    📊 Thống kê refill
 
+                </h1>
 
+                <p
+                    className="
+                        mt-3
+                        text-gray-600
+                        text-lg
+                    "
+                >
 
+                    Theo dõi lượng refill và tác động
+                    tích cực đến môi trường 🌱
 
+                </p>
 
-            {/* TITLE */}
-
-            <h1 className="text-5xl font-bold text-center text-green-700 mb-16 mt-24">
-
-                ♻️ Thống kê lượng nhựa đã tiết kiệm
-
-            </h1>
-
-
-
+            </div>
 
 
-            {/* STATS */}
+            {/* ================================================= */}
+            {/* FILTER */}
+            {/* ================================================= */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div
+                className="
+             max-w-4xl
+                    mx-auto
+                    bg-white
+                    rounded-3xl
+                    shadow-lg
+                    p-5
+                    md:p-6
+                    mb-8
+                "
+            >
 
-                {/* TOTAL REFILL */}
+                <div
+                    className="
+                        flex
+                        flex-col
+                        md:flex-row
+                        md:items-center
+                        gap-4
+                    "
+                >
 
-                <div className="bg-white rounded-3xl p-8 shadow-md">
+                    {/* LABEL */}
 
-                    <h2 className="text-2xl font-bold mb-4">
+                    <div
+                        className="
+                            font-bold
+                            text-gray-700
+                            whitespace-nowrap
+                        "
+                    >
 
-                        🔄 Tổng số lần refill
+                        📅 Thời gian :
 
-                    </h2>
-
-                    <p className="text-5xl font-bold text-green-600">
-
-                        {stats.totalRefills}
-
-                    </p>
-
-                </div>
-
-
-
-
-
-                {/* TOTAL QUANTITY */}
-
-                <div className="bg-white rounded-3xl p-8 shadow-md">
-
-                    <h2 className="text-2xl font-bold mb-4">
-
-                        💧 Tổng lượng refill
-
-                    </h2>
-
-                    <p className="text-5xl font-bold text-blue-500">
-
-                        {stats.totalQuantity} lít
-
-                    </p>
-
-                </div>
+                    </div>
 
 
+                    {/* SELECT */}
+
+                    <select
+
+                        value={filter}
+
+                        onChange={(e) =>
+                            handleFilterChange(
+                                e.target.value
+                            )
+                        }
+
+                        className="
+                            flex-1
+                            md:max-w-50
+                            px-4
+                            py-3
+                            rounded-xl
+                            border
+                            border-gray-200
+                            bg-gray-50
+                            font-semibold
+                            text-gray-700
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-green-400
+                        "
+                    >
+
+                        <option value="all">
+                            Tất cả thời gian
+                        </option>
+
+                        <option value="7days">
+                            7 ngày qua
+                        </option>
+
+                        <option value="30days">
+                            30 ngày qua
+                        </option>
+
+                        <option value="3months">
+                            3 tháng qua
+                        </option>
+
+                        <option value="6months">
+                            6 tháng qua
+                        </option>
+
+                        <option value="year">
+                            Năm nay
+                        </option>
+
+                        <option value="custom">
+                            Tùy chọn ngày
+                        </option>
+
+                    </select>
 
 
+                    {/* CUSTOM DATE */}
 
-                {/* PLASTIC SAVED */}
+                    {filter === "custom" && (
 
-                <div className="bg-white rounded-3xl p-8 shadow-md">
+                        <div
+                            className="
+                                flex
+                                flex-col
+                                sm:flex-row
+                                gap-3
+                                flex-1
+                            "
+                        >
 
-                    <h2 className="text-2xl font-bold mb-4">
+                            <input
 
-                        ♻️ Nhựa đã tiết kiệm
+                                type="date"
 
-                    </h2>
+                                value={fromDate}
 
-                    <p className="text-5xl font-bold text-green-500">
+                                onChange={(e) =>
+                                    setFromDate(
+                                        e.target.value
+                                    )
+                                }
 
-                        {stats.plasticSaved} g
+                                className="
+                                    px-4
+                                    py-3
+                                    rounded-xl
+                                    border
+                                    border-gray-200
+                                    bg-gray-50
+                                    focus:outline-none
+                                    focus:ring-2
+                                    focus:ring-green-400
+                                "
+                            />
 
-                    </p>
 
-                </div>
+                            <span
+                                className="
+                                    hidden
+                                    sm:flex
+                                    items-center
+                                    text-gray-500
+                                    font-semibold
+                                "
+                            >
+
+                                đến
+
+                            </span>
 
 
+                            <input
+
+                                type="date"
+
+                                value={toDate}
+
+                                onChange={(e) =>
+                                    setToDate(
+                                        e.target.value
+                                    )
+                                }
+
+                                className="
+                                    px-4
+                                    py-3
+                                    rounded-xl
+                                    border
+                                    border-gray-200
+                                    bg-gray-50
+                                    focus:outline-none
+                                    focus:ring-2
+                                    focus:ring-green-400
+                                "
+                            />
 
 
+                            <button
 
-                {/* CO2 */}
+                                onClick={
+                                    handleApplyCustomDate
+                                }
 
-                <div className="bg-white rounded-3xl p-8 shadow-md">
+                                className="
+                                    px-5
+                                    py-3
+                                    rounded-xl
+                                    bg-green-500
+                                    hover:bg-green-600
+                                    text-white
+                                    font-bold
+                                    transition
+                                    whitespace-nowrap
+                                "
+                            >
 
-                    <h2 className="text-2xl font-bold mb-4">
+                                Lọc
 
-                        🌍 CO₂ giảm thải
+                            </button>
 
-                    </h2>
+                        </div>
 
-                    <p className="text-5xl font-bold text-emerald-600">
-
-                        {stats.co2Reduced} kg
-
-                    </p>
+                    )}
 
                 </div>
 
             </div>
 
 
+            {/* ================================================= */}
+            {/* STATISTIC CARDS */}
+            {/* ================================================= */}
+
+            {stats && (
+
+                <div
+                    className="
+                        max-w-6xl
+                        mx-auto
+                        grid
+                        grid-cols-1
+                        sm:grid-cols-2
+                        lg:grid-cols-4
+                        gap-5
+                    "
+                >
+
+                    {/* TOTAL REFILLS */}
+
+                    <div
+                        className="
+                            bg-green-100
+                            border
+                            border-green-500
+                            rounded-3xl
+                            p-6
+                            shadow-lg
+                            hover:-translate-y-1
+                            transition
+                        "
+                    >
+
+                        <div
+                            className="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h2
+                                className="
+                                    text-xl
+                                    font-bold
+                                    text-gray-700
+                                "
+                            >
+
+                                🔄 Lần refill
+
+                            </h2>
+
+                        </div>
+                        <p
+                            className="
+                                text-5xl
+                                font-extrabold
+                                text-green-600
+                            "
+                        >
+
+                            {stats.totalRefills}
+
+                        </p>
 
 
+                        <p
+                            className="
+                                text-sm
+                                text-gray-500
+                                mt-2
+                            "
+                        >
 
+                            Tổng số lần refill
+
+                        </p>
+
+                    </div>
+
+
+                    {/* TOTAL QUANTITY */}
+
+                    <div
+                        className="
+                            bg-green-100
+                            border
+                            border-green-500
+                            rounded-3xl
+                            p-6
+                            shadow-lg
+                            hover:-translate-y-1
+                            transition
+                        "
+                    >
+
+                        <div
+                            className="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h2
+                                className="
+                                    text-xl
+                                    font-bold
+                                    text-gray-700
+                                "
+                            >
+
+                                💧 Lượng refill
+
+                            </h2>
+
+                           
+
+                        </div>
+
+
+                        <p
+                            className="
+                                text-5xl
+                                font-extrabold
+                                text-blue-500
+                            "
+                        >
+
+                            {stats.totalQuantity}
+
+                            <span
+                                className="
+                                    text-2xl
+                                    ml-1
+                                "
+                            >
+                                lít
+                            </span>
+
+                        </p>
+
+
+                        <p
+                            className="
+                                text-sm
+                                text-gray-500
+                                mt-2
+                            "
+                        >
+
+                            Tổng lượng sản phẩm
+
+                        </p>
+
+                    </div>
+
+
+                    {/* PLASTIC */}
+
+                    <div
+                        className="
+                            bg-green-100
+                            border
+                            border-green-500
+                            rounded-3xl
+                            p-6
+                            shadow-lg
+                            hover:-translate-y-1
+                            transition
+                        "
+                    >
+
+                        <div
+                            className="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h2
+                                className="
+                                    text-xl
+                                    font-bold
+                                    text-gray-700
+                                "
+                            >
+
+                                ♻️ Nhựa tiết kiệm
+
+                            </h2>
+
+                            
+
+                        </div>
+
+
+                        <p
+                            className="
+                                text-5xl
+                                font-extrabold
+                                text-green-500
+                            "
+                        >
+
+                            {stats.plasticSaved}
+
+                            <span
+                                className="
+                                    text-2xl
+                                    ml-1
+                                "
+                            >
+                                g
+                            </span>
+
+                        </p>
+
+
+                        <p
+                            className="
+                                text-sm
+                                text-gray-500
+                                mt-2
+                            "
+                        >
+
+                            Ước tính bao bì nhựa giảm
+
+                        </p>
+
+                    </div>
+
+
+                    {/* CO2 */}
+
+                    <div
+                        className="
+                            bg-green-100
+                            border
+                            border-green-500
+                            rounded-3xl
+                            p-6
+                            shadow-lg
+                            hover:-translate-y-1
+                            transition
+                        "
+                    >
+
+                        <div
+                            className="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h2
+                                className="
+                                    text-xl
+                                    font-bold
+                                    text-gray-700
+                                "
+                            >
+
+                                🌍 CO₂ giảm
+
+                            </h2>
+
+                            
+
+                        </div>
+
+
+                        <p
+                            className="
+                                text-5xl
+                                font-extrabold
+                                text-emerald-600
+                            "
+                        >
+
+                            {stats.co2Reduced}
+
+                            <span
+                                className="
+                                    text-2xl
+                                    ml-1
+                                "
+                            >
+                                kg
+                            </span>
+
+                        </p>
+
+
+                        <p
+                            className="
+                                text-sm
+                                text-gray-500
+                                mt-2
+                            "
+                        >
+
+                            Ước tính CO₂ giảm thải
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            )}
+
+
+            {/* ================================================= */}
             {/* CHART */}
+            {/* ================================================= */}
 
-            <div className="bg-white rounded-3xl p-8 shadow-md mt-10">
+            <div
+                className="
+                    max-w-6xl
+                    mx-auto
+                    bg-white
+                    rounded-3xl
+                    shadow-lg
+                    p-5
+                    md:p-8
+                    mt-8
+                "
+            >
 
-                <h2 className="text-3xl font-bold mb-6 text-green-700">
+                <div
+                    className="
+                        flex
+                        flex-col
+                        md:flex-row
+                        md:items-center
+                        md:justify-between
+                        gap-2
+                        mb-6
+                    "
+                >
 
-                    📊 Thống kê refill theo tháng
+                    <div>
 
-                </h2>
+                        <h2
+                            className="
+                                text-2xl
+                                md:text-3xl
+                                font-extrabold
+                                text-green-700
+                            "
+                        >
 
-                <ResponsiveContainer width="100%" height={350}>
+                            📊 Biểu đồ lượng refill 
 
-                    <BarChart data={monthlyData}>
+                        </h2>
 
-                        <XAxis
-                            dataKey="month"
-                            tickFormatter={(month) => `T${month}`}
-                        />
+                        <p
+                            className="
+                                text-gray-500
+                                mt-1
+                            "
+                        >
 
-                        <YAxis />
+                            Tổng lượng sản phẩm đã refill
 
-                        <Tooltip />
+                        </p>
 
-                        <Bar
-                            dataKey="total_quantity"
-                            fill="#22c55e"
-                            radius={[10, 10, 0, 0]}
-                        />
+                    </div>
 
-                    </BarChart>
+                </div>
 
-                </ResponsiveContainer>
+
+                {monthlyData.length > 0 ? (
+
+                    <ResponsiveContainer
+                        width="100%"
+                        height={350}
+                    >
+
+                        <BarChart
+                            data={monthlyData}
+                            margin={{
+                                top: 10,
+                                right: 20,
+                                left: 0,
+                                bottom: 10
+                            }}
+                        >
+
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                vertical={false}
+                            />
+
+                            <XAxis
+                                dataKey="label"
+                                tick={{
+                                    fontSize: 13
+                                }}
+                            />
+
+                            <YAxis
+                                allowDecimals={false}
+                            />
+
+                            <Tooltip
+                                formatter={(
+                                    value
+                                ) => [
+                                    `${value} lít`,
+                                    "Lượng refill"
+                                ]}
+                            />
+
+                            <Bar
+                                dataKey="total_quantity"
+                                fill="#22c55e"
+                                radius={[
+                                    10,
+                                    10,
+                                    0,
+                                    0
+                                ]}
+                                barSize={55}
+                            />
+
+                        </BarChart>
+
+                    </ResponsiveContainer>
+
+                ) : (
+
+                    <div
+                        className="
+                            h-[350px]
+                            flex
+                            items-center
+                            justify-center
+                            text-gray-500
+                            text-lg
+                        "
+                    >
+
+                        📭 Chưa có dữ liệu refill
+                        trong khoảng thời gian này.
+
+                    </div>
+
+                )}
+
+            </div>
+
+
+            {/* ================================================= */}
+            {/* FOOTER NOTE */}
+            {/* ================================================= */}
+
+            <div
+                className="
+                    max-w-6xl
+                    mx-auto
+                    text-center
+                    mt-6
+                    text-sm
+                    text-gray-500
+                "
+            >
+
+                🌱 Mỗi lần refill là một bước nhỏ
+                giúp giảm rác thải nhựa.
 
             </div>
 
         </div>
 
-    </div>
-
-);
-    
+    );
 
 }
+
 
 export default StatisticsPage;
