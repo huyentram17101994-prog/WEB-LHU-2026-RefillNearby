@@ -539,13 +539,13 @@ function StatisticsPage() {
 
             <div
                 className="
-             max-w-4xl
+             max-w-3xl
                     mx-auto
                     bg-white
                     rounded-3xl
                     shadow-lg
-                    p-5
-                    md:p-6
+                    p-8
+                    md:p-3
                     mb-8
                 "
             >
@@ -590,8 +590,8 @@ function StatisticsPage() {
                         className="
                             flex-1
                             md:max-w-50
-                            px-4
-                            py-3
+                            px-3
+                            py-2.5
                             rounded-xl
                             border
                             border-gray-200
@@ -662,8 +662,8 @@ function StatisticsPage() {
                                 }
 
                                 className="
-                                    px-4
-                                    py-3
+                                    px-3
+                            py-2.5
                                     rounded-xl
                                     border
                                     border-gray-200
@@ -703,8 +703,8 @@ function StatisticsPage() {
                                 }
 
                                 className="
-                                    px-4
-                                    py-3
+                                    px-3
+                            py-2.5
                                     rounded-xl
                                     border
                                     border-gray-200
@@ -723,9 +723,9 @@ function StatisticsPage() {
                                 }
 
                                 className="
-                                    px-5
-                                    py-3
-                                    rounded-xl
+                                    px-4
+                            py-2.5
+                                   rounded-xl
                                     bg-green-500
                                     hover:bg-green-600
                                     text-white

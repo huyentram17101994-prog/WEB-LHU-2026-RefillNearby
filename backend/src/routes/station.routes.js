@@ -4,6 +4,7 @@ const router = express.Router();
 
 const {
     getAllStations,
+    getStationsPagination,
     getStationById,
     searchStations,
     createStation,
@@ -16,6 +17,7 @@ const {
     authorizeRoles
 } = require('../middlewares/auth.middleware');
 router.get('/', getAllStations);
+router.get('/pagination',getStationsPagination);
 router.get('/search', searchStations);
 router.get('/:id', getStationById);
 router.post(

@@ -1,389 +1,259 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
-
 import api from "../services/api";
-
 import { IoChevronBack } from "react-icons/io5";
-
 
 function RefillHistoryPage() {
 
     const navigate = useNavigate();
 
-
-    // =========================
-    // DATA
-    // =========================
-
     const [history, setHistory] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    const [allHistory, setAllHistory] = useState([]);
+    const [filterType, setFilterType] = useState("all");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
 
+    const ITEMS_PER_PAGE = 10;
 
-    // =========================
-    // FILTER
-    // =========================
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
 
-    const [filterType, setFilterType] =
-        useState("all");
-
-    const [fromDate, setFromDate] =
-        useState("");
-
-    const [toDate, setToDate] =
-        useState("");
-
-
-    // =========================
+    // =====================================================
     // FETCH HISTORY
-    // =========================
+    // =====================================================
 
-    const fetchHistory = async () => {
+    const fetchHistory = async (
+        page = 1,
+        type = filterType,
+        from = fromDate,
+        to = toDate
+    ) => {
 
         try {
 
-            const token =
-                localStorage.getItem("token");
+            setLoading(true);
 
+            const token = localStorage.getItem("token");
+
+            const params = new URLSearchParams();
+
+            params.append("page", page);
+            params.append("limit", ITEMS_PER_PAGE);
+            params.append("period", type);
+
+            if (type === "custom" && from) {
+                params.append("fromDate", from);
+            }
+
+            if (type === "custom" && to) {
+                params.append("toDate", to);
+            }
 
             const response = await api.get(
-
-                "/refill-history/my-history",
-
+                `/refill-history/my-history?${params.toString()}`,
                 {
                     headers: {
-                        Authorization:
-                            `Bearer ${token}`
+                        Authorization: `Bearer ${token}`
                     }
                 }
-
             );
 
+            const result = response.data;
 
-            setHistory(response.data);
+            setHistory(result.data || []);
+            setTotal(result.total || 0);
+            setCurrentPage(result.page || page);
+            setTotalPages(result.totalPages || 0);
 
-            setAllHistory(response.data);
+        } catch (error) {
 
-        }
+            console.log("Lỗi tải lịch sử refill:", error);
 
-        catch (error) {
+            setHistory([]);
+            setTotal(0);
+            setTotalPages(0);
 
-            console.log(error);
+        } finally {
+
+            setLoading(false);
 
         }
 
     };
 
+    useEffect(() => {
 
-    // =========================
-    // GET DATE
-    // =========================
+        fetchHistory(1, "all", "", "");
 
-    const getItemDate = (item) => {
+    }, []);
 
-        if (!item.refill_date) {
-            return null;
-        }
-
-
-        const dateString =
-            String(item.refill_date)
-                .replace(" ", "T");
-
-
-        const date =
-            new Date(dateString);
-
-
-        return isNaN(date.getTime())
-            ? null
-            : date;
-
-    };
-
-
-    // =========================
-    // FILTER BY TYPE
-    // =========================
+    // =====================================================
+    // FILTER
+    // =====================================================
 
     const handleFilterType = (type) => {
 
         setFilterType(type);
+        setCurrentPage(1);
 
-
-        // TẤT CẢ
-        if (type === "all") {
-
-            setHistory(allHistory);
+        if (type !== "custom") {
 
             setFromDate("");
-
             setToDate("");
 
-            return;
+            fetchHistory(1, type, "", "");
 
         }
-
-
-        const now = new Date();
-
-
-        let from = new Date();
-
-        let to = new Date();
-
-
-        // =========================
-        // 7 NGÀY QUA
-        // =========================
-
-        if (type === "7days") {
-
-            from.setDate(
-                now.getDate() - 7
-            );
-
-        }
-
-
-        // =========================
-        // 30 NGÀY QUA
-        // =========================
-
-        else if (type === "30days") {
-
-            from.setDate(
-                now.getDate() - 30
-            );
-
-        }
-
-
-        // =========================
-        // 3 THÁNG QUA
-        // =========================
-
-        else if (type === "3months") {
-
-            from.setMonth(
-                now.getMonth() - 3
-            );
-
-        }
-
-
-        // =========================
-        // 6 THÁNG QUA
-        // =========================
-
-        else if (type === "6months") {
-
-            from.setMonth(
-                now.getMonth() - 6
-            );
-
-        }
-
-
-        // =========================
-        // NĂM NAY
-        // =========================
-
-        else if (type === "year") {
-
-            from =
-                new Date(
-                    now.getFullYear(),
-                    0,
-                    1
-                );
-
-        }
-
-
-        // =========================
-        // SET TIME
-        // =========================
-
-        from.setHours(
-            0,
-            0,
-            0,
-            0
-        );
-
-
-        to.setHours(
-            23,
-            59,
-            59,
-            999
-        );
-
-
-        const filtered =
-            allHistory.filter(item => {
-
-                const refillDate =
-                    getItemDate(item);
-
-
-                if (!refillDate) {
-                    return false;
-                }
-
-
-                return (
-
-                    refillDate >= from &&
-                    refillDate <= to
-
-                );
-
-            });
-
-
-        setHistory(filtered);
 
     };
-
-
-    // =========================
-    // CUSTOM DATE
-    // =========================
 
     const handleCustomFilter = () => {
 
         if (!fromDate || !toDate) {
 
-            alert(
-                "Vui lòng chọn đầy đủ Từ ngày và Đến ngày."
-            );
+            alert("Vui lòng chọn đầy đủ Từ ngày và Đến ngày.");
 
             return;
 
         }
 
+        if (toDate < fromDate) {
 
-        const from =
-            new Date(fromDate);
-
-
-        const to =
-            new Date(toDate);
-
-
-        from.setHours(
-            0,
-            0,
-            0,
-            0
-        );
-
-
-        to.setHours(
-            23,
-            59,
-            59,
-            999
-        );
-
-
-        if (to < from) {
-
-            alert(
-                "Đến ngày phải lớn hơn hoặc bằng Từ ngày."
-            );
+            alert("Đến ngày phải lớn hơn hoặc bằng Từ ngày.");
 
             return;
 
         }
 
+        setCurrentPage(1);
 
-        const filtered =
-            allHistory.filter(item => {
-
-                const refillDate =
-                    getItemDate(item);
-
-
-                if (!refillDate) {
-                    return false;
-                }
-
-
-                return (
-
-                    refillDate >= from &&
-                    refillDate <= to
-
-                );
-
-            });
-
-
-        setHistory(filtered);
+        fetchHistory(
+            1,
+            "custom",
+            fromDate,
+            toDate
+        );
 
     };
 
+    const handleReset = () => {
 
-    // =========================
-    // CUSTOM DATE CHANGE
-    // =========================
+        setFilterType("all");
+        setFromDate("");
+        setToDate("");
+        setCurrentPage(1);
 
-    const handleFilterChange = (value) => {
+        fetchHistory(1, "all", "", "");
 
-        setFilterType(value);
+    };
 
+    // =====================================================
+    // PAGINATION
+    // =====================================================
 
-        if (value !== "custom") {
+    const handlePageChange = (page) => {
 
-            setFromDate("");
+        if (page < 1 || page > totalPages) {
+            return;
+        }
 
-            setToDate("");
+        setCurrentPage(page);
+
+        fetchHistory(
+            page,
+            filterType,
+            fromDate,
+            toDate
+        );
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+    };
+
+    const getPageNumbers = () => {
+
+        const pages = [];
+
+        if (totalPages <= 7) {
+
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+
+            return pages;
 
         }
 
+        pages.push(1);
+
+        if (currentPage <= 4) {
+
+            pages.push(2, 3, 4, 5, "...");
+            pages.push(totalPages);
+
+            return pages;
+
+        }
+
+        if (currentPage >= totalPages - 3) {
+
+            pages.push("...");
+
+            pages.push(
+                totalPages - 4,
+                totalPages - 3,
+                totalPages - 2,
+                totalPages - 1,
+                totalPages
+            );
+
+            return pages;
+
+        }
+
+        pages.push(
+            "...",
+            currentPage - 1,
+            currentPage,
+            currentPage + 1,
+            "...",
+            totalPages
+        );
+
+        return pages;
+
     };
 
-
-    // =========================
-    // USE EFFECT
-    // =========================
-
-    useEffect(() => {
-
-        fetchHistory();
-
-    }, []);
-
-
-    // =========================
+    // =====================================================
     // LOADING
-    // =========================
+    // =====================================================
 
-    if (!allHistory) {
+    if (loading && history.length === 0) {
 
         return (
 
-            <div
-                className="
-                    min-h-screen
-                    flex
-                    items-center
-                    justify-center
-                    bg-gradient-to-br
-                    from-green-200
-                    via-white
-                    to-green-400
-                "
-            >
+            <div className="
+                min-h-screen
+                flex
+                items-center
+                justify-center
+                bg-gradient-to-br
+                from-green-200
+                via-white
+                to-green-400
+            ">
 
-                <p className="text-xl font-semibold text-green-700">
-
+                <p className="
+                    text-xl
+                    font-semibold
+                    text-green-700
+                ">
                     Đang tải lịch sử refill...
-
                 </p>
 
             </div>
@@ -392,32 +262,22 @@ function RefillHistoryPage() {
 
     }
 
-
     return (
 
-        <div
-            className="
-                min-h-screen
-                bg-gradient-to-br
-                from-green-200
-                via-white
-                to-green-400
-                p-6
-                md:p-8
-            "
-        >
+        <div className="
+            min-h-screen
+            bg-gradient-to-br
+            from-green-200
+            via-white
+            to-green-400
+            p-6
+            md:p-8
+        ">
 
-
-            {/* ========================= */}
-            {/* BACK BUTTON */}
-            {/* ========================= */}
+            {/* BACK */}
 
             <button
-
-                onClick={() =>
-                    navigate(-1)
-                }
-
+                onClick={() => navigate(-1)}
                 className="
                     flex
                     items-center
@@ -434,7 +294,6 @@ function RefillHistoryPage() {
                     font-semibold
                     text-gray-700
                 "
-
             >
 
                 <IoChevronBack size={22} />
@@ -443,70 +302,42 @@ function RefillHistoryPage() {
 
             </button>
 
+            <div className="max-w-5xl mx-auto">
 
-
-            {/* ========================= */}
-            {/* MAIN */}
-            {/* ========================= */}
-
-            <div
-                className="
-                    max-w-5xl
-                    mx-auto
-                "
-            >
-
-
-                {/* ========================= */}
                 {/* HEADER */}
-                {/* ========================= */}
 
                 <div className="text-center mb-10">
 
-                    <h1
-                        className="
-                            text-4xl
-                            md:text-5xl
-                            font-extrabold
-                            text-green-700
-                        "
-                    >
-
+                    <h1 className="
+                        text-4xl
+                        md:text-5xl
+                        font-extrabold
+                        text-green-700
+                    ">
                         📜 Lịch sử Refill
-
                     </h1>
 
-
-                    <p
-                        className="
-                            text-gray-600
-                            text-lg
-                            mt-3
-                        "
-                    >
-
+                    <p className="
+                        text-gray-600
+                        text-lg
+                        mt-3
+                    ">
                         Theo dõi các lần refill
                         và lượng nhựa bạn đã tiết kiệm 🌱
-
                     </p>
 
                 </div>
 
-
-
-                {/* ========================= */}
                 {/* FILTER */}
-                {/* ========================= */}
-
 <div
     className="
-         max-w-4xl
+         max-w-3xl
                     mx-auto
                     bg-white
                     rounded-3xl
                     shadow-lg
-                    p-5
-                    md:p-6
+                    p-4
+                    md:p-3
                     mb-8
     "
 >
@@ -514,12 +345,11 @@ function RefillHistoryPage() {
         className="
             flex
             items-center
-            gap-4
+            gap-3
             min-w-max
         "
     >
-
-        {/* LABEL */}
+                         {/* LABEL */}
 
         <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-xl">
@@ -530,225 +360,191 @@ function RefillHistoryPage() {
                 Thời gian:
             </span>
         </div>
+                        <select
+                            value={filterType}
+                            onChange={(e) =>
+                                handleFilterType(e.target.value)
+                            }
+                            className="
+                                border
+                                border-gray-300
+                                rounded-xl
+                                px-3
+                                py-2.5
+                                bg-gray-50
+                                font-semibold
+                                text-gray-700
+                                focus:outline-none
+                                focus:ring-2
+                                focus:ring-green-400
+                            "
+                        >
 
+                            <option value="all">
+                                Tất cả thời gian
+                            </option>
 
-        {/* SELECT */}
+                            <option value="7">
+                                7 ngày qua
+                            </option>
 
-        <select
-            value={filterType}
-            onChange={(e) => {
-                setFilterType(e.target.value);
+                            <option value="30">
+                                30 ngày qua
+                            </option>
 
-                if (e.target.value !== "custom") {
-                    setFromDate("");
-                    setToDate("");
-                }
-            }}
-            className="
-                flex-1
-                            md:max-w-50
-                            px-4
-                            py-3
-                            rounded-xl
-                            border
-                            border-gray-200
-                            bg-gray-50
-                            font-semibold
-                            text-gray-700
-                            focus:outline-none
-                            focus:ring-2
-                            focus:ring-green-400
-            "
-        >
-            <option value="all">
-                Tất cả thời gian
-            </option>
+                            <option value="3months">
+                                3 tháng qua
+                            </option>
 
-            <option value="7">
-                7 ngày qua
-            </option>
+                            <option value="6months">
+                                6 tháng qua
+                            </option>
 
-            <option value="30">
-                30 ngày qua
-            </option>
+                            <option value="year">
+                                Năm nay
+                            </option>
 
-            <option value="90">
-                3 tháng qua
-            </option>
+                            <option value="custom">
+                                Tùy chọn ngày
+                            </option>
 
-            <option value="180">
-                6 tháng qua
-            </option>
+                        </select>
 
-            <option value="year">
-                Năm nay
-            </option>
+                        {filterType === "custom" && (
 
-            <option value="custom">
-                Tùy chọn ngày
-            </option>
-        </select>
+                            <div className="
+                                flex
+                                flex-wrap
+                                items-center
+                                justify-center
+                                gap-2
+                                mx-auto
+                            ">
+                                
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    onChange={(e) =>
+                                        setFromDate(e.target.value)
+                                    }
+                                    className="
+                                        border
+                                        border-gray-300
+                                        rounded-xl
+                                        px-3
+                                        py-2.5
+                                        outline-none
+                                        focus:ring-2
+                                        focus:ring-green-400
+                                    "
+                                />
 
+                                <span className="
+                                    text-xl
+                                    font-semibold
+                                    text-gray-500
+                                ">
+                                    →
+                                </span>
 
-        {/* CUSTOM DATE */}
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    onChange={(e) =>
+                                        setToDate(e.target.value)
+                                    }
+                                    className="
+                                        border
+                                        border-gray-300
+                                        rounded-xl
+                                        px-3
+                                        py-2.5
+                                        outline-none
+                                        focus:ring-2
+                                        focus:ring-green-400
+                                        mx-auto
+                                    "
+                                />
 
-        {filterType === "custom" && (
+                                <button
+                                    onClick={handleCustomFilter}
+                                    className="
+                                        bg-green-500
+                                        hover:bg-green-600
+                                        text-white
+                                        px-5
+                                        py-2.5
+                                        rounded-xl
+                                        font-semibold
+                                        transition
+                                    "
+                                >
+                                    Lọc
+                                </button>
 
-            <>
-                
+                            </div>
 
-                <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) =>
-                        setFromDate(e.target.value)
-                    }
-                    className="
-                        border
-                        border-gray-300
-                        rounded-xl
-                        px-3
-                        py-2.5
-                        outline-none
-                        focus:ring-2
-                        focus:ring-green-400
-                    "
-                />
+                        )}
 
-               
+                       
+                    </div>
 
-                <span className="font-semibold text-gray-700 whitespace-nowrap">
-                    Đến:
-                </span>
+                </div>
 
-                <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) =>
-                        setToDate(e.target.value)
-                    }
-                    className="
-                        border
-                        border-gray-300
-                        rounded-xl
-                        px-3
-                        py-2.5
-                        outline-none
-                        focus:ring-2
-                        focus:ring-green-400
-                    "
-                />
-
-                <button
-                    onClick={handleCustomFilter}
-                    className="
-                        bg-green-500
-                        hover:bg-green-600
-                        text-white
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        font-semibold
-                        transition
-                        whitespace-nowrap
-                    "
-                >
-                    🔍 Lọc
-                </button>
-
-            </>
-
-        )}
-
-    </div>
-</div>
-
-
-
-                {/* ========================= */}
                 {/* TOTAL */}
-                {/* ========================= */}
 
-                <div
-                    className="
-                        inline-flex
-                        items-center
-                        gap-2
-                        bg-white/90
-                        rounded-2xl
-                        shadow-sm
-                        px-5
-                        py-3
-                        mb-5
-                    "
-                >
+                <div className="
+                    inline-flex
+                    items-center
+                    gap-2
+                    bg-white/90
+                    rounded-2xl
+                    shadow-sm
+                    px-5
+                    py-3
+                    mb-5
+                ">
 
-                    <span
-                        className="
-                            text-lg
-                            font-semibold
-                            text-gray-700
-                        "
-                    >
-
+                    <span className="
+                        text-lg
+                        font-semibold
+                        text-gray-700
+                    ">
                         🔄 Tổng số lần refill:
-
                     </span>
 
-
-                    <span
-                        className="
-                            text-2xl
-                            font-bold
-                            text-green-600
-                        "
-                    >
-
-                        {history.length}
-
+                    <span className="
+                        text-2xl
+                        font-bold
+                        text-green-600
+                    ">
+                        {total}
                     </span>
 
-
-                    <span
-                        className="
-                            text-gray-600
-                        "
-                    >
-
+                    <span className="text-gray-600">
                         lần
-
                     </span>
 
                 </div>
 
-
-
-                {/* ========================= */}
-                {/* HISTORY LIST */}
-                {/* ========================= */}
+                {/* HISTORY */}
 
                 {history.length === 0 ? (
 
-                    <div
-                        className="
-                            bg-white
-                            rounded-3xl
-                            p-10
-                            text-center
-                            shadow-md
-                        "
-                    >
+                    <div className="
+                        bg-white
+                        rounded-3xl
+                        p-10
+                        text-center
+                        shadow-md
+                    ">
 
-                        <p
-                            className="
-                                text-xl
-                                text-gray-500
-                            "
-                        >
-
+                        <p className="
+                            text-xl
+                            text-gray-500
+                        ">
                             📭 Chưa có lịch sử refill
                             trong khoảng thời gian này.
-
                         </p>
 
                     </div>
@@ -760,9 +556,7 @@ function RefillHistoryPage() {
                         {history.map((item) => (
 
                             <div
-
-                                key={item.history_id}
-
+                                key={item.refill_id}
                                 className="
                                     bg-white
                                     rounded-3xl
@@ -774,132 +568,211 @@ function RefillHistoryPage() {
                                 "
                             >
 
+                                <div className="
+                                    flex
+                                    flex-col
+                                    md:flex-row
+                                    md:items-center
+                                    md:justify-between
+                                    gap-2
+                                ">
 
-                                {/* ========================= */}
-                                {/* STATION + DATE */}
-                                {/* ========================= */}
-
-                                <div
-                                    className="
-                                        flex
-                                        flex-col
-                                        md:flex-row
-                                        md:items-center
-                                        md:justify-between
-                                        gap-2
-                                    "
-                                >
-
-                                    <h2
-                                        className="
-                                            text-xl
-                                            md:text-2xl
-                                            font-bold
-                                            text-gray-800
-                                        "
-                                    >
-
+                                    <h2 className="
+                                        text-xl
+                                        md:text-2xl
+                                        font-bold
+                                        text-gray-800
+                                    ">
                                         🏪 {item.station_name}
-
                                     </h2>
 
-
-                                    <p
-                                        className="
-                                            text-gray-500
-                                            text-sm
-                                            md:text-base
-                                            whitespace-nowrap
-                                        "
-                                    >
-
+                                    <p className="
+                                        text-gray-500
+                                        text-sm
+                                        md:text-base
+                                        whitespace-nowrap
+                                    ">
                                         🕒 {item.refill_date_display}
-
                                     </p>
 
                                 </div>
 
-
-
-                                {/* ========================= */}
-                                {/* PRODUCT */}
-                                {/* ========================= */}
-
-                                <p
-                                    className="
-                                        text-lg
-                                        md:text-xl
-                                        text-gray-700
-                                        font-semibold
-                                        mt-3
-                                    "
-                                >
-
+                                <p className="
+                                    text-lg
+                                    md:text-xl
+                                    text-gray-700
+                                    font-semibold
+                                    mt-3
+                                ">
                                     📦 {item.product_name}
-
                                 </p>
 
+                                <div className="
+                                    flex
+                                    flex-wrap
+                                    items-center
+                                    gap-x-10
+                                    gap-y-2
+                                    mt-3
+                                ">
 
-
-                                {/* ========================= */}
-                                {/* QUANTITY + PLASTIC */}
-                                {/* ========================= */}
-
-                                <div
-                                    className="
-                                        flex
-                                        flex-wrap
-                                        items-center
-                                        gap-x-10
-                                        gap-y-2
-                                        mt-3
-                                    "
-                                >
-
-                                    {/* QUANTITY */}
-
-                                    <p
-                                        className="
-                                            text-lg
-                                            text-gray-700
-                                            font-semibold
-                                        "
-                                    >
-
+                                    <p className="
+                                        text-lg
+                                        text-gray-700
+                                        font-semibold
+                                    ">
                                         💧 {item.quantity} lít
-
                                     </p>
 
-
-
-                                    {/* PLASTIC */}
-
-                                    <p
-                                        className="
-                                            text-lg
-                                            text-green-600
-                                            font-semibold
-                                        "
-                                    >
-
+                                    <p className="
+                                        text-lg
+                                        text-green-600
+                                        font-semibold
+                                    ">
                                         ♻️ Tiết kiệm khoảng{" "}
-
-                                        {(
-                                            item.quantity * 20
-                                        ).toFixed(0)}
-
+                                        {(item.quantity * 20).toFixed(0)}
                                         g nhựa
-
                                     </p>
 
                                 </div>
-
 
                             </div>
 
                         ))}
 
                     </div>
+
+                )}
+
+                {/* PAGINATION */}
+
+                {totalPages > 1 && (
+
+                    <>
+
+                        <div className="
+                            flex
+                            flex-wrap
+                            justify-center
+                            items-center
+                            gap-2
+                            mt-10
+                        ">
+
+                            <button
+                                onClick={() =>
+                                    handlePageChange(
+                                        currentPage - 1
+                                    )
+                                }
+                                disabled={currentPage === 1}
+                                className="
+                                    px-4
+                                    py-2.5
+                                    rounded-xl
+                                    bg-white
+                                    shadow-md
+                                    text-gray-700
+                                    font-semibold
+                                    disabled:opacity-40
+                                    disabled:cursor-not-allowed
+                                    hover:bg-green-50
+                                    transition
+                                "
+                            >
+                                ← Trước
+                            </button>
+
+                            {getPageNumbers().map(
+                                (page, index) => (
+
+                                    page === "..." ? (
+
+                                        <span
+                                            key={`dots-${index}`}
+                                            className="
+                                                px-2
+                                                py-2
+                                                text-gray-500
+                                            "
+                                        >
+                                            ...
+                                        </span>
+
+                                    ) : (
+
+                                        <button
+                                            key={`page-${page}`}
+                                            onClick={() =>
+                                                handlePageChange(page)
+                                            }
+                                            className={`
+                                                min-w-[42px]
+                                                px-3
+                                                py-2.5
+                                                rounded-xl
+                                                font-semibold
+                                                transition
+                                                ${
+                                                    currentPage === page
+                                                        ? "bg-green-500 text-white shadow-md"
+                                                        : "bg-white text-gray-700 shadow-sm hover:bg-green-50"
+                                                }
+                                            `}
+                                        >
+                                            {page}
+                                        </button>
+
+                                    )
+
+                                )
+                            )}
+
+                            <button
+                                onClick={() =>
+                                    handlePageChange(
+                                        currentPage + 1
+                                    )
+                                }
+                                disabled={
+                                    currentPage === totalPages
+                                }
+                                className="
+                                    px-4
+                                    py-2.5
+                                    rounded-xl
+                                    bg-white
+                                    shadow-md
+                                    text-gray-700
+                                    font-semibold
+                                    disabled:opacity-40
+                                    disabled:cursor-not-allowed
+                                    hover:bg-green-50
+                                    transition
+                                "
+                            >
+                                Sau →
+                            </button>
+
+                        </div>
+
+                        <p className="
+                            text-center
+                            text-gray-600
+                            mt-4
+                            mb-8
+                        ">
+                            Trang{" "}
+                            <span className="
+                                font-bold
+                                text-green-600
+                            ">
+                                {currentPage}
+                            </span>
+                            {" "} / {totalPages}
+                        </p>
+
+                    </>
 
                 )}
 
@@ -910,6 +783,5 @@ function RefillHistoryPage() {
     );
 
 }
-
 
 export default RefillHistoryPage;

@@ -37,6 +37,143 @@ const getAllStations = async (req, res) => {
     }
 
 };
+
+const getStationsPagination = async (req, res) => {
+
+    try {
+
+        await sql.connect(config);
+
+
+        // =========================
+        // PHÂN TRANG
+        // =========================
+
+        const page =
+            Math.max(
+                parseInt(req.query.page) || 1,
+                1
+            );
+
+        const limit =
+            Math.max(
+                parseInt(req.query.limit) || 15,
+                1
+            );
+
+        const offset =
+            (page - 1) * limit;
+
+
+        // =========================
+        // ĐẾM TỔNG SỐ TRẠM
+        // =========================
+
+        const countResult = await sql.query`
+
+            SELECT COUNT(*) AS total
+
+            FROM refill_stations rs
+
+            WHERE rs.status = 'active'
+
+        `;
+
+
+        const total =
+            countResult.recordset[0].total;
+
+
+        const totalPages =
+            Math.ceil(total / limit);
+
+
+        // =========================
+        // LẤY TRẠM THEO TRANG
+        // =========================
+
+        const result = await sql.query`
+
+            SELECT
+
+                rs.station_id,
+
+                rs.owner_id,
+
+                rs.status,
+
+                rs.station_name,
+
+                rs.address,
+
+                rs.latitude,
+
+                rs.longitude,
+
+                CONVERT(
+                    VARCHAR(5),
+                    rs.open_time,
+                    108
+                ) AS open_time,
+
+                CONVERT(
+                    VARCHAR(5),
+                    rs.close_time,
+                    108
+                ) AS close_time,
+
+                rs.description,
+
+                rs.image_url
+
+            FROM refill_stations rs
+
+            WHERE rs.status = 'active'
+
+            ORDER BY
+                rs.station_name
+
+            OFFSET ${offset} ROWS
+
+            FETCH NEXT ${limit} ROWS ONLY
+
+        `;
+
+
+        // =========================
+        // TRẢ KẾT QUẢ
+        // =========================
+
+        res.json({
+
+            data: result.recordset,
+
+            total: total,
+
+            page: page,
+
+            limit: limit,
+
+            totalPages: totalPages
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
 const createStation = async (req, res) => {
 
     try {
@@ -300,6 +437,7 @@ AND
 };
 module.exports = {
     getAllStations,
+    getStationsPagination,
     getStationById,
     searchStations,
     createStation,

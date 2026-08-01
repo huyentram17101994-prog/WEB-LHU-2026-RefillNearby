@@ -10,47 +10,149 @@ const getAllProducts = async (req, res) => {
 
         await sql.connect(config);
 
+        // =========================
+        // PHÂN TRANG
+        // =========================
+
+        const page =
+            Math.max(
+                parseInt(req.query.page) || 1,
+                1
+            );
+
+        const limit =
+            Math.max(
+                parseInt(req.query.limit) || 15,
+                1
+            );
+
+        const offset =
+            (page - 1) * limit;
+
+
+        // =========================
+        // TÌM KIẾM
+        // =========================
+
+        const search =
+            req.query.search || "";
+
+
+        // =========================
+        // LẤY TỔNG SỐ SẢN PHẨM
+        // =========================
+
+        const countResult = await sql.query`
+
+            SELECT COUNT(*) AS total
+
+            FROM (
+
+                SELECT
+                    p.product_name
+
+                FROM products p
+
+                INNER JOIN refill_stations rs
+                    ON p.station_id = rs.station_id
+
+                WHERE
+                    rs.status = 'active'
+
+                    AND p.product_name LIKE
+                        ${`%${search}%`}
+
+                GROUP BY
+                    p.product_name
+
+            ) AS product_list
+
+        `;
+
+
+        const total =
+            countResult.recordset[0].total;
+
+
+        const totalPages =
+            Math.ceil(total / limit);
+
+
+        // =========================
+        // LẤY SẢN PHẨM THEO TRANG
+        // =========================
+
         const result = await sql.query`
 
             SELECT
 
-    MIN(p.product_id) AS product_id,
+                MIN(p.product_id) AS product_id,
 
-    p.product_name,
+                p.product_name,
 
-    MIN(p.price) AS min_price,
+                MIN(p.price) AS min_price,
 
-    COUNT(*) AS total_stations,
+                COUNT(*) AS total_stations,
 
-    MIN(p.image_url) AS image_url
+                MIN(p.image_url) AS image_url
 
-FROM products p
+            FROM products p
 
-INNER JOIN refill_stations rs
-ON p.station_id = rs.station_id
+            INNER JOIN refill_stations rs
+                ON p.station_id = rs.station_id
 
-WHERE rs.status = 'active'
+            WHERE
+                rs.status = 'active'
 
-GROUP BY
-    p.product_name
+                AND p.product_name LIKE
+                    ${`%${search}%`}
 
-ORDER BY
-    p.product_name
-    
-    `;
-        res.json(result.recordset);
+            GROUP BY
+                p.product_name
 
-    } catch (error) {
+            ORDER BY
+                p.product_name
+
+            OFFSET ${offset} ROWS
+
+            FETCH NEXT ${limit} ROWS ONLY
+
+        `;
+
+
+        // =========================
+        // TRẢ KẾT QUẢ
+        // =========================
+
+        res.json({
+
+            data: result.recordset,
+
+            total: total,
+
+            page: page,
+
+            limit: limit,
+
+            totalPages: totalPages
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.log(error);
 
         res.status(500).json({
+
             error: error.message
+
         });
 
     }
 
 };
-
-
 // ================= CREATE PRODUCT =================
 const createProduct = async (req, res) => {
 
