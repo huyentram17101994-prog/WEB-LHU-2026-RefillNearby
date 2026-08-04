@@ -347,43 +347,83 @@ const getStationById = async (req, res) => {
         await sql.connect(config);
 
         const result = await sql.query`
-    SELECT
-        rs.station_id,
-        rs.owner_id,
-        rs.station_name,
-        rs.address,
-        rs.latitude,
-        rs.longitude,
 
-        CONVERT(VARCHAR(5), rs.open_time, 108) AS open_time,
-        CONVERT(VARCHAR(5), rs.close_time, 108) AS close_time,
+            SELECT
 
-        rs.description,
-        rs.image_url,
+                rs.station_id,
+                rs.owner_id,
+                rs.station_name,
+                rs.address,
+                rs.latitude,
+                rs.longitude,
 
-        p.product_name
+                CONVERT(VARCHAR(5), rs.open_time,108) AS open_time,
+                CONVERT(VARCHAR(5), rs.close_time,108) AS close_time,
 
-    FROM refill_stations rs
-    LEFT JOIN products p
-    ON rs.station_id = p.station_id
+                rs.phone,
 
-    WHERE rs.station_id = ${stationId}
-    AND
+                rs.description,
+                rs.image_url,
 
-rs.status='active'
-`;
+                COUNT(DISTINCT p.product_id) AS product_count,
+
+                SUM(
+                    CASE
+                        WHEN p.stock_status = 1 THEN 1
+                        ELSE 0
+                    END
+                ) AS available_product_count,
+
+                COUNT(DISTINCT r.review_id) AS review_count,
+
+                ISNULL(
+                    ROUND(AVG(CAST(r.rating AS FLOAT)),1),
+                    0
+                ) AS average_rating
+
+            FROM refill_stations rs
+
+            LEFT JOIN products p
+                ON rs.station_id = p.station_id
+
+            LEFT JOIN reviews r
+                ON rs.station_id = r.station_id
+
+            WHERE
+                rs.station_id = ${stationId}
+                AND rs.status='active'
+
+            GROUP BY
+
+                rs.station_id,
+                rs.owner_id,
+                rs.station_name,
+                rs.address,
+                rs.latitude,
+                rs.longitude,
+                rs.open_time,
+                rs.close_time,
+                rs.phone,
+                rs.description,
+                rs.image_url
+
+        `;
 
         if (result.recordset.length === 0) {
 
             return res.status(404).json({
-                message: 'Station not found'
+                message: "Station not found"
             });
 
         }
 
         res.json(result.recordset[0]);
 
-    } catch (error) {
+    }
+
+    catch (error) {
+
+        console.log(error);
 
         res.status(500).json({
             error: error.message

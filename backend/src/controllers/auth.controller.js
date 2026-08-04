@@ -58,21 +58,31 @@ const login = async (req, res) => {
 
         const {
             email,
+            phone,
+            account,
             password
         } = req.body;
 
+        const loginInput = (email || phone || account || '').trim();
+
+        if (!loginInput) {
+            return res.status(400).json({
+                message: 'Vui lòng nhập Email hoặc Số điện thoại'
+            });
+        }
+
         await sql.connect(config);
 
-        // tìm user theo email
+        // tìm user theo email hoặc số điện thoại
         const result = await sql.query`
             SELECT * FROM users
-            WHERE email = ${email}
+            WHERE email = ${loginInput} OR phone = ${loginInput}
         `;
 
         // kiểm tra user tồn tại
         if (result.recordset.length === 0) {
             return res.status(404).json({
-                message: 'Email không tồn tại'
+                message: 'Tài khoản (Email hoặc Số điện thoại) không tồn tại'
             });
         }
 

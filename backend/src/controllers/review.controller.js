@@ -37,43 +37,129 @@ const getReviewsByStation = async (req, res) => {
 
         await sql.connect(config);
 
-        const result = await sql.query`
+        // =======================
+        // PHÂN TRANG
+        // =======================
+
+        const page =
+            Math.max(parseInt(req.query.page) || 1, 1);
+
+        const limit =
+            Math.max(parseInt(req.query.limit) || 5, 1);
+
+        const offset =
+            (page - 1) * limit;
+
+        const rating =
+            parseInt(req.query.rating) || 0;
+
+        // =======================
+        // COUNT
+        // =======================
+
+        const countRequest = new sql.Request();
+
+        countRequest.input("stationId", sql.Int, stationId);
+
+        countRequest.input("rating", sql.Int, rating);
+
+        const countResult = await countRequest.query(`
+
+            SELECT COUNT(*) AS total
+
+            FROM reviews
+
+            WHERE station_id=@stationId
+
+            AND (@rating=0 OR rating=@rating)
+
+        `);
+
+        const total =
+            countResult.recordset[0].total;
+
+        const totalPages =
+            Math.ceil(total / limit);
+
+        // =======================
+        // DATA
+        // =======================
+
+        const request = new sql.Request();
+
+        request.input("stationId", sql.Int, stationId);
+
+        request.input("rating", sql.Int, rating);
+
+        request.input("offset", sql.Int, offset);
+
+        request.input("limit", sql.Int, limit);
+
+        const result = await request.query(`
+
             SELECT
-    reviews.review_id,
-    reviews.user_id,
-    reviews.station_id,
-    reviews.rating,
-    reviews.comment,
-    reviews.product_id,
-    reviews.owner_reply,
 
-    FORMAT(reviews.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at,
-    FORMAT(reviews.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
+                reviews.review_id,
+                reviews.user_id,
+                reviews.station_id,
+                reviews.rating,
+                reviews.comment,
+                reviews.product_id,
+                reviews.owner_reply,
 
-    users.full_name,
-    products.product_name
+                FORMAT(reviews.created_at,'dd/MM/yyyy HH:mm:ss') AS created_at,
+                FORMAT(reviews.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
+
+                users.full_name,
+
+                products.product_name
+
             FROM reviews
 
             JOIN users
+
             ON reviews.user_id = users.user_id
 
             JOIN products
+
             ON reviews.product_id = products.product_id
 
-            WHERE reviews.station_id = ${stationId}
-            
+            WHERE reviews.station_id=@stationId
+
+            AND (@rating=0 OR reviews.rating=@rating)
 
             ORDER BY reviews.created_at DESC
-        `;
 
-        res.json(result.recordset);
+            OFFSET @offset ROWS
 
-    } catch (error) {
+            FETCH NEXT @limit ROWS ONLY
+
+        `);
+
+        res.json({
+
+            data: result.recordset,
+
+            page,
+
+            limit,
+
+            total,
+
+            totalPages
+
+        });
+
+    }
+
+    catch (error) {
 
         console.log(error);
 
         res.status(500).json({
+
             error: error.message
+
         });
 
     }
@@ -90,8 +176,9 @@ const createReview = async (req, res) => {
             product_id,
             rating,
             comment
+             
         } = req.body;
-
+        
         const user_id = req.user.user_id;
 
         await sql.connect(config);
@@ -104,6 +191,7 @@ const createReview = async (req, res) => {
                 product_id,
                 rating,
                 comment
+                
             )
             VALUES
             (
@@ -112,6 +200,7 @@ const createReview = async (req, res) => {
                  ${product_id},
                 ${rating},
                 ${comment}
+                
             )
         `;
 
@@ -128,9 +217,6 @@ const createReview = async (req, res) => {
     }
 
 };
-
-
-
 // ================= UPDATE REVIEW =================
 const updateReview = async (req, res) => {
 
@@ -167,8 +253,6 @@ const updateReview = async (req, res) => {
 
 };
 
-
-
 // ================= DELETE REVIEW =================
 const deleteReview = async (req, res) => {
 
@@ -196,8 +280,6 @@ const deleteReview = async (req, res) => {
     }
 
 };
-
-
 
 module.exports = {
     getAllReviews,

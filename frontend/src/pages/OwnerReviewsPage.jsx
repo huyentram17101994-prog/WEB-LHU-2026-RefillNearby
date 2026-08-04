@@ -1,719 +1,618 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import { IoChevronBack } from "react-icons/io5";
+import { IoChevronBack } from 'react-icons/io5';
+import {
+    FaStar,
+    FaSearch,
+    FaCalendarAlt,
+    FaStore,
+    FaCommentDots,
+    FaReply,
+    FaEdit,
+    FaCheck,
+    FaUndo,
+    FaUser,
+    FaBox,
+    FaChevronLeft,
+    FaChevronRight,
+} from 'react-icons/fa';
+
+const REVIEWS_PER_PAGE = 10;
+
+// Format ngày hiển thị dạng Ngày/Tháng/Năm (dd/mm/yyyy)
+const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return '';
+
+    if (typeof dateStr === 'string') {
+        const trimmed = dateStr.trim();
+
+        // 1. Nếu backend đã trả về dạng "DD/MM/YYYY..." (Ví dụ: "04/08/2026 15:30:00")
+        if (trimmed.includes('/')) {
+            const datePart = trimmed.split(' ')[0]; // lấy phần "04/08/2026"
+            const parts = datePart.split('/');
+            if (parts.length === 3) {
+                const [d, m, y] = parts;
+                if (d.length <= 2 && m.length <= 2 && y.length === 4) {
+                    return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+                }
+            }
+        }
+
+        // 2. Nếu là dạng chuỗi ISO "YYYY-MM-DD..." (Ví dụ: "2026-08-04T15:30:00.000Z")
+        if (trimmed.includes('-')) {
+            const d = new Date(trimmed);
+            if (!isNaN(d.getTime())) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        }
+    }
+
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    return dateStr;
+};
+
 function OwnerReviewsPage() {
     const navigate = useNavigate();
-const [ratingFilter, setRatingFilter] = useState('');
-const [search, setSearch] = useState('');
-const [dashboard, setDashboard] = useState({});
-const [reply, setReply] = useState({});
-const [editingReview, setEditingReview] = useState(null);
-  const [fromDate, setFromDate] = useState('');
+
+    const [ratingFilter, setRatingFilter] = useState('');
+    const [stationFilter, setStationFilter] = useState('all');
+    const [search, setSearch] = useState('');
+    const [dashboard, setDashboard] = useState({});
+    const [reply, setReply] = useState({});
+    const [editingReview, setEditingReview] = useState(null);
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [submittingReply, setSubmittingReply] = useState(false);
+
+    // Phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+
     const MAX_DAYS = 30;
 
-const daysBetween = (start, end) => {
+    const daysBetween = (start, end) => {
+        const diff = new Date(end) - new Date(start);
+        return diff / (1000 * 60 * 60 * 24);
+    };
 
-    const diff =
-        new Date(end) - new Date(start);
+    const loadReviews = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/owner/dashboard');
+            setDashboard(res.data || {});
+        } catch (error) {
+            console.error('Lỗi lấy danh sách đánh giá:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    return diff / (1000 * 60 * 60 * 24);
+    useEffect(() => {
+        loadReviews();
+    }, []);
 
-};
+    // Danh sách trạm duy nhất cho bộ lọc
+    const stationList = Array.from(
+        new Set(dashboard.reviews?.map((r) => r.station_name).filter(Boolean))
+    );
 
-const [toDate, setToDate] = useState('');
-const filterReview = (review) => {
+    // Map điểm sao & tổng đánh giá từng trạm
+    const stationRatingsMap = {};
+    dashboard.stationRatings?.forEach((station) => {
+        stationRatingsMap[station.station_name] = station;
+    });
 
-    const matchRating =
+    // Hàm kiểm tra review khớp điều kiện lọc
+    const filterReview = (review) => {
+        const matchRating =
+            ratingFilter === '' || review.rating === Number(ratingFilter);
 
-        ratingFilter === ''
+        const matchStation =
+            stationFilter === 'all' || review.station_name === stationFilter;
 
-        ||
+        const keyword = search.toLowerCase();
+        const matchSearch =
+            review.full_name?.toLowerCase().includes(keyword) ||
+            review.station_name?.toLowerCase().includes(keyword) ||
+            review.comment?.toLowerCase().includes(keyword) ||
+            review.product_name?.toLowerCase().includes(keyword);
 
-        review.rating === Number(ratingFilter);
+        const reviewDate = new Date(review.created_at);
+        let matchDate = true;
 
-    const matchSearch =
+        if (fromDate && toDate) {
+            const diff = daysBetween(fromDate, toDate);
+            if (diff < 0 || diff > MAX_DAYS) {
+                matchDate = false;
+            } else {
+                const from = new Date(fromDate);
+                from.setHours(0, 0, 0, 0);
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                matchDate = reviewDate >= from && reviewDate <= to;
+            }
+        } else if (fromDate) {
+            const from = new Date(fromDate);
+            from.setHours(0, 0, 0, 0);
+            matchDate = reviewDate >= from;
+        } else if (toDate) {
+            const to = new Date(toDate);
+            to.setHours(23, 59, 59, 999);
+            matchDate = reviewDate <= to;
+        }
 
-        review.full_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
+        return matchRating && matchStation && matchSearch && matchDate;
+    };
 
-        ||
+    // Tất cả review sau khi lọc
+    const filteredReviews = (dashboard.reviews || []).filter(filterReview);
 
-        review.station_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
+    // Phân trang
+    const totalPages = Math.ceil(filteredReviews.length / REVIEWS_PER_PAGE);
+    const paginatedReviews = filteredReviews.slice(
+        (currentPage - 1) * REVIEWS_PER_PAGE,
+        currentPage * REVIEWS_PER_PAGE
+    );
 
-        ||
+    // Gom nhóm 10 review trên trang hiện tại theo trạm
+    const groupedPaginatedReviews = paginatedReviews.reduce((acc, review) => {
+        const station = review.station_name || 'Khác';
+        if (!acc[station]) acc[station] = [];
+        acc[station].push(review);
+        return acc;
+    }, {});
 
-        review.comment
-            ?.toLowerCase()
-            .includes(search.toLowerCase());
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        setCurrentPage(1);
+    };
 
-const reviewDate = new Date(review.created_at);
-console.log({
-    created_at: review.created_at,
-    reviewDate,
-    fromDate,
-    toDate
-});
-const from = fromDate
-    ? new Date(fromDate)
-    : null;
+    const handleRatingFilterChange = (val) => {
+        setRatingFilter(val);
+        setCurrentPage(1);
+    };
 
-const to = toDate
-    ? new Date(toDate)
-    : null;
+    const handleStationFilterChange = (val) => {
+        setStationFilter(val);
+        setCurrentPage(1);
+    };
 
-let matchDate = true;
+    const handleFromDateChange = (val) => {
+        setFromDate(val);
+        setCurrentPage(1);
+    };
 
-if (fromDate && toDate) {
+    const handleToDateChange = (val) => {
+        setToDate(val);
+        setCurrentPage(1);
+    };
 
-    const diff = daysBetween(fromDate, toDate);
+    const resetFilters = () => {
+        setSearch('');
+        setRatingFilter('');
+        setStationFilter('all');
+        setFromDate('');
+        setToDate('');
+        setCurrentPage(1);
+    };
 
-    if (diff < 0) {
-        matchDate = false;
-    }
-    else if (diff > MAX_DAYS) {
-        matchDate = false;
-    }
-    else {
+    const handleReplyChange = (reviewId, value) => {
+        setReply((prev) => ({ ...prev, [reviewId]: value }));
+    };
 
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
+    const startEditReply = (review) => {
+        setEditingReview(review.review_id);
+        setReply((prev) => ({ ...prev, [review.review_id]: review.owner_reply }));
+    };
 
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
+    const replyReview = async (reviewId) => {
+        if (!reply[reviewId]?.trim()) {
+            alert('Vui lòng nhập nội dung phản hồi.');
+            return;
+        }
 
-        matchDate =
-            reviewDate >= from &&
-            reviewDate <= to;
-    }
+        setSubmittingReply(true);
+        try {
+            await api.put(`/owner/reviews/${reviewId}/reply`, {
+                owner_reply: reply[reviewId],
+            });
 
-}
-else if (fromDate) {
+            alert('✨ Lưu phản hồi thành công!');
+            setReply((prev) => ({ ...prev, [reviewId]: '' }));
+            setEditingReview(null);
+            loadReviews();
+        } catch (error) {
+            console.error(error);
+            alert('Phản hồi thất bại. Vui lòng thử lại.');
+        } finally {
+            setSubmittingReply(false);
+        }
+    };
 
-    const from = new Date(fromDate);
-    from.setHours(0, 0, 0, 0);
+    const hasFilter =
+        search || ratingFilter || stationFilter !== 'all' || fromDate || toDate;
 
-    matchDate = reviewDate >= from;
+    const totalReviewsCount = dashboard.reviews?.length || 0;
 
-}
-else if (toDate) {
+    // Component Thanh Phân Trang
+    const PaginationBar = () => {
+        if (totalPages <= 1) return null;
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
 
-    const to = new Date(toDate);
-    to.setHours(23, 59, 59, 999);
+        return (
+            <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                    <FaChevronLeft size={13} className="text-gray-600" />
+                </button>
 
-    matchDate = reviewDate <= to;
+                {pages.map((p) => (
+                    <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`w-9 h-9 rounded-xl font-bold text-sm transition shadow-sm ${
+                            currentPage === p
+                                ? 'bg-green-600 text-white shadow-green-200 shadow-md'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-400'
+                        }`}
+                    >
+                        {p}
+                    </button>
+                ))}
 
-}
-
+                <button
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                    <FaChevronRight size={13} className="text-gray-600" />
+                </button>
+            </div>
+        );
+    };
 
     return (
-    matchRating &&
-    matchSearch &&
-    matchDate
-);
-}
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
 
-useEffect(() => {
-
-    loadReviews();
-
-}, []);
-const loadReviews = async () => {
-
-    try {
-
-        const res =
-            await api.get('/owner/dashboard');
-         console.log(res.data[0]);  
-        setDashboard(
-            res.data
-        );
-
-    } catch (error) {
-
-        console.log(error);
-
-    }
-
-};
-const reviewsByStation =
-    dashboard.reviews?.reduce((acc, review) => {
-
-        const station =
-            review.station_name;
-
-        if (!acc[station]) {
-
-            acc[station] = [];
-
-        }
-
-        acc[station].push(review);
-
-        return acc;
-
-    }, {}) || {};
-    const stationRatingsMap = {};
-
-dashboard.stationRatings?.forEach((station) => {
-
-    stationRatingsMap[
-        station.station_name
-    ] = station;
-
-});
-const handleReplyChange = (reviewId, value) => {
-
-    setReply(prev => ({
-        ...prev,
-        [reviewId]: value
-    }));
-
-};
-const startEditReply = (review) => {
-
-    setEditingReview(review.review_id);
-
-    setReply(prev => ({
-        ...prev,
-        [review.review_id]: review.owner_reply
-    }));
-
-};
-const replyReview = async (reviewId) => {
-
-    try {
-
-        await api.put(
-    `/owner/reviews/${reviewId}/reply`,
-    {
-        owner_reply: reply[reviewId]
-    }
-);
-
-alert("Đã lưu phản hồi.");
-
-setReply(prev => ({
-    ...prev,
-    [reviewId]: ""
-}));
-
-setEditingReview(null);
-
-loadReviews();
-
-    } catch (error) {
-
-        console.log(error);
-
-        alert("Phản hồi thất bại.");
-
-    }
-
-};
-const filteredStations = Object.entries(reviewsByStation)
-    .filter(([_, reviews]) => reviews.some(filterReview));
-
-const hasFilter =
-    search ||
-    ratingFilter ||
-    fromDate ||
-    toDate;
-
-
-return (
-
-<div className="max-full mx-auto bg-gradient-to-br from-green-200 via-white to-green-500 min-h-screen bg-gray-100 p-8">
-
-    
-<button
-    onClick={() => navigate('/owner')}
-    className="
-        flex items-center gap-2
-        mb-8
-        px-5 py-3
-        bg-white
-        rounded-full
-        shadow-md
-    "
->
-    <IoChevronBack size={22} />
-    Quay lại
-</button>
-<div className="max-w-6xl mx-auto">
-     <h1 className="text-5xl text-center text-green-500 font-bold mb-8">
-
-                    ⭐ Quản lý đánh giá
-
-                </h1>
-
-                <div
-    className="
-        flex
-        items-end
-        gap-4
-        mb-6
-    "
->
-                     <div className="flex-1">
-                    <input
-                        type="text"
-                        placeholder="🔍 Tìm người dùng, trạm hoặc nội dung..."
-                        value={search}
-                        onChange={(e) =>
-                            setSearch(e.target.value)
-                        }
-                        className="
-                            w-full
-                            bg-white
-                            border
-                            border-gray-200
-                            rounded-2xl
-                            px-4
-                            py-3
-                            shadow-sm
-                            focus:outline-none
-                            focus:ring-2
-                            focus:ring-green-400
-                        "
-                    />
-                    </div>
-                    <select
-    value={ratingFilter}
-    onChange={(e) =>
-        setRatingFilter(e.target.value)
-    }
-    className="
-        text-center
-        bg-white
-        border
-        border-gray-200
-        rounded-2xl
-        px-4
-        py-3
-        shadow-sm
-        text-gray-700
-        appearance-none
-        focus:outline-none
-        focus:ring-2
-        focus:ring-green-400
-        focus:border-green-400
-        min-w-[110px]
-        "
->
-    <option value="">
-        Tất cả
-    </option>
-
-    <option value="5">
-        ⭐ 5 sao
-    </option>
-
-    <option value="4">
-        ⭐ 4 sao
-    </option>
-
-    <option value="3">
-        ⭐ 3 sao
-    </option>
-
-    <option value="2">
-        ⭐ 2 sao
-    </option>
-
-    <option value="1">
-        ⭐ 1 sao
-    </option>
-
-</select>
-<div>
-
-        <label className="  block mb-2 font-semibold">
-
-            📅 Từ ngày
-
-        </label>
-<input
-
-    type="date"
-    value={fromDate}
-   onChange={(e) => {
-    setFromDate(e.target.value);
-}}
-    className="
-        text-center
-        bg-white
-        border
-        border-gray-200
-        rounded-2xl
-        px-4
-        py-3
-        shadow-sm
-        text-gray-700
-        appearance-none
-        focus:outline-none
-        focus:ring-2
-        focus:ring-green-400
-        focus:border-green-400
-        
-    "
-/>
-
-</div>
-<div>
-
-        <label className="block mb-2 font-semibold">
-
-            📅 Đến ngày
-
-        </label>
-<input
-    type="date"
-    value={toDate}
-   onChange={(e) => {
-    setToDate(e.target.value);
-}}
-    className="
-        text-center
-        bg-white
-        border
-        border-gray-200
-        rounded-2xl
-        px-4
-        py-3
-        shadow-sm
-        text-gray-700
-        appearance-none
-        focus:outline-none
-        focus:ring-2
-        focus:ring-green-400
-        focus:border-green-400
-        
-    "
-/>
-</div>
-
-                </div>
-                {fromDate && toDate && daysBetween(fromDate, toDate) < 0 && (
-    <div className="mt-2 rounded-lg bg-red-100 border border-red-300 px-4 py-2 text-red-700 text-sm">
-        ⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.
-    </div>
-)}
-
-{fromDate && toDate && daysBetween(fromDate, toDate) > MAX_DAYS && (
-    <div className="mt-2 rounded-lg bg-red-100 border border-red-300 px-4 py-2 text-red-700 text-sm">
-        ⚠️ Chỉ được lọc tối đa trong khoảng 30 ngày.
-    </div>
-)}
-    <div className="space-y-4">
-
-      {filteredStations.length > 0 ? (
-
-    filteredStations.map(([stationName, reviews]) => (
-
-            <div
-                key={stationName}
-                className="mb-8"
-            >
-
-                <div className="mb-3">
-
-    <h3 className="text-xl font-bold text-green-700">
-
-        🏪 {stationName}
-
-    </h3>
-
-    <p className="text-yellow-600 font-semibold">
-
-        ⭐ {
-            Number(
-                stationRatingsMap[stationName]
-                    ?.averageRating || 0
-            ).toFixed(1)
-        }
-
-        ({stationRatingsMap[stationName]
-            ?.totalReviews || 0} đánh giá)
-
-    </p>
-
-</div>
-
-                <div className="space-y-3">
-{
-reviews
-.filter(filterReview).map((review) => (
-                        <div
-                            key={review.review_id}
-                            className="
-    bg-white
-    rounded-2xl
-    shadow-md
-    border
-    border-gray-100
-    p-5
-"
-                        >
-
-                            <div className="flex justify-between items-center">
-
-    <div className="font-semibold">
-
-        👤 {review.full_name}
-
-    </div>
-
-    <div className="text-sm text-gray-500">
-
-       {review.created_at_display}
-
-    </div>
-
-</div>
-
-                            <div className="text-yellow-500 font-bold">
-
-                                ⭐ {review.rating}/5
-
-                            </div>
-
-                            <div className="text-gray-700 mt-2">
-
-                                {review.comment}
-
-                            </div>
-                          
-                            <div className="text-sm text-gray-500 mt-2">
-
-                                📦 {review.product_name}
-
-                            </div>
-                            
-
-{/* ================= PHẢN HỒI ĐÃ GỬI ================= */}
-
-{review.owner_reply && (
-
-    <div
-        className="
-            mt-5
-            rounded-2xl
-            border
-            border-green-200
-            bg-green-50
-            p-4
-        "
-    >
-
-        <div className="flex justify-between items-center">
-
-            <div className="font-semibold text-green-700">
-
-                🏪 Phản hồi của trạm
-
-            </div>
-
+            {/* BUTTON QUAY LẠI */}
             <button
-                onClick={() => startEditReply(review)}
-                className="
-                    text-blue-600
-                    hover:underline
-                    text-sm
-                "
+                onClick={() => navigate('/owner')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
             >
-                ✏️ Chỉnh sửa
+                <IoChevronBack size={22} />
+                Quay lại
             </button>
 
-        </div>
+            <div className="max-w-6xl mx-auto space-y-6 mt-4">
 
-        <div className="text-xs text-gray-500 mt-1">
+                {/* PAGE TITLE BANNER */}
+                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
+                            <span className="p-3 bg-amber-100 text-amber-700 rounded-2xl text-2xl">⭐</span>
+                            Quản Lý Đánh Giá
+                        </h1>
+                        <p className="text-gray-600 text-sm mt-1">
+                            Xem phản hồi đánh giá từ khách hàng, lọc theo trạm / mức sao / thời gian và trực tiếp tương tác
+                        </p>
+                    </div>
 
-            {review.replied_at}
+                    <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-2xl font-bold text-sm border border-amber-200 flex items-center gap-2">
+                        <FaStar className="text-amber-500" /> Tổng số: {totalReviewsCount} đánh giá
+                    </div>
+                </div>
 
-        </div>
+                {/* MAIN CONTENT CARD */}
+                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-100">
 
-        <div className="mt-3 whitespace-pre-line text-gray-700">
+                    {/* BAR BỘ LỌC */}
+                    <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
+                        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center flex-wrap">
 
-            {review.owner_reply}
+                            {/* TÌM KIẾM */}
+                            <div className="relative flex-1 min-w-[220px]">
+                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm theo tên người dùng, trạm, sản phẩm, nội dung..."
+                                    value={search}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition"
+                                />
+                            </div>
 
-        </div>
+                            {/* LỌC TRẠM */}
+                            <select
+                                value={stationFilter}
+                                onChange={(e) => handleStationFilterChange(e.target.value)}
+                                className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition text-gray-700 font-medium min-w-[160px]"
+                            >
+                                <option value="all">🏪 Tất cả trạm</option>
+                                {stationList.map((st) => (
+                                    <option key={st} value={st}>
+                                        {st}
+                                    </option>
+                                ))}
+                            </select>
 
-    </div>
+                            {/* LỌC SỐ SAO */}
+                            <select
+                                value={ratingFilter}
+                                onChange={(e) => handleRatingFilterChange(e.target.value)}
+                                className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition text-gray-700 font-medium min-w-[130px]"
+                            >
+                                <option value="">⭐ Tất cả sao</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
+                                <option value="4">⭐⭐⭐⭐ 4 sao</option>
+                                <option value="3">⭐⭐⭐ 3 sao</option>
+                                <option value="2">⭐⭐ 2 sao</option>
+                                <option value="1">⭐ 1 sao</option>
+                            </select>
 
-)}
-{editingReview === review.review_id && (
+                            {/* TỪ NGÀY */}
+                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 text-xs font-semibold text-gray-600">
+                                <FaCalendarAlt className="text-green-600 shrink-0" />
+                                <span>Từ:</span>
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    onChange={(e) => handleFromDateChange(e.target.value)}
+                                    className="bg-transparent outline-none text-gray-800 font-medium cursor-pointer"
+                                />
+                            </div>
 
-<div className="mt-4 ml-6">
+                            {/* ĐẾN NGÀY */}
+                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 text-xs font-semibold text-gray-600">
+                                <FaCalendarAlt className="text-green-600 shrink-0" />
+                                <span>Đến:</span>
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    onChange={(e) => handleToDateChange(e.target.value)}
+                                    className="bg-transparent outline-none text-gray-800 font-medium cursor-pointer"
+                                />
+                            </div>
 
-    <textarea
-        rows={4}
-        value={reply[review.review_id] || ""}
-        onChange={(e)=>
-            handleReplyChange(
-                review.review_id,
-                e.target.value
-            )
-        }
-        className="
-            w-full
-            border
-            rounded-xl
-            p-3
-            resize-none
-            focus:ring-2
-            focus:ring-green-400
-        "
-    />
-
-    <div className="flex gap-3 mt-3">
-
-        <button
-            onClick={() =>
-                replyReview(review.review_id)
-            }
-            className="
-                bg-green-600
-                text-white
-                px-5
-                py-2
-                rounded-lg
-            "
-        >
-            Lưu
-        </button>
-
-        <button
-            onClick={() =>
-                setEditingReview(null)
-            }
-            className="
-                bg-gray-300
-                px-5
-                py-2
-                rounded-lg
-            "
-        >
-            Hủy
-        </button>
-
-    </div>
-
-</div>
-
-)}
-{!review.owner_reply && (
-
-<div className="mt-4">
-
-    <textarea
-    rows={4}
-    value={reply[review.review_id] || ""}
-    onChange={(e)=>
-        handleReplyChange(
-            review.review_id,
-            e.target.value
-        )
-    }
-    placeholder="Nhập phản hồi..."
-
-    className="
-        w-full
-        border
-        border-gray-300
-        rounded-xl
-        p-3
-        resize-none
-        focus:outline-none
-        focus:ring-2
-        focus:ring-green-400
-    "
-/>
-<button
-            onClick={() =>
-                replyReview(review.review_id)
-            }
-            className="
-                mt-3
-                bg-green-600
-                hover:bg-green-700
-                text-white
-                px-5
-                py-2
-                rounded-xl
-            "
-        >
-            Gửi phản hồi
-        </button>
-</div>
-
-)}
-
+                            {/* RESET FILTER */}
+                            {hasFilter && (
+                                <button
+                                    onClick={resetFilters}
+                                    className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap"
+                                >
+                                    <FaUndo size={12} /> Xóa lọc
+                                </button>
+                            )}
                         </div>
 
-                    ))}
+                        {/* BÁO LỖI KHOẢNG NGÀY KHÔNG HỢP LỆ */}
+                        {fromDate && toDate && daysBetween(fromDate, toDate) < 0 && (
+                            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-2.5 text-red-600 text-xs font-semibold flex items-center gap-2">
+                                ⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.
+                            </div>
+                        )}
+                        {fromDate && toDate && daysBetween(fromDate, toDate) > MAX_DAYS && (
+                            <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-amber-700 text-xs font-semibold flex items-center gap-2">
+                                ⚠️ Chỉ hỗ trợ lọc thời gian trong tối đa 30 ngày.
+                            </div>
+                        )}
+                    </div>
 
+                    {/* DANH SÁCH ĐÁNH GIÁ CỦA CÁC TRẠM */}
+                    {loading ? (
+                        <div className="text-center py-16 text-gray-500">
+                            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                            Đang tải danh sách đánh giá...
+                        </div>
+                    ) : filteredReviews.length > 0 ? (
+                        <>
+                            <div className="space-y-8">
+                                {Object.entries(groupedPaginatedReviews).map(([stationName, reviews]) => {
+                                    const statRating = stationRatingsMap[stationName];
+                                    const avgRating = Number(statRating?.averageRating || 0).toFixed(1);
+                                    const totalReviewsForStation = statRating?.totalReviews || reviews.length;
+
+                                    return (
+                                        <div key={stationName} className="space-y-4">
+
+                                            {/* HEADER CỦA TRẠM: HIỂN THỊ TÊN TRẠM, ĐIỂM TRUNG BÌNH & TỔNG LƯỢT ĐÁNH GIÁ */}
+                                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2.5 bg-green-600 text-white rounded-xl text-lg">
+                                                        <FaStore />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-xl font-extrabold text-green-900">
+                                                            {stationName}
+                                                        </h3>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-green-200 shadow-sm self-start sm:self-auto">
+                                                    <FaStar className="text-amber-400 text-base" />
+                                                    <span className="font-extrabold text-gray-800 text-base">{avgRating}</span>
+                                                    <span className="text-gray-500 text-xs font-semibold">({totalReviewsForStation} đánh giá)</span>
+                                                </div>
+                                            </div>
+
+                                            {/* CÁC ĐÁNH GIÁ THUỘC TRẠM NÀY */}
+                                            <div className="space-y-4 pl-0 sm:pl-3">
+                                                {reviews.map((review) => (
+                                                    <div
+                                                        key={review.review_id}
+                                                        className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-200 p-5 transition duration-200 space-y-3"
+                                                    >
+                                                        {/* NGUỜI DÙNG & ĐIỂM SỐ */}
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                                                    <FaUser />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-gray-800 text-base">
+                                                                        {review.full_name || 'Khách hàng'}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-400">
+                                                                        📅 {formatDateDisplay(review.created_at)}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* ĐIỂM SAO */}
+                                                            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 self-start sm:self-auto">
+                                                                {[...Array(5)].map((_, i) => (
+                                                                    <FaStar
+                                                                        key={i}
+                                                                        className={`text-sm ${
+                                                                            i < review.rating ? 'text-amber-400' : 'text-gray-300'
+                                                                        }`}
+                                                                    />
+                                                                ))}
+                                                                <span className="ml-1 text-gray-700">{review.rating}/5</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* NỘI DUNG ĐÁNH GIÁ */}
+                                                        {review.comment && (
+                                                            <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-3.5 rounded-xl italic border border-gray-100">
+                                                                "{review.comment}"
+                                                            </p>
+                                                        )}
+
+                                                        {/* TÊN SẢN PHẨM MUA */}
+                                                        {review.product_name && (
+                                                            <div className="flex items-center gap-2 text-xs font-semibold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl w-fit">
+                                                                <FaBox className="text-purple-500" />
+                                                                <span>Sản phẩm: {review.product_name}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* PHẢN HỒI ĐÃ CÓ */}
+                                                        {review.owner_reply && editingReview !== review.review_id && (
+                                                            <div className="mt-3 bg-green-50/80 rounded-2xl border border-green-200 p-4 space-y-2">
+                                                                <div className="flex justify-between items-center">
+                                                                    <div className="font-bold text-green-800 text-xs flex items-center gap-2">
+                                                                        <FaReply className="text-green-600 transform rotate-180" />
+                                                                        <span>Phản hồi từ chủ trạm</span>
+                                                                        {review.replied_at && (
+                                                                            <span className="text-[11px] font-normal text-gray-400">• {formatDateDisplay(review.replied_at)}</span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <button
+                                                                        onClick={() => startEditReply(review)}
+                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 hover:underline transition"
+                                                                    >
+                                                                        <FaEdit size={12} /> Chỉnh sửa
+                                                                    </button>
+                                                                </div>
+
+                                                                <p className="text-gray-800 text-xs whitespace-pre-line leading-relaxed pl-5 border-l-2 border-green-500">
+                                                                    {review.owner_reply}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* FORM SOẠN THẢO / CHỈNH SỬA PHẢN HỒI */}
+                                                        {(editingReview === review.review_id || !review.owner_reply) && (
+                                                            <div className="mt-3 pt-2">
+                                                                <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                                                                    <FaCommentDots className="text-green-600" />
+                                                                    {editingReview === review.review_id ? 'Chỉnh sửa phản hồi của bạn:' : 'Nhập phản hồi cho khách hàng:'}
+                                                                </label>
+
+                                                                <textarea
+                                                                    rows={3}
+                                                                    value={reply[review.review_id] || ''}
+                                                                    onChange={(e) => handleReplyChange(review.review_id, e.target.value)}
+                                                                    placeholder="Cảm ơn khách hàng hoặc giải đáp thắc mắc về sản phẩm / dịch vụ..."
+                                                                    className="w-full p-3 text-xs bg-white rounded-2xl border border-gray-300 focus:ring-2 focus:ring-green-400 outline-none transition"
+                                                                />
+
+                                                                <div className="flex gap-2 justify-end mt-2">
+                                                                    {editingReview === review.review_id && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEditingReview(null)}
+                                                                            disabled={submittingReply}
+                                                                            className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold transition"
+                                                                        >
+                                                                            Hủy
+                                                                        </button>
+                                                                    )}
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => replyReview(review.review_id)}
+                                                                        disabled={submittingReply}
+                                                                        className="px-5 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5 disabled:opacity-50"
+                                                                    >
+                                                                        <FaCheck size={12} />
+                                                                        {submittingReply ? 'Đang gửi...' : editingReview === review.review_id ? 'Lưu cập nhật' : 'Gửi phản hồi'}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* THANH PHÂN TRANG */}
+                            <PaginationBar />
+
+                            {/* THÔNG TIN PHÂN TRANG */}
+                            {totalPages > 1 && (
+                                <p className="text-center text-xs text-gray-400 mt-3">
+                                    Hiển thị {(currentPage - 1) * REVIEWS_PER_PAGE + 1}–{Math.min(currentPage * REVIEWS_PER_PAGE, filteredReviews.length)} / {filteredReviews.length} đánh giá
+                                </p>
+                            )}
+                        </>
+                    ) : (
+                        /* EMPTY STATE */
+                        <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                            <span className="text-5xl block mb-3">⭐</span>
+                            <p className="text-gray-700 font-bold text-lg">
+                                {hasFilter
+                                    ? 'Không tìm thấy đánh giá nào phù hợp với bộ lọc'
+                                    : 'Chưa có đánh giá nào từ khách hàng'}
+                            </p>
+                            <p className="text-gray-500 text-xs mt-1 mb-4">
+                                {hasFilter
+                                    ? 'Thử thay đổi từ khóa hoặc xóa điều kiện lọc để xem thêm'
+                                    : 'Khi có khách hàng đánh giá trạm Refill của bạn, nội dung sẽ xuất hiện ở đây'}
+                            </p>
+                            {hasFilter && (
+                                <button
+                                    onClick={resetFilters}
+                                    className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl text-xs font-bold transition inline-flex items-center gap-1.5 shadow"
+                                >
+                                    <FaUndo /> Xóa bộ lọc
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
-
             </div>
-
-        )
-
-    )
-
-) :   (
-
-    <div className="bg-white rounded-2xl shadow p-10 text-center">
-
-        <div className="text-5xl mb-3">
-            🔍
         </div>
-
-        <p className="text-lg font-semibold text-gray-700">
-
-            {hasFilter
-                ? "Không tìm thấy đánh giá nào phù hợp với điều kiện lọc."
-                : "Chưa có đánh giá nào."}
-
-        </p>
-
-        {hasFilter && (
-
-            <button
-                onClick={() => {
-
-                    setSearch("");
-                    setRatingFilter("");
-                    setFromDate("");
-                    setToDate("");
-
-                }}
-                className="
-                    mt-4
-                    bg-green-600
-                    hover:bg-green-700
-                    text-white
-                    px-4
-                    py-2
-                    rounded-xl
-                "
-            >
-                Xóa bộ lọc
-            </button>
-
-        )}
-
-    </div>
-
-)}
-    </div>
-
-</div>
-     </div>
-
-);
+    );
 }
+
 export default OwnerReviewsPage;

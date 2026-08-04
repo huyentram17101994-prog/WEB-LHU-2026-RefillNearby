@@ -16,7 +16,17 @@ const createRefillHistory = async (req, res) => {
             product_id,
             quantity
         } = req.body;
-
+// Kiểm tra số lượng refill
+        if (
+            quantity === undefined ||
+            quantity === null ||
+            Number(quantity) <= 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Số lượng refill phải lớn hơn 0."
+            });
+        }
         const user_id = req.user.user_id;
 
         await sql.connect(config);

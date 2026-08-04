@@ -118,6 +118,12 @@ router.get(
     getRefillStatistics
 );
 router.get(
+    '/refills/statistics',
+    verifyToken,
+    authorizeRoles('admin'),
+    getRefillStatistics
+);
+router.get(
     "/rating-statistics",
     verifyToken,
     authorizeRoles("admin"),

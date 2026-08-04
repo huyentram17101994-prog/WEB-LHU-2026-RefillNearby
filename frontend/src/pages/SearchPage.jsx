@@ -520,7 +520,7 @@ function SearchPage() {
                                 sm:grid-cols-2
                                 lg:grid-cols-3
                                 xl:grid-cols-5
-                                gap-5
+                                gap-4
                             ">
 
 
@@ -544,7 +544,7 @@ function SearchPage() {
                                                 transition
                                                 duration-300
                                                 w-full
-                                                max-w-[280px]
+                                                max-w-[260px]
                                                 mx-auto
                                                 h-full
                                                 flex
@@ -714,7 +714,7 @@ function SearchPage() {
                                                     text-gray-600
                                                     text-sm
                                                     leading-6
-                                                    mb-4
+                                                    mb-2
                                                     line-clamp-2
                                                     min-h-[48px]
                                                 ">

@@ -95,7 +95,6 @@ CREATE TABLE reviews (
     REFERENCES products(product_id);
 );
 
-select * from [dbo].[reviews]
 -- =========================================
 -- TABLE: INVOICES
 CREATE TABLE invoices (
@@ -256,7 +255,8 @@ CREATE TABLE notifications
         FOREIGN KEY(user_id)
         REFERENCES users(user_id)
 );
-
+ALTER TABLE refill_stations
+ADD phone VARCHAR(20);
 
 SELECT * FROM vw_StationRatings
 SELECT * FROM [dbo].[favorites]
@@ -272,7 +272,25 @@ SELECT * FROM refill_history
 SELECT * FROM [dbo].[notifications]
 SELECT * FROM [dbo].[product_notification_requests]
 
+;WITH StationList AS
+(
+    SELECT
+        station_id,
+        ROW_NUMBER() OVER (ORDER BY station_id) - 1 AS rn
+    FROM refill_stations
+)
 
+UPDATE rs
+SET phone =
+    '09' +
+    RIGHT(
+        '00000000' +
+        CAST(11111111 + s.rn AS VARCHAR(8)),
+        8
+    )
+FROM refill_stations rs
+INNER JOIN StationList s
+    ON rs.station_id = s.station_id;
 
 
 

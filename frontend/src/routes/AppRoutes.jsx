@@ -200,6 +200,22 @@ function AppRoutes() {
                 element={<NotificationPage />}
                 />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route
+                    path="/admin/profile"
+                    element={
+                        <ProtectedAdminRoute>
+                            <ProfilePage />
+                        </ProtectedAdminRoute>
+                    }
+                />
+                <Route
+                    path="/owner/profile"
+                    element={
+                        <ProtectedOwnerRoute>
+                            <ProfilePage />
+                        </ProtectedOwnerRoute>
+                    }
+                />
 
                 </Routes>
                 

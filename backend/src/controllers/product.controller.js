@@ -285,21 +285,107 @@ const getProductsByStation = async (req, res) => {
 
         await sql.connect(config);
 
-        const result = await sql.query`
-            SELECT *
+        // ===========================
+        // PHÂN TRANG
+        // ===========================
+
+        const page =
+            Math.max(parseInt(req.query.page) || 1, 1);
+
+        const limit =
+            Math.max(parseInt(req.query.limit) || 10, 1);
+
+        const offset =
+            (page - 1) * limit;
+
+        const search =
+            req.query.search || "";
+
+        // ===========================
+        // ĐẾM TỔNG
+        // ===========================
+
+        const countRequest = new sql.Request();
+
+        countRequest.input("stationId", sql.Int, stationId);
+        countRequest.input("search", sql.NVarChar, `%${search}%`);
+
+        const countResult = await countRequest.query(`
+
+            SELECT COUNT(*) AS total
+
             FROM products
-            WHERE station_id = ${stationId}
-        `;
 
-        res.json(result.recordset);
+            WHERE station_id=@stationId
 
-    } catch (error) {
+            AND product_name LIKE @search
 
-        res.status(500).json({
-            error: error.message
+        `);
+
+        const total =
+            countResult.recordset[0].total;
+
+        const totalPages =
+            Math.ceil(total / limit);
+
+        // ===========================
+        // LẤY DỮ LIỆU
+        // ===========================
+
+        const request = new sql.Request();
+
+        request.input("stationId", sql.Int, stationId);
+
+        request.input("search", sql.NVarChar, `%${search}%`);
+
+        request.input("offset", sql.Int, offset);
+
+        request.input("limit", sql.Int, limit);
+
+        const result = await request.query(`
+
+            SELECT *
+
+            FROM products
+
+            WHERE station_id=@stationId
+
+            AND product_name LIKE @search
+
+            ORDER BY product_name
+
+            OFFSET @offset ROWS
+
+            FETCH NEXT @limit ROWS ONLY
+
+        `);
+
+        res.json({
+
+            data: result.recordset,
+
+            page,
+
+            limit,
+
+            total,
+
+            totalPages
+
         });
 
-    
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+
+            error: error.message
+
+        });
+
     }
 
 };
