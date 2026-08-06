@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import {
     FaUsers,
     FaSearch,
@@ -13,7 +14,11 @@ import {
     FaTrash,
     FaCalendarAlt,
     FaChevronLeft,
-    FaChevronRight
+    FaChevronRight,
+    FaKey,
+    FaExclamationTriangle,
+    FaCheckCircle,
+    FaPrint
 } from 'react-icons/fa';
 
 const USERS_PER_PAGE = 10;
@@ -25,6 +30,13 @@ function AdminUsersPage() {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+
+    const [userToResetPassword, setUserToResetPassword] = useState(null);
+    const [isResetting, setIsResetting] = useState(false);
+    const [resetSuccessData, setResetSuccessData] = useState(null);
+
+    const [userToDelete, setUserToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -42,12 +54,54 @@ function AdminUsersPage() {
         }
     };
 
+    const confirmResetPassword = async () => {
+        if (!userToResetPassword) return;
+        setIsResetting(true);
+        try {
+            const res = await api.post(`/admin/users/${userToResetPassword.user_id}/reset-password`);
+            setResetSuccessData({
+                user: userToResetPassword,
+                tempPassword: res.data?.tempPassword,
+                message: res.data?.message || `Reset mật khẩu thành công. Mật khẩu tạm đã được phát hành.`
+            });
+            setUserToResetPassword(null);
+            loadUsers();
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || "Không thể reset mật khẩu người dùng.");
+        } finally {
+            setIsResetting(false);
+        }
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+        setIsDeleting(true);
+        try {
+            await api.delete(`/admin/users/${userToDelete.user_id}`);
+            setUserToDelete(null);
+            loadUsers();
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || "Không thể xóa người dùng.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const pendingResetCount = users.filter(u => Boolean(u.reset_requested)).length;
+
     const filteredUsers = users.filter(user => {
         const matchSearch =
             user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
             user.email?.toLowerCase().includes(search.toLowerCase());
 
-        const matchRole = roleFilter === '' || user.role === roleFilter;
+        let matchRole = true;
+        if (roleFilter === 'reset_requested') {
+            matchRole = Boolean(user.reset_requested);
+        } else if (roleFilter !== '') {
+            matchRole = user.role === roleFilter;
+        }
 
         return matchSearch && matchRole;
     });
@@ -100,7 +154,7 @@ function AdminUsersPage() {
         for (let i = 1; i <= totalPages; i++) pages.push(i);
 
         return (
-            <div className="flex items-center justify-center gap-2 mt-6">
+            <div className="flex items-center justify-center gap-2 mt-6 print:hidden">
                 <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
@@ -133,13 +187,18 @@ function AdminUsersPage() {
         );
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF danh sách người dùng" />
 
             {/* BUTTON QUAY LẠI */}
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
             >
                 <IoChevronBack size={22} />
                 Quay lại
@@ -155,12 +214,24 @@ function AdminUsersPage() {
                             Quản Lý Người Dùng
                         </h1>
                         <p className="text-gray-600 text-sm mt-1">
-                            Xem danh sách tài khoản, khóa/mở khóa và quản lý quyền truy cập trong hệ thống
+                            Xem danh sách tài khoản, duyệt yêu cầu reset mật khẩu và quản lý quyền truy cập
                         </p>
                     </div>
 
-                    <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl font-bold text-sm border border-blue-200 flex items-center gap-2">
-                        <FaUsers /> Tổng số: {users.length} tài khoản
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {pendingResetCount > 0 && (
+                            <div 
+                                onClick={() => { setRoleFilter('reset_requested'); setCurrentPage(1); }}
+                                className="px-4 py-2 bg-amber-100 text-amber-900 rounded-2xl font-bold text-sm border border-amber-300 flex items-center gap-2 animate-bounce cursor-pointer shadow-sm hover:bg-amber-200 transition"
+                                title="Bấm để xem người dùng đang chờ duyệt Reset MK"
+                            >
+                                🔔 {pendingResetCount} yêu cầu Reset MK
+                            </div>
+                        )}
+
+                        <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl font-bold text-sm border border-blue-200 flex items-center gap-2">
+                            <FaUsers /> Tổng số: {users.length} tài khoản
+                        </div>
                     </div>
                 </div>
 
@@ -183,9 +254,12 @@ function AdminUsersPage() {
                         <select
                             value={roleFilter}
                             onChange={(e) => handleRoleFilterChange(e.target.value)}
-                            className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition font-medium min-w-[170px]"
+                            className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition font-medium min-w-[200px]"
                         >
                             <option value="">👤 Tất cả vai trò</option>
+                            {pendingResetCount > 0 && (
+                                <option value="reset_requested">🔔 Yêu cầu Reset MK ({pendingResetCount})</option>
+                            )}
                             <option value="admin">🛡️ Admin</option>
                             <option value="store_owner">🏪 Chủ trạm</option>
                             <option value="user">👤 Người dùng</option>
@@ -269,7 +343,18 @@ function AdminUsersPage() {
                                                     {user.role === "admin" ? (
                                                         <span className="text-gray-400 text-xs italic">Bảo vệ quyền Admin</span>
                                                     ) : (
-                                                        <div className="flex justify-center items-center gap-2">
+                                                        <div className="flex justify-center items-center gap-1.5 whitespace-nowrap">
+                                                            <button
+                                                                onClick={() => setUserToResetPassword(user)}
+                                                                className={`px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow transition flex items-center gap-1 ${Boolean(user.reset_requested)
+                                                                    ? "bg-amber-500 hover:bg-amber-600 animate-pulse ring-2 ring-amber-300"
+                                                                    : "bg-blue-600 hover:bg-blue-700"
+                                                                    }`}
+                                                                title={Boolean(user.reset_requested) ? "Người dùng này đang gửi yêu cầu Reset MK!" : "Reset Mật khẩu & Gửi Email Mật khẩu tạm"}
+                                                            >
+                                                                <FaKey size={11} /> {Boolean(user.reset_requested) ? "🔔 Duyệt Reset MK" : "Reset MK"}
+                                                            </button>
+
                                                             <button
                                                                 onClick={() => toggleStatus(user)}
                                                                 className={`px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow transition flex items-center gap-1 ${user.status === "active"
@@ -285,7 +370,7 @@ function AdminUsersPage() {
                                                             </button>
 
                                                             <button
-                                                                onClick={() => deleteUser(user.user_id)}
+                                                                onClick={() => setUserToDelete(user)}
                                                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center gap-1"
                                                             >
                                                                 <FaTrash size={11} /> Xóa
@@ -311,6 +396,156 @@ function AdminUsersPage() {
                     )}
                 </div>
             </div>
+
+            {/* MODAL XÁC NHẬN RESET MẬT KHẨU */}
+            {userToResetPassword && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-blue-100">
+                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                            <FaKey />
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-extrabold text-gray-800">Xác Nhận Reset Mật Khẩu</h3>
+                            <p className="text-gray-600 text-sm mt-2">
+                                Bạn có chắc chắn muốn đặt lại mật khẩu cho người dùng <b className="text-gray-900 font-extrabold">"{userToResetPassword.full_name}"</b> (<span className="text-blue-600 font-semibold">{userToResetPassword.email}</span>)?
+                            </p>
+                            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-2xl p-3 text-left text-xs text-blue-800 space-y-1">
+                                <p>🔒 <b>Mật khẩu tạm tự động</b> (Độ phức tạp cao) sẽ được hệ thống tạo ngẫu nhiên.</p>
+                                <p>✉️ Mật khẩu tạm được tự động gửi tới Email của người dùng.</p>
+                                <p>⏳ Mật khẩu tạm thời có hiệu lực trong <b>30 phút</b> và bắt buộc đổi ngay khi đăng nhập.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-3 pt-2">
+                            <button
+                                onClick={() => setUserToResetPassword(null)}
+                                disabled={isResetting}
+                                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-sm transition flex-1 disabled:opacity-50"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={confirmResetPassword}
+                                disabled={isResetting}
+                                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 transition flex-1 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isResetting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Đang tạo MK...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaKey /> Xác nhận Reset
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL THÔNG BÁO RESET THÀNH CÔNG */}
+            {resetSuccessData && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-green-100">
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                            <FaCheckCircle />
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-extrabold text-green-800">Reset Mật Khẩu Thành Công 🎉</h3>
+                            <p className="text-gray-600 text-xs mt-1.5">
+                                {resetSuccessData.message}
+                            </p>
+
+                            {/* HIỂN THỊ MẬT KHẨU TẠM THỜI TRỰC TIẾP TRÊN MÀN HÌNH ADMIN */}
+                            {resetSuccessData.tempPassword && (
+                                <div className="mt-4 bg-amber-50 border border-amber-300 rounded-2xl p-4 text-center space-y-2 shadow-inner">
+                                    <p className="text-xs text-amber-900 font-extrabold">🔑 MẬT KHẨU TẠM THỜI (Vừa tạo):</p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <code className="text-lg font-mono font-extrabold text-amber-950 bg-amber-100/90 px-3.5 py-1.5 rounded-xl border border-amber-300 select-all tracking-wider">
+                                            {resetSuccessData.tempPassword}
+                                        </code>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(resetSuccessData.tempPassword);
+                                                alert("📋 Đã sao chép Mật khẩu tạm vào bộ nhớ tạm!");
+                                            }}
+                                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95"
+                                        >
+                                            Sao chép
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-amber-700 font-medium">
+                                        ⏳ Mật khẩu có hiệu lực trong <b>30 phút</b> và sẽ bắt buộc đổi ngay sau khi đăng nhập.
+                                    </p>
+                                </div>
+                            )}
+
+                            <p className="text-xs text-gray-500 mt-3">
+                                Bạn có thể sao chép mật khẩu trên hoặc hướng dẫn người dùng kiểm tra Email để đăng nhập.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={() => setResetSuccessData(null)}
+                            className="w-full px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-200 transition"
+                        >
+                            Đã hiểu
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL XÁC NHẬN XÓA NGƯỜI DÙNG (POPUP ĐỒNG BỘ) */}
+            {userToDelete && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-red-100">
+                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                            <FaTrash />
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-extrabold text-gray-800">Xác Nhận Xóa Tài Khoản</h3>
+                            <p className="text-gray-600 text-sm mt-2">
+                                Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản <b className="text-gray-900 font-extrabold">"{userToDelete.full_name}"</b> (<span className="text-blue-600 font-semibold">{userToDelete.email}</span>)?
+                            </p>
+                            <p className="text-xs text-red-500 font-medium mt-2.5 bg-red-50 p-2.5 rounded-xl border border-red-200">
+                                ⚠️ <b>Cảnh báo:</b> Thao tác này không thể hoàn tác và sẽ xóa toàn bộ thông tin người dùng khỏi hệ thống.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-3 pt-2">
+                            <button
+                                onClick={() => setUserToDelete(null)}
+                                disabled={isDeleting}
+                                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-sm transition flex-1 disabled:opacity-50"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={confirmDeleteUser}
+                                disabled={isDeleting}
+                                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 transition flex-1 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Đang xóa...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaTrash /> Xác nhận Xóa
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

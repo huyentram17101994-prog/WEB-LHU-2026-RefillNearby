@@ -7,9 +7,11 @@ const {
     login,
     profile,
     updateProfile,
-     verifyPassword,
+    verifyPassword,
     changePassword,
-    forgotPassword
+    forgotPassword,
+    changePasswordRequired,
+    requestPasswordReset
 } = require('../controllers/auth.controller');
 const {
     verifyToken
@@ -21,6 +23,8 @@ router.put('/profile', verifyToken, updateProfile);
 router.post('/verify-password',verifyToken,verifyPassword);
 router.put('/change-password',verifyToken,changePassword);
 router.post('/forgot-password',forgotPassword );
+router.post('/forgot-password-request', requestPasswordReset);
+router.post('/change-password-required', verifyToken, changePasswordRequired);
 
 
 module.exports = router;

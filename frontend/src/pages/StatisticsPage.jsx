@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import FloatingPrintButton from '../components/FloatingPrintButton';
 
 import { useNavigate } from "react-router-dom";
 
@@ -451,8 +452,10 @@ function StatisticsPage() {
                 to-green-400
                 p-4
                 md:p-8
+                relative
             "
         >
+            <FloatingPrintButton title="In hoặc Xuất PDF thống kê" />
 
             {/* ================================================= */}
             {/* BACK BUTTON */}

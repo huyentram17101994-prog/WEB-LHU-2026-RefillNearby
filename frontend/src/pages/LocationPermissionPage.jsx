@@ -100,10 +100,12 @@ function LocationPermissionPage() {
 
                 <button
                     onClick={() => {
-                    localStorage.setItem('locationPermission', 'denied');
-                    navigate('/home');
+                        localStorage.setItem('locationPermission', 'denied');
+                        localStorage.removeItem('latitude');
+                        localStorage.removeItem('longitude');
+                        navigate('/home');
                     }}
-                    className="mt-5 text-gray-500 hover:text-green-700"
+                    className="mt-5 text-gray-500 hover:text-green-700 cursor-pointer font-medium transition"
                 >
                     Bỏ qua
                 </button>

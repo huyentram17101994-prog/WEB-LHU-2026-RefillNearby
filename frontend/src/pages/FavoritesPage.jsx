@@ -300,14 +300,13 @@ function FavoritesPage() {
 
             {showStations && (
 
-                <>
+                <div className="max-w-7xl mx-auto">
 
                     <h2 className="
                         text-4xl
                         font-bold
                         text-pink-600
                         mb-8
-                      
                     ">
 
                         🏪 Trạm refill yêu thích
@@ -317,11 +316,11 @@ function FavoritesPage() {
                     <div className="
                         grid
                         grid-cols-1
-                        md:grid-cols-2
-                        lg:grid-cols-5
-                        gap-6
+                        sm:grid-cols-2
+                        lg:grid-cols-3
+                        xl:grid-cols-5
+                        gap-5
                         mb-14
-                        
                     ">
 
                         {stations.map((station) => (
@@ -329,20 +328,23 @@ function FavoritesPage() {
                             <div
                                 key={station.station_id}
                                 className="
-                                    bg-white/80
-                                    backdrop-blur-lg
-                                    rounded-[30px]
+                                    bg-white/90
+                                    backdrop-blur-md
+                                    rounded-3xl
                                     overflow-hidden
-                                    shadow-xl
+                                    shadow-lg
                                     hover:shadow-2xl
-                                    hover:-translate-y-2
+                                    hover:-translate-y-1.5
                                     transition
                                     duration-300
-                                    w-64
+                                    w-full
+                                    max-w-[280px]
                                     mx-auto
-                                    h-full
                                     flex
                                     flex-col
+                                    border
+                                    border-green-100
+                                    group
                                 "
                             >
 
@@ -352,7 +354,7 @@ function FavoritesPage() {
 
                                     <img
                                         src={
-                                            station.image_url.startsWith('/uploads')
+                                            station.image_url?.startsWith('/uploads')
                                                 ? `http://localhost:5000${station.image_url}`
                                                 : station.image_url
                                         }
@@ -361,16 +363,8 @@ function FavoritesPage() {
                                             w-full
                                             h-52
                                             object-cover
-                                            rounded-lg
-                                            mb-2
                                         "
                                     />
-
-                                    <div className="
-                                        absolute
-                                        inset-0
-                                        bg-black/20
-                                    "></div>
 
                                     {/* FAVORITE */}
 
@@ -388,14 +382,19 @@ function FavoritesPage() {
                                             absolute
                                             top-3
                                             right-3
-                                            bg-white/80
+                                            bg-white/90
                                             backdrop-blur-md
                                             rounded-full
-                                            w-10
-                                            h-10
+                                            w-11
+                                            h-11
                                             text-xl
+                                            shadow-md
                                             hover:scale-110
                                             transition
+                                            flex
+                                            items-center
+                                            justify-center
+                                            cursor-pointer
                                         "
                                     >
 
@@ -415,12 +414,15 @@ function FavoritesPage() {
                                 ">
 
                                     <h2 className="
+                                        text-xl
                                         font-bold
                                         text-gray-800
-                                        text-xl
-                                        mb-3
+                                        mb-2
                                         line-clamp-2
-                                        min-h-[56px]
+                                        min-h-[48px]
+                                        group-hover:text-green-700
+                                        transition
+                                        
                                     ">
 
                                         {station.station_name}
@@ -428,31 +430,37 @@ function FavoritesPage() {
                                     </h2>
 
                                     <p className="
-                                        text-gray-800
-                                        mb-3
+                                        text-gray-700
+                                        text-sm
+                                        mb-2
                                         line-clamp-2
-                                        min-h-[48px]
+                                        min-h-[40px]
                                     ">
 
-                                        - Địa chỉ: {station.address}
+                                        📍{" "}
+                                        {station.address}
 
                                     </p>
 
                                     <p className="
                                         text-green-600
-                                        mb-4
+                                        text-sm
+                                        font-medium
+                                        mb-2
                                     ">
 
-                                        - Mở cửa: {station.open_time}
+                                        🕒{" "}
+                                        {station.open_time}
                                         {' - '}
                                         {station.close_time}
 
                                     </p>
 
                                     <p className="
-                                        text-gray-700
-                                        leading-7
-                                        mb-3
+                                        text-gray-600
+                                        text-sm
+                                        leading-6
+                                        mb-4
                                         line-clamp-2
                                         min-h-[48px]
                                     ">
@@ -468,14 +476,18 @@ function FavoritesPage() {
                                             )
                                         }
                                         className="
-                                            mt-auto
                                             w-full
-                                            bg-green-500
-                                            hover:bg-green-600
+                                            bg-green-600  
+                                            hover:bg-green-700
                                             text-white
-                                            py-2
+                                            py-2.5
                                             rounded-xl
-                                            font-semibold
+                                            font-bold
+                                            text-xs
+                                            shadow-md
+                                            transition
+                                            mt-auto
+                                            cursor-pointer
                                         "
                                     >
 
@@ -491,7 +503,7 @@ function FavoritesPage() {
 
                     </div>
 
-                </>
+                </div>
 
             )}
 
@@ -499,7 +511,7 @@ function FavoritesPage() {
 
             {showProducts && (
 
-                <>
+                <div className="max-w-7xl mx-auto">
 
                     <h2 className="
                         text-4xl
@@ -514,8 +526,8 @@ function FavoritesPage() {
 
                     <div className="
                         grid
-                        grid-cols-1
-                        md:grid-cols-2
+                        grid-cols-2
+                        md:grid-cols-3
                         lg:grid-cols-5
                         gap-6
                         mb-14
@@ -526,26 +538,29 @@ function FavoritesPage() {
                             <div
                                 key={product.favorite_product_id}
                                 className="
-                                    bg-white/80
-                                    backdrop-blur-lg
-                                    rounded-[30px]
+                                    bg-white/90
+                                    backdrop-blur-md
+                                    rounded-3xl
                                     overflow-hidden
-                                    shadow-xl
+                                    shadow-lg
                                     hover:shadow-2xl
-                                    hover:-translate-y-2
+                                    hover:-translate-y-1.5
                                     transition
                                     duration-300
-                                    w-64
+                                    w-full
+                                    max-w-[280px]
                                     mx-auto
-                                    h-full
                                     flex
                                     flex-col
+                                    border
+                                    border-green-100
+                                    group
                                 "
                             >
 
                                 {/* IMAGE */}
 
-                                <div className="relative">
+                                <div className="relative overflow-hidden">
 
                                     <img
                                         src={
@@ -558,14 +573,11 @@ function FavoritesPage() {
                                             w-full
                                             h-52
                                             object-cover
+                                            group-hover:scale-105
+                                            transition
+                                            duration-500
                                         "
                                     />
-
-                                    <div className="
-                                        absolute
-                                        inset-0
-                                        bg-black/20
-                                    "></div>
 
                                     <button
                                         onClick={async () => {
@@ -581,13 +593,20 @@ function FavoritesPage() {
                                             absolute
                                             top-3
                                             right-3
-                                            bg-white/80
+                                            bg-white/90
+                                            backdrop-blur-md
                                             rounded-full
                                             w-10
                                             h-10
-                                            text-xl
+                                            text-lg
+                                            shadow-md
                                             hover:scale-110
+                                            active:scale-95
                                             transition
+                                            flex
+                                            items-center
+                                            justify-center
+                                            cursor-pointer
                                         "
                                     >
 
@@ -608,10 +627,13 @@ function FavoritesPage() {
 
                                     <h3 className="
                                         text-xl
-                                        font-semibold
-                                        mb-3
+                                        font-bold
+                                        text-gray-800
+                                        mb-2
                                         line-clamp-2
-                                        min-h-[56px]
+                                        min-h-[48px]
+                                        group-hover:text-green-700
+                                        transition
                                     ">
 
                                         {product.product_name}
@@ -619,59 +641,61 @@ function FavoritesPage() {
                                     </h3>
 
                                     <p className="
-                                        text-base
                                         text-gray-700
-                                        mb-2
+                                        text-base
+                                        mb-1.5
+                                        font-medium
                                     ">
 
                                         💰 Giá từ:{" "}
-                                        {Number(
-                                            product.min_price
-                                        ).toLocaleString()} đ
-
+                                        <b className="text-green-600 font-extrabold">
+                                            {Number(
+                                                product.min_price
+                                            ).toLocaleString()} đ
+                                        </b>
                                     </p>
 
                                     <p className="
                                         text-gray-600
-                                        mb-5
+                                        text-base
+                                        mb-4
                                     ">
 
                                         📍 Có tại:{" "}
-                                        {product.total_stations}
+                                        <b className="text-green-600 font-bold">
+                                            {product.total_stations}
+                                        </b>
                                         {" "}trạm refill
 
                                     </p>
 
-                                    <div className="
-                                        flex
-                                        gap-3
-                                        mt-auto
-                                    ">
+                                    <button
+                                        onClick={() =>
+                                            navigate(
+                                                `/products/${encodeURIComponent(
+                                                    product.product_name
+                                                )}`
+                                            )
+                                        }
+                                        className="
+                                            w-full
+                                            bg-green-600
+                                            hover:bg-green-700
+                                            text-white
+                                            py-2.5
+                                            rounded-xl
+                                            font-bold
+                                            text-xs
+                                            shadow-md
+                                            transition
+                                            mt-auto
+                                            cursor-pointer
+                                        "
+                                    >
 
-                                        <button
-                                            onClick={() =>
-                                                navigate(
-                                                    `/products/${encodeURIComponent(
-                                                        product.product_name
-                                                    )}`
-                                                )
-                                            }
-                                            className="
-                                                flex-1
-                                                bg-green-500
-                                                hover:bg-green-600
-                                                text-white
-                                                py-2
-                                                rounded-xl
-                                                font-semibold
-                                            "
-                                        >
+                                        Xem chi tiết
 
-                                            Xem chi tiết
-
-                                        </button>
-
-                                    </div>
+                                    </button>
 
                                 </div>
 
@@ -681,7 +705,7 @@ function FavoritesPage() {
 
                     </div>
 
-                </>
+                </div>
 
             )}
 
@@ -691,4 +715,4 @@ function FavoritesPage() {
 
 }
 
-export default FavoritesPage;
+            export default FavoritesPage;

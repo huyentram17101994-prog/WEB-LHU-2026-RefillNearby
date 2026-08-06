@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import {
     FaBox,
     FaPlus,
@@ -16,6 +17,7 @@ import {
     FaChevronLeft,
     FaChevronRight,
     FaExclamationTriangle,
+    FaPrint
 } from 'react-icons/fa';
 
 const ITEMS_PER_PAGE = 12;
@@ -49,6 +51,9 @@ function OwnerProductsPage() {
     const [productImageFile, setProductImageFile] = useState(null);
     const [previewImage, setPreviewImage] = useState('');
     const [productForm, setProductForm] = useState(emptyForm);
+
+    const [productToDelete, setProductToDelete] = useState(null);
+    const [isDeletingProduct, setIsDeletingProduct] = useState(false);
 
     // Phân trang
     const [currentPage, setCurrentPage] = useState(1);
@@ -272,7 +277,7 @@ function OwnerProductsPage() {
         const pages = [];
         for (let i = 1; i <= totalPages; i++) pages.push(i);
         return (
-            <div className="flex items-center justify-center gap-2 mt-8">
+            <div className="flex items-center justify-center gap-2 mt-8 print:hidden">
                 <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
@@ -306,16 +311,21 @@ function OwnerProductsPage() {
         );
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     // ========================
     // RENDER
     // ========================
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF danh sách sản phẩm" />
 
             {/* BACK BUTTON */}
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
             >
                 <IoChevronBack size={22} />
                 Quay lại
@@ -334,8 +344,11 @@ function OwnerProductsPage() {
                             Thêm mới, chỉnh sửa thông tin, giá cả và hình ảnh sản phẩm tại các trạm Refill của bạn
                         </p>
                     </div>
-                    <div className="px-4 py-2 bg-green-50 text-green-700 rounded-2xl font-bold text-sm border border-green-200">
-                        Tổng số: {products.length} sản phẩm
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="px-4 py-2 bg-green-50 text-green-700 rounded-2xl font-bold text-sm border border-green-200">
+                            Tổng số: {products.length} sản phẩm
+                        </div>
                     </div>
                 </div>
 

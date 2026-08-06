@@ -718,170 +718,172 @@ const toggleProductStatus = async (req, res) => {
 
 };
 const getOwnerDashboard = async (req, res) => {
-
     try {
-
         const ownerId = req.user.user_id;
+        const { fromDate, toDate } = req.query;
 
         await sql.connect(config);
 
-        const stationResult = await sql.query`
+        const request = new sql.Request();
+        request.input('ownerId', sql.Int, ownerId);
+
+        let dateConditionReview = '';
+        let dateConditionRefill = '';
+        let dateConditionFavStation = '';
+        let dateConditionFavProduct = '';
+
+        if (fromDate && toDate) {
+            request.input('fromDate', sql.VarChar, fromDate);
+            request.input('toDate', sql.VarChar, toDate);
+            dateConditionReview = ` AND CAST(r.created_at AS DATE) BETWEEN @fromDate AND @toDate`;
+            dateConditionRefill = ` AND CAST(rh.refill_date AS DATE) BETWEEN @fromDate AND @toDate`;
+            dateConditionFavStation = ` AND CAST(f.created_at AS DATE) BETWEEN @fromDate AND @toDate`;
+            dateConditionFavProduct = ` AND CAST(fp.created_at AS DATE) BETWEEN @fromDate AND @toDate`;
+        }
+
+        // Báo cáo tổng quan toàn bộ hệ thống (Không phụ thuộc vào bộ lọc ngày)
+        const allTimeStationFavResult = await request.query(`
+            SELECT COUNT(f.favorite_id) AS total
+            FROM favorites f
+            JOIN refill_stations rs ON f.station_id = rs.station_id
+            WHERE rs.owner_id = @ownerId
+        `);
+        const allTimeStationFavorites = allTimeStationFavResult.recordset[0]?.total || 0;
+
+        let allTimeProductFavorites = 0;
+        try {
+            const allTimeProdFavResult = await request.query(`
+                SELECT COUNT(fp.favorite_product_id) AS total
+                FROM favorite_products fp
+                JOIN products p ON fp.product_id = p.product_id
+                JOIN refill_stations rs ON p.station_id = rs.station_id
+                WHERE rs.owner_id = @ownerId
+            `);
+            allTimeProductFavorites = allTimeProdFavResult.recordset[0]?.total || 0;
+        } catch (e) {
+            console.error("All time product favorites query error:", e.message);
+        }
+
+        const allTimeTotalFavorites = allTimeStationFavorites + allTimeProductFavorites;
+
+        const stationResult = await request.query(`
             SELECT COUNT(*) totalStations
             FROM refill_stations
-            WHERE owner_id = ${ownerId}
-        `;
+            WHERE owner_id = @ownerId
+        `);
 
-        const productResult = await sql.query`
+        const productResult = await request.query(`
             SELECT COUNT(*) totalProducts
             FROM products p
+            JOIN refill_stations rs ON p.station_id = rs.station_id
+            WHERE rs.owner_id = @ownerId
+        `);
 
-            JOIN refill_stations rs
-            ON p.station_id = rs.station_id
+        const favoriteResult = await request.query(`
+            SELECT COUNT(*) totalFavorites
+            FROM favorites f
+            JOIN refill_stations rs ON f.station_id = rs.station_id
+            WHERE rs.owner_id = @ownerId ${dateConditionFavStation}
+        `);
 
-            WHERE rs.owner_id = ${ownerId}
-        `;
-        const favoriteResult = await sql.query`
-    SELECT COUNT(*) totalFavorites
-    FROM favorites f
+        const stationFavoriteResult = await request.query(`
+            SELECT
+                rs.station_id,
+                rs.station_name,
+                COUNT(f.favorite_id) AS totalFavorites
+            FROM refill_stations rs
+            LEFT JOIN favorites f ON rs.station_id = f.station_id ${dateConditionFavStation}
+            WHERE rs.owner_id = @ownerId
+            GROUP BY rs.station_id, rs.station_name
+            HAVING COUNT(f.favorite_id) > 0
+            ORDER BY totalFavorites DESC
+        `);
 
-    JOIN refill_stations rs
-    ON f.station_id = rs.station_id
+        const totalStationFavorites = stationFavoriteResult.recordset.reduce(
+            (sum, item) => sum + item.totalFavorites,
+            0
+        );
 
-    WHERE rs.owner_id = ${ownerId}
-`;
-const stationFavoriteResult = await sql.query`
-    SELECT
-        rs.station_id,
-        rs.station_name,
-        COUNT(f.favorite_id) AS totalFavorites
+        const productFavoriteResult = await request.query(`
+            SELECT
+                p.product_id,
+                p.product_name,
+                COUNT(fp.favorite_product_id) AS totalFavorites
+            FROM products p
+            INNER JOIN favorite_products fp ON p.product_id = fp.product_id ${dateConditionFavProduct}
+            JOIN refill_stations rs ON p.station_id = rs.station_id
+            WHERE rs.owner_id = @ownerId
+            GROUP BY p.product_id, p.product_name
+            ORDER BY totalFavorites DESC
+        `);
 
-    FROM refill_stations rs
+        const totalProductFavorites = productFavoriteResult.recordset.reduce(
+            (sum, item) => sum + item.totalFavorites,
+            0
+        );
 
-    LEFT JOIN favorites f
-    ON rs.station_id = f.station_id
+        const stationRatingResult = await request.query(`
+            SELECT *
+            FROM vw_StationRatings
+            WHERE owner_id = @ownerId
+        `);
 
-    WHERE rs.owner_id = ${ownerId}
+        const reviewResult = await request.query(`
+            SELECT
+                r.review_id,
+                r.rating,
+                r.comment,
+                r.owner_reply,
+                r.created_at,
+                CONVERT(varchar(19), r.created_at, 120) AS created_at_display,
+                FORMAT(r.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
+                u.full_name,
+                p.product_name,
+                rs.station_name
+            FROM reviews r
+            JOIN users u ON r.user_id = u.user_id
+            JOIN products p ON r.product_id = p.product_id
+            JOIN refill_stations rs ON r.station_id = rs.station_id
+            WHERE rs.owner_id = @ownerId ${dateConditionReview}
+            ORDER BY r.review_id DESC
+        `);
 
-    GROUP BY
-        rs.station_id,
-        rs.station_name
-
-    HAVING COUNT(f.favorite_id) > 0
-
-    ORDER BY totalFavorites DESC
-`;
-const totalStationFavorites =
-    stationFavoriteResult.recordset.reduce(
-
-        (sum, item) =>
-
-            sum + item.totalFavorites,
-
-        0
-
-    );
-const productFavoriteResult = await sql.query`
-
-SELECT
-    p.product_id,
-    p.product_name,
-    COUNT(fp.favorite_product_id) AS totalFavorites
-
-FROM products p
-
-INNER JOIN favorite_products fp
-ON p.product_id = fp.product_id
-
-JOIN refill_stations rs
-ON p.station_id = rs.station_id
-
-WHERE rs.owner_id = ${ownerId}
-
-GROUP BY
-    p.product_id,
-    p.product_name
-
-ORDER BY totalFavorites DESC
-
-`;
-const totalProductFavorites =
-    productFavoriteResult.recordset.reduce(
-
-        (sum, item) =>
-
-            sum + item.totalFavorites,
-
-        0
-
-    );
-const stationRatingResult = await sql.query`
-SELECT *
-FROM vw_StationRatings
-WHERE owner_id = ${ownerId}
-`;
-const reviewResult = await sql.query`
-SELECT
-    r.review_id,
-    r.rating,
-    r.comment,
-    r.owner_reply,
-   
-   r.created_at,
-    CONVERT(varchar(19), r.created_at, 120) AS created_at_display,
-    FORMAT(r.replied_at,'dd/MM/yyyy HH:mm:ss') AS replied_at,
-    u.full_name,
-    p.product_name,
-    rs.station_name
-FROM reviews r
-
-JOIN users u
-ON r.user_id = u.user_id
-
-JOIN products p
-ON r.product_id = p.product_id
-
-JOIN refill_stations rs
-ON r.station_id = rs.station_id
-
-WHERE rs.owner_id = ${ownerId}
-
-ORDER BY r.review_id DESC
-`;
+        let refillResult = { recordset: [{ totalRefillQuantity: 0, totalRefillCount: 0 }] };
+        try {
+            refillResult = await request.query(`
+                SELECT
+                    ISNULL(SUM(rh.quantity), 0) AS totalRefillQuantity,
+                    COUNT(rh.refill_id) AS totalRefillCount
+                FROM refill_history rh
+                JOIN refill_stations rs ON rh.station_id = rs.station_id
+                WHERE rs.owner_id = @ownerId ${dateConditionRefill}
+            `);
+        } catch (e) {
+            console.error("Refill history query error:", e.message);
+        }
 
         res.json({
-
-    totalStations:
-        stationResult.recordset[0].totalStations,
-
-    totalProducts:
-        productResult.recordset[0].totalProducts,
-        totalProductFavorites,
-        totalStationFavorites,
-
-    totalFavorites:
-        favoriteResult.recordset[0].totalFavorites,
-
-    stationFavorites:
-        stationFavoriteResult.recordset,
-    productFavorites:
-        productFavoriteResult.recordset,
-
-    stationRatings:
-        stationRatingResult.recordset,
-
-    reviews:
-        reviewResult.recordset
-
-});
-
-    } catch (error) {
-
-        res.status(500).json({
-            error: error.message
+            totalStations: stationResult.recordset[0].totalStations,
+            totalProducts: productResult.recordset[0].totalProducts,
+            totalProductFavorites,
+            totalStationFavorites,
+            totalFavorites: favoriteResult.recordset[0].totalFavorites,
+            allTimeStationFavorites,
+            allTimeProductFavorites,
+            allTimeTotalFavorites,
+            stationFavorites: stationFavoriteResult.recordset,
+            productFavorites: productFavoriteResult.recordset,
+            stationRatings: stationRatingResult.recordset,
+            reviews: reviewResult.recordset,
+            totalRefillQuantity: refillResult.recordset[0]?.totalRefillQuantity || 0,
+            totalRefillCount: refillResult.recordset[0]?.totalRefillCount || 0,
+            fromDate: fromDate || null,
+            toDate: toDate || null
         });
-
+    } catch (error) {
+        console.error("Lỗi getOwnerDashboard:", error);
+        res.status(500).json({ error: error.message });
     }
-
 };
 const replyReview = async (req, res) => {
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
@@ -270,9 +271,11 @@ function RefillHistoryPage() {
             from-green-200
             via-white
             to-green-400
-            p-6
+            p-4
             md:p-8
+            relative
         ">
+            <FloatingPrintButton title="In hoặc Xuất PDF lịch sử refill" />
 
             {/* BACK */}
 
@@ -329,8 +332,8 @@ function RefillHistoryPage() {
                 </div>
 
                 {/* FILTER */}
-<div
-    className="
+                <div
+                    className="
          max-w-3xl
                     mx-auto
                     bg-white
@@ -340,26 +343,26 @@ function RefillHistoryPage() {
                     md:p-3
                     mb-8
     "
->
-    <div
-        className="
+                >
+                    <div
+                        className="
             flex
             items-center
             gap-3
             min-w-max
         "
-    >
-                         {/* LABEL */}
+                    >
+                        {/* LABEL */}
 
-        <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xl">
-                📅
-            </span>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-xl">
+                                📅
+                            </span>
 
-            <span className="font-semibold text-gray-700">
-                Thời gian:
-            </span>
-        </div>
+                            <span className="font-semibold text-gray-700">
+                                Thời gian:
+                            </span>
+                        </div>
                         <select
                             value={filterType}
                             onChange={(e) =>
@@ -420,7 +423,7 @@ function RefillHistoryPage() {
                                 gap-2
                                 mx-auto
                             ">
-                                
+
                                 <input
                                     type="date"
                                     value={fromDate}
@@ -486,7 +489,7 @@ function RefillHistoryPage() {
 
                         )}
 
-                       
+
                     </div>
 
                 </div>
@@ -713,10 +716,9 @@ function RefillHistoryPage() {
                                                 rounded-xl
                                                 font-semibold
                                                 transition
-                                                ${
-                                                    currentPage === page
-                                                        ? "bg-green-500 text-white shadow-md"
-                                                        : "bg-white text-gray-700 shadow-sm hover:bg-green-50"
+                                                ${currentPage === page
+                                                    ? "bg-green-500 text-white shadow-md"
+                                                    : "bg-white text-gray-700 shadow-sm hover:bg-green-50"
                                                 }
                                             `}
                                         >

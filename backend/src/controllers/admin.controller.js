@@ -1,5 +1,6 @@
 const sql = require('mssql');
 const config = require('../config/db.config');
+const bcrypt = require('bcryptjs');
 
 const getDashboard = async (req, res) => {
 
@@ -29,6 +30,7 @@ const getAllUsers = async (req, res) => {
 
     try {
 
+        await ensureUsersTableColumns();
         await sql.connect(config);
 
         const result = await sql.query`
@@ -36,11 +38,15 @@ const getAllUsers = async (req, res) => {
                 user_id,
                 full_name,
                 email,
+                phone,
                 role,
                 status,
+                must_change_password,
+                reset_requested,
+                reset_requested_at,
                 created_at
             FROM users
-            ORDER BY user_id DESC
+            ORDER BY reset_requested DESC, user_id DESC
         `;
 
         res.json(result.recordset);
@@ -1184,6 +1190,109 @@ const getTopStations = async (req, res) => {
     }
 
 };
+
+const crypto = require('crypto');
+const { sendTempPasswordEmail } = require('../services/email.service');
+const { logAudit } = require('../services/audit.service');
+const { ensureUsersTableColumns } = require('../services/dbSetup.service');
+
+/**
+ * Tạo mật khẩu tạm ngẫu nhiên đủ độ phức tạp (chữ hoa, chữ thường, số, ký tự đặc biệt)
+ */
+const generateSecureTempPassword = (length = 10) => {
+    const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lowercase = "abcdefghijkmnpqrstuvwxyz";
+    const numbers = "23456789";
+    const symbols = "!@#$%^&*";
+    const allChars = uppercase + lowercase + numbers + symbols;
+
+    let password = "";
+    // Đảm bảo có ít nhất 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+    password += uppercase[crypto.randomInt(0, uppercase.length)];
+    password += lowercase[crypto.randomInt(0, lowercase.length)];
+    password += numbers[crypto.randomInt(0, numbers.length)];
+    password += symbols[crypto.randomInt(0, symbols.length)];
+
+    for (let i = 4; i < length; i++) {
+        password += allChars[crypto.randomInt(0, allChars.length)];
+    }
+
+    // Xáo trộn chuỗi mật khẩu
+    return password.split('').sort(() => 0.5 - Math.random()).join('');
+};
+
+/**
+ * Admin Reset Mật Khẩu và Gửi Mật Khẩu Tạm cho Người Dùng
+ */
+const resetUserPassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminId = req.user?.user_id;
+
+        await ensureUsersTableColumns();
+        await sql.connect(config);
+
+        // Lấy thông tin user
+        const userCheck = await sql.query`
+            SELECT user_id, full_name, email, role, status
+            FROM users
+            WHERE user_id = ${id}
+        `;
+
+        if (userCheck.recordset.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+        }
+
+        const targetUser = userCheck.recordset[0];
+
+        if (targetUser.role === 'admin') {
+            return res.status(403).json({ message: 'Không thể reset mật khẩu của tài khoản Admin khác.' });
+        }
+
+        // Sinh mật khẩu tạm an toàn
+        const tempPassword = generateSecureTempPassword(10);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        const EXPIRE_MINUTES = 30;
+
+        // Cập nhật DB: password, must_change_password=1, temp_password_expires_at = DATEADD(minute, 30, GETDATE()), reset_requested = 0
+        await sql.query`
+            UPDATE users
+            SET password = ${hashedPassword},
+                must_change_password = 1,
+                temp_password_expires_at = DATEADD(minute, ${EXPIRE_MINUTES}, GETDATE()),
+                reset_requested = 0,
+                reset_requested_at = NULL
+            WHERE user_id = ${id}
+        `;
+
+        // Ghi Audit Log
+        await logAudit(
+            adminId,
+            targetUser.user_id,
+            'RESET_USER_PASSWORD',
+            `Admin #${adminId} đã reset mật khẩu cho người dùng #${targetUser.user_id} (${targetUser.email}). Mật khẩu tạm có hiệu lực 30 phút.`
+        );
+
+        // Gửi Email thông báo mật khẩu tạm
+        await sendTempPasswordEmail(
+            targetUser.email,
+            targetUser.full_name,
+            tempPassword,
+            EXPIRE_MINUTES
+        );
+
+        return res.json({
+            message: `Reset mật khẩu thành công! Mật khẩu tạm đã được gửi tới email ${targetUser.email}`,
+            tempPassword: tempPassword,
+            expiresInMinutes: EXPIRE_MINUTES
+        });
+
+    } catch (error) {
+        console.error("Lỗi resetUserPassword:", error);
+        return res.status(500).json({ error: error.message || 'Lỗi hệ thống khi reset mật khẩu' });
+    }
+};
+
 module.exports = {
     getDashboard,
     getAllUsers,
@@ -1209,5 +1318,6 @@ module.exports = {
     getFavoriteProductCount,
     toggleUserStatus,
     getStationDetail,
-    getTopRefillProducts
+    getTopRefillProducts,
+    resetUserPassword
 };

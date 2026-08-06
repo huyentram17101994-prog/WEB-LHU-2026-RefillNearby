@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import { 
     FaTint, 
     FaCalendarAlt, 
@@ -11,7 +12,8 @@ import {
     FaCalendarWeek, 
     FaTrophy,
     FaStore,
-    FaBox
+    FaBox,
+    FaPrint
 } from "react-icons/fa";
 
 function AdminRefillStatisticsPage() {
@@ -121,6 +123,10 @@ function AdminRefillStatisticsPage() {
         return str;
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (loading && !data) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-white to-green-300">
@@ -131,12 +137,13 @@ function AdminRefillStatisticsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF thống kê" />
 
             {/* BUTTON QUAY LẠI */}
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
             >
                 <IoChevronBack size={22} />
                 Quay lại
@@ -144,7 +151,6 @@ function AdminRefillStatisticsPage() {
 
             <div className="max-w-7xl mx-auto space-y-6 mt-4">
 
-                {/* PAGE TITLE BANNER */}
                 <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">

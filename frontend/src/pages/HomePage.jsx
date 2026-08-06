@@ -34,6 +34,8 @@ function HomePage() {
 
     const [userLocation, setUserLocation] = useState(null);
 
+    const [showLocationModal, setShowLocationModal] = useState(false);
+
     const [user, setUser] = useState(
         JSON.parse(
             localStorage.getItem("user")
@@ -222,137 +224,68 @@ function HomePage() {
 
 
     // =====================================================
-    // TRẠM GẦN TÔI
-    // CHỈ THAY ĐỔI BẢN ĐỒ
-    // KHÔNG THAY ĐỔI DANH SÁCH
+    // TRẠM GẦN TÔI & XIN QUYỀN TRUY CẬP VỊ TRÍ
     // =====================================================
+    const filterNearbyStations = (latitude, longitude) => {
+        const nearbyStations = allStations.filter((station) => {
+            const stationLat = Number(station.latitude);
+            const stationLng = Number(station.longitude);
+            if (!stationLat || !stationLng) return false;
+
+            const distance = calculateDistance(
+                latitude,
+                longitude,
+                stationLat,
+                stationLng
+            );
+            return distance <= 30;
+        });
+
+        setMapStations(nearbyStations);
+    };
 
     const showNearestStations = () => {
-
-        if (
-            !navigator.geolocation
-        ) {
-
-            alert(
-                "Trình duyệt không hỗ trợ lấy vị trí."
-            );
-
+        // Nếu đã có vị trí người dùng -> Lọc trạm 30km ngay lập tức
+        if (userLocation && userLocation[0] && userLocation[1]) {
+            filterNearbyStations(userLocation[0], userLocation[1]);
             return;
-
         }
 
+        // Nếu chưa có vị trí -> Mở Modal hỏi xin phép người dùng
+        setShowLocationModal(true);
+    };
+
+    const handleConfirmLocation = () => {
+        setShowLocationModal(false);
+
+        if (!navigator.geolocation) {
+            alert("Trình duyệt của bạn không hỗ trợ lấy vị trí GPS.");
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(
-
             (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
 
-                const latitude =
-                    position.coords.latitude;
+                localStorage.setItem("latitude", latitude);
+                localStorage.setItem("longitude", longitude);
+                localStorage.setItem("locationPermission", "granted");
 
-                const longitude =
-                    position.coords.longitude;
-
-
-                // Lưu vị trí
-                localStorage.setItem(
-                    "latitude",
-                    latitude
-                );
-
-                localStorage.setItem(
-                    "longitude",
-                    longitude
-                );
-
-                localStorage.setItem(
-                    "locationPermission",
-                    "granted"
-                );
-
-
-                setUserLocation([
-                    latitude,
-                    longitude
-                ]);
-
-
-                // Lọc trạm gần trong bán kính 30km
-                const nearbyStations =
-                    allStations.filter(
-                        (station) => {
-
-                            const stationLat =
-                                Number(
-                                    station.latitude
-                                );
-
-                            const stationLng =
-                                Number(
-                                    station.longitude
-                                );
-
-
-                            if (
-                                !stationLat ||
-                                !stationLng
-                            ) {
-
-                                return false;
-
-                            }
-
-
-                            const distance =
-                                calculateDistance(
-                                    latitude,
-                                    longitude,
-                                    stationLat,
-                                    stationLng
-                                );
-
-
-                            return (
-                                distance <= 30
-                            );
-
-                        }
-                    );
-
-
-                // QUAN TRỌNG:
-                // Chỉ thay đổi bản đồ
-                setMapStations(
-                    nearbyStations
-                );
-
-
-                // KHÔNG đụng vào:
-                // setStations()
-                // setCurrentPage()
-                // setTotalPages()
-
+                setUserLocation([latitude, longitude]);
+                filterNearbyStations(latitude, longitude);
             },
-
-
-            () => {
-
-                alert(
-                    "Không thể lấy vị trí hiện tại. Vui lòng cho phép trình duyệt truy cập vị trí."
-                );
-
+            (error) => {
+                console.log("Lỗi lấy vị trí GPS:", error);
+                alert("Không thể lấy vị trí. Vui lòng cho phép truy cập vị trí trên thiết bị.");
             },
-
-            {
-                enableHighAccuracy: true,
-
-                timeout: 10000,
-
-                maximumAge: 0
-
-            }
-
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
+    };
 
+    const handleCancelLocation = () => {
+        // Bấm Hủy: Giữ nguyên bản đồ không có vị trí người dùng
+        setShowLocationModal(false);
     };
 
 
@@ -493,6 +426,15 @@ function HomePage() {
 
         // Notification
         fetchUnreadCount();
+
+        // CHỈ TỰ ĐỘNG HIỂN THỊ VỊ TRÍ NẾU NGƯỜI DÙNG ĐÃ CHO PHÉP TRƯỚC ĐÓ (granted)
+        const isGranted = localStorage.getItem("locationPermission") === "granted";
+        const lat = Number(localStorage.getItem("latitude"));
+        const lng = Number(localStorage.getItem("longitude"));
+
+        if (isGranted && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            setUserLocation([lat, lng]);
+        }
 
     }, []);
 
@@ -747,10 +689,10 @@ function HomePage() {
                     <div className="
                         bg-yellow-100
                         text-yellow-700
-                        px-4
-                        py-3
+                        px-3
+                        py-2
                         rounded-2xl
-                        font-semibold
+                        font-bold
                         shadow-md
                         whitespace-nowrap
                     ">
@@ -775,8 +717,8 @@ function HomePage() {
 
                         className="
                             relative
-                            bg-red-100
-                            p-3
+                            bg-red-50
+                            p-2
                             rounded-2xl
                             shadow-md
                             hover:bg-red-200
@@ -835,7 +777,7 @@ function HomePage() {
                                 cursor-pointer
                                 bg-green-200
                                 px-3
-                                py-3
+                                py-2
                                 rounded-2xl
                                 shadow-md
                                 hover:bg-green-100
@@ -1034,7 +976,7 @@ function HomePage() {
                 TÌM KIẾM -> TRANG TÌM KIẾM RIÊNG
             ================================================= */}
 
-       <div className="
+            <div className="
                 mb-8
                 max-w-4xl
                 mx-auto
@@ -1196,8 +1138,8 @@ function HomePage() {
                                 bg-red-500
                                 hover:bg-red-600
                                 text-white
-                                px-5
-                                py-2.5
+                                px-4
+                                py-2
                                 rounded-xl
                                 font-semibold
                                 shadow-md
@@ -1223,8 +1165,8 @@ function HomePage() {
                                 bg-green-500
                                 hover:bg-green-600
                                 text-white
-                                px-5
-                                py-2.5
+                                px-4
+                                py-2
                                 rounded-xl
                                 font-semibold
                                 shadow-md
@@ -1243,11 +1185,9 @@ function HomePage() {
 
 
                 {/* MAP */}
-
                 <MapView
-                    stations={
-                        mapStations
-                    }
+                    stations={mapStations}
+                    userLocation={userLocation}
                 />
 
             </div>
@@ -1367,8 +1307,8 @@ function HomePage() {
                                 }
 
                                 className="
-                                    bg-white/85
-                                    backdrop-blur-lg
+                                     bg-white/90
+                                    backdrop-blur-md
                                     rounded-3xl
                                     overflow-hidden
                                     shadow-lg
@@ -1379,9 +1319,11 @@ function HomePage() {
                                     w-full
                                     max-w-[280px]
                                     mx-auto
-                                    h-full
                                     flex
                                     flex-col
+                                    border
+                                    border-green-100
+                                    group
                                 "
                             >
 
@@ -1485,6 +1427,8 @@ function HomePage() {
                                         mb-2
                                         line-clamp-2
                                         min-h-[56px]
+                                        group-hover:text-green-700
+                                        transition
                                     ">
 
                                         {
@@ -1560,8 +1504,8 @@ function HomePage() {
 
                                         className="
                                             w-full
-                                            bg-green-500
-                                            hover:bg-green-600
+                                            bg-green-600
+                                            hover:bg-green-700
                                             text-white
                                             py-2
                                             rounded-xl
@@ -1687,17 +1631,16 @@ function HomePage() {
                                         rounded-xl
                                         font-semibold
                                         transition
-                                        ${
-                                            currentPage ===
+                                        ${currentPage ===
                                             page
 
-                                                ?
+                                            ?
 
-                                                "bg-green-500 text-white shadow-md"
+                                            "bg-green-500 text-white shadow-md"
 
-                                                :
+                                            :
 
-                                                "bg-white text-gray-700 hover:bg-green-50 shadow-sm"
+                                            "bg-white text-gray-700 hover:bg-green-50 shadow-sm"
                                         }
                                     `}
                                 >
@@ -1778,6 +1721,41 @@ function HomePage() {
 
                 </p>
 
+            )}
+
+            {/* LOCATION PERMISSION POPUP MODAL */}
+            {showLocationModal && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-4 border border-green-100 animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-3xl mx-auto text-emerald-600">
+                            📍
+                        </div>
+
+                        <h3 className="text-2xl font-bold text-gray-800">
+                            Cho phép truy cập vị trí?
+                        </h3>
+
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Ứng dụng cần vị trí của bạn để hiển thị vị trí trên bản đồ và tìm các trạm refill gần bạn nhất trong bán kính 30km.
+                        </p>
+
+                        <div className="flex items-center justify-center gap-3 pt-2">
+                            <button
+                                onClick={handleCancelLocation}
+                                className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-sm transition cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                onClick={handleConfirmLocation}
+                                className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl font-bold text-sm shadow-md transition cursor-pointer"
+                            >
+                                Đồng ý (OK)
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
         </div>

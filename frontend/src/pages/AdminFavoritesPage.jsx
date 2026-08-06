@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
@@ -231,7 +232,8 @@ function AdminFavoritesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF danh sách lượt yêu thích" />
 
             {/* BUTTON QUAY LẠI */}
             <button

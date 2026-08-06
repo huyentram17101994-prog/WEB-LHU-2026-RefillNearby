@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import {
     BrowserRouter,
     Routes,
-    Route
+    Route,
+    useLocation,
+    useNavigate
 } from 'react-router-dom';
 import WelcomePage from '../pages/WelcomePage';
 import HomePage from '../pages/HomePage';
@@ -34,11 +37,38 @@ import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ProductStationsPage from '../pages/ProductStationsPage';
 import NotificationPage from "../pages/NotificationPage";
 import ProfilePage from '../pages/ProfilePage';
+import ForceChangePasswordPage from '../pages/ForceChangePasswordPage';
+
+/**
+ * Route Guard kiểm tra nếu User cần đổi mật khẩu bắt buộc -> Tự động chuyển hướng về /change-password-required
+ */
+function MustChangePasswordGuard() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.must_change_password && location.pathname !== '/change-password-required') {
+                    navigate('/change-password-required', { replace: true });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }, [location.pathname, navigate]);
+
+    return null;
+}
+
 function AppRoutes() {
 
     return (
 
         <BrowserRouter>
+            <MustChangePasswordGuard />
 
             <Routes>
 
@@ -54,6 +84,10 @@ function AppRoutes() {
                 <Route
                     path="/login"
                     element={<LoginPage />}
+                />
+                <Route
+                    path="/change-password-required"
+                    element={<ForceChangePasswordPage />}
                 />
                 <Route
                     path="/register"

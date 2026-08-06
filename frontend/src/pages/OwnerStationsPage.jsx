@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import { 
     FaStore, 
     FaPlus, 
@@ -14,7 +15,8 @@ import {
     FaSearch, 
     FaTimes, 
     FaCheck, 
-    FaGlobe 
+    FaGlobe,
+    FaPrint
 } from 'react-icons/fa';
 import { formatTimeDisplay, formatTimeInput } from '../utils/formatters';
 
@@ -231,36 +233,22 @@ function OwnerStationsPage() {
         station.address?.toLowerCase().includes(searchStation.toLowerCase())
     );
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF danh sách các trạm Refill" />
              
-<button
-                        onClick={() => navigate('/owner')}
-                        className="
-                            flex items-center gap-2
-                            px-5 py-2.5
-                            bg-white
-                            rounded-full
-                            shadow-md
-                            hover:shadow-lg
-                            hover:bg-gray-50
-                            transition-all
-                            duration-200
-                            text-base
-                            font-semibold
-                            text-gray-700
-                        "
-                    >
-                        <IoChevronBack size={22} />
-                        Quay lại
-                    </button>
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
+            >
+                <IoChevronBack size={22} />
+                Quay lại
+            </button>
             <div className="max-w-6xl mx-auto space-y-6">
-{/* BACK BUTTON & NAVIGATION BAR */}
-                <div className="flex justify-between items-center">
-                    
-              
-                   
-                </div>
 
                 {/* PAGE TITLE BANNER */}
                 <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -274,8 +262,10 @@ function OwnerStationsPage() {
                         </p>
                     </div>
 
-                    <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl font-bold text-sm border border-blue-200">
-                        Tổng số: {stations.length} trạm
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl font-bold text-sm border border-blue-200">
+                            Tổng số: {stations.length} trạm
+                        </div>
                     </div>
                 </div>
 

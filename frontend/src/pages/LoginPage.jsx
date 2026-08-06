@@ -32,6 +32,13 @@ function LoginPage() {
             localStorage.setItem('role', response.data.user.role);
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
+            // Nếu tài khoản sử dụng Mật khẩu tạm từ Admin -> Bắt buộc tới trang đổi mật khẩu mới
+            if (response.data.must_change_password) {
+                alert('⚠️ Bạn đang sử dụng Mật khẩu tạm thời. Vui lòng khởi tạo Mật khẩu mới để bảo vệ tài khoản!');
+                navigate('/change-password-required');
+                return;
+            }
+
             const role = response.data.user.role;
             if (role === 'admin') {
                 navigate('/admin');

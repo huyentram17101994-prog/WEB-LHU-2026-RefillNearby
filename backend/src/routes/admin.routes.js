@@ -26,7 +26,8 @@ const {
     getFavoriteProductCount,
     toggleUserStatus,
     getStationDetail,
-    getTopRefillProducts
+    getTopRefillProducts,
+    resetUserPassword
 } = require('../controllers/admin.controller');
 
 const {
@@ -60,6 +61,12 @@ router.put(
     verifyToken,
     authorizeRoles('admin'),
     toggleUserStatus
+);
+router.post(
+    '/users/:id/reset-password',
+    verifyToken,
+    authorizeRoles('admin'),
+    resetUserPassword
 );
 router.get(
     '/stations',

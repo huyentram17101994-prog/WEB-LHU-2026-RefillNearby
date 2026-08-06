@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import {
     FaStar,
     FaSearch,
@@ -16,6 +17,7 @@ import {
     FaBox,
     FaChevronLeft,
     FaChevronRight,
+    FaPrint
 } from 'react-icons/fa';
 
 const REVIEWS_PER_PAGE = 10;
@@ -252,7 +254,7 @@ function OwnerReviewsPage() {
         for (let i = 1; i <= totalPages; i++) pages.push(i);
 
         return (
-            <div className="flex items-center justify-center gap-2 mt-8">
+            <div className="flex items-center justify-center gap-2 mt-8 print:hidden">
                 <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
@@ -286,13 +288,18 @@ function OwnerReviewsPage() {
         );
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF danh sách đánh giá" />
 
             {/* BUTTON QUAY LẠI */}
             <button
                 onClick={() => navigate('/owner')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
             >
                 <IoChevronBack size={22} />
                 Quay lại
@@ -312,8 +319,10 @@ function OwnerReviewsPage() {
                         </p>
                     </div>
 
-                    <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-2xl font-bold text-sm border border-amber-200 flex items-center gap-2">
-                        <FaStar className="text-amber-500" /> Tổng số: {totalReviewsCount} đánh giá
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-2xl font-bold text-sm border border-amber-200 flex items-center gap-2">
+                            <FaStar className="text-amber-500" /> Tổng số: {totalReviewsCount} đánh giá
+                        </div>
                     </div>
                 </div>
 

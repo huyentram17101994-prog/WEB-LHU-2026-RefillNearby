@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import FloatingPrintButton from '../components/FloatingPrintButton';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { RiLogoutCircleRLine } from "react-icons/ri";
@@ -70,16 +71,19 @@ function AdminDashboardPage() {
         loadAllData();
     }, []);
 
+    const [pendingResetUsers, setPendingResetUsers] = useState([]);
+
     const loadAllData = async () => {
         setLoading(true);
         try {
-            const [dashRes, statRes, ratingRes, topProdRes, topStatRes, profileRes] = await Promise.all([
+            const [dashRes, statRes, ratingRes, topProdRes, topStatRes, profileRes, usersRes] = await Promise.all([
                 api.get('/admin/dashboard').catch(() => ({ data: null })),
                 api.get('/admin/refill-statistics').catch(() => ({ data: {} })),
                 api.get('/admin/rating-statistics').catch(() => ({ data: [] })),
                 api.get('/admin/refill-statistics/top-products').catch(() => ({ data: [] })),
                 api.get('/admin/refill-statistics/top-stations').catch(() => ({ data: [] })),
-                api.get('/auth/profile').catch(() => null)
+                api.get('/auth/profile').catch(() => null),
+                api.get('/admin/users').catch(() => ({ data: [] }))
             ]);
 
             setDashboard(dashRes.data);
@@ -87,6 +91,10 @@ function AdminDashboardPage() {
             setRatingStatistics(ratingRes.data || []);
             setTopProducts(topProdRes.data || []);
             setTopStations(topStatRes.data || []);
+
+            const allUsers = usersRes.data || [];
+            const pending = allUsers.filter(u => Boolean(u.reset_requested));
+            setPendingResetUsers(pending);
 
             if (profileRes && profileRes.data) {
                 setCurrentUser(profileRes.data);
@@ -196,7 +204,8 @@ function AdminDashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
+            <FloatingPrintButton title="In hoặc Xuất PDF bảng điều khiển admin" />
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* TOP HEADER */}
@@ -225,7 +234,17 @@ function AdminDashboardPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end md:self-auto">
+                    <div className="flex items-center gap-3 self-end md:self-auto flex-wrap">
+                        {pendingResetUsers.length > 0 && (
+                            <button
+                                onClick={() => navigate('/admin/users')}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow-lg shadow-amber-200 font-extrabold text-xs transition animate-bounce cursor-pointer"
+                                title="Bấm để tới trang Quản lý Người dùng và Duyệt Reset Mật Khẩu"
+                            >
+                                🔔 Có {pendingResetUsers.length} Yêu Cầu Reset MK!
+                            </button>
+                        )}
+
                         <button
                             onClick={() => navigate('/profile')}
                             className="
