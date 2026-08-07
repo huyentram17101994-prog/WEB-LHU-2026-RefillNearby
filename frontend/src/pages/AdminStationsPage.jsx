@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import FloatingPrintButton from '../components/FloatingPrintButton';
+import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
@@ -18,7 +19,8 @@ import {
     FaShieldAlt,
     FaChevronLeft,
     FaChevronRight,
-    FaExclamationTriangle
+    FaExclamationTriangle,
+    FaBars
 } from 'react-icons/fa';
 
 const STATIONS_PER_PAGE = 10;
@@ -35,6 +37,7 @@ function AdminStationsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [stationToDelete, setStationToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         loadStations();
@@ -166,32 +169,36 @@ function AdminStationsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF trạm Refill" />
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
 
-            {/* BUTTON QUAY LẠI */}
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
-            >
-                <IoChevronBack size={22} />
-                Quay lại
-            </button>
-
-            <div className="max-w-7xl mx-auto space-y-6 mt-4">
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
                 {/* HEADER BANNER */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
-                            <span className="p-3 bg-green-100 text-green-700 rounded-2xl text-2xl">
-                                <FaShieldAlt />
-                            </span>
-                            Quản Lý Trạm Refill
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            Giám sát toàn bộ các trạm refill trong hệ thống, kiểm duyệt thông tin và quản lý quyền hoạt động
-                        </p>
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                            title="Mở menu quản trị"
+                        >
+                            <FaBars size={18} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <span className="p-2.5 bg-emerald-100 text-emerald-700 rounded-2xl text-xl">
+                                    <FaStore />
+                                </span>
+                                Quản Lý Trạm Refill
+                            </h1>
+                            <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                Giám sát toàn bộ các trạm refill trong hệ thống, kiểm duyệt thông tin và quản lý quyền hoạt động
+                            </p>
+                        </div>
                     </div>
 
                     <div className="px-4 py-2 bg-green-50 text-green-700 rounded-2xl font-bold text-sm border border-green-200">
@@ -347,7 +354,6 @@ function AdminStationsPage() {
                         </>
                     )}
                 </div>
-            </div>
 
             {/* MODAL CHI TIẾT TRẠM */}
             {showDetail && selectedStation && (
@@ -372,8 +378,8 @@ function AdminStationsPage() {
                                 {/* CỘT THÔNG TIN */}
                                 <div className="space-y-4">
                                     <div className="bg-green-50 p-4 rounded-2xl border border-green-100">
-                                        <p className="text-xs text-green-700 font-bold uppercase">Tên trạm Refill</p>
-                                        <p className="text-xl font-extrabold text-green-900 mt-1">{selectedStation.station_name}</p>
+                                        <p className="text-xs text-white font-bold uppercase">Tên trạm Refill</p>
+                                        <p className="text-xl text-green-700 font-bold uppercase mt-1">{selectedStation.station_name}</p>
                                     </div>
 
                                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
@@ -495,6 +501,8 @@ function AdminStationsPage() {
                     </div>
                 </div>
             )}
+                </main>
+            </div>
         </div>
     );
 }

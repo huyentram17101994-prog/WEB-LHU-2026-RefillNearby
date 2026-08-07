@@ -63,12 +63,51 @@ function MustChangePasswordGuard() {
     return null;
 }
 
+/**
+ * Theme Scope Guard: Chỉ áp dụng Chế độ Dark Mode cho các trang Admin & Chủ trạm (/admin, /owner, /profile của Admin/Owner)
+ * Không áp dụng cho các trang Khách hàng (User) và Đăng nhập (Login, Register, Welcome, etc.)
+ */
+function ThemeScopeGuard() {
+    const location = useLocation();
+
+    useEffect(() => {
+        const path = location.pathname;
+        const userStr = localStorage.getItem('user');
+        let isAdminOrOwner = false;
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                isAdminOrOwner = user.role === 'admin' || user.role === 'store_owner';
+            } catch {
+                isAdminOrOwner = false;
+            }
+        }
+
+        const isAdminOrOwnerRoute = path.startsWith('/admin') || path.startsWith('/owner') || (path === '/profile' && isAdminOrOwner);
+
+        if (isAdminOrOwnerRoute) {
+            const savedTheme = localStorage.getItem('admin_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } else {
+            // Loại bỏ hoàn toàn Dark mode ở các trang Người dùng & Màn hình Đăng nhập
+            document.documentElement.classList.remove('dark');
+        }
+    }, [location.pathname]);
+
+    return null;
+}
+
 function AppRoutes() {
 
     return (
 
         <BrowserRouter>
             <MustChangePasswordGuard />
+            <ThemeScopeGuard />
 
             <Routes>
 

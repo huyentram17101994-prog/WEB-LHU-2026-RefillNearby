@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import FloatingPrintButton from '../components/FloatingPrintButton';
+import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
@@ -13,7 +14,8 @@ import {
     FaTrophy, 
     FaTimes,
     FaChevronLeft,
-    FaChevronRight
+    FaChevronRight,
+    FaBars
 } from 'react-icons/fa';
 
 const FAVORITES_PER_PAGE = 10;
@@ -69,6 +71,7 @@ function AdminFavoritesPage() {
 
     const [showStationModal, setShowStationModal] = useState(false);
     const [showProductModal, setShowProductModal] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const MAX_DAYS = 30;
 
@@ -232,33 +235,37 @@ function AdminFavoritesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF danh sách lượt yêu thích" />
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
 
-            {/* BUTTON QUAY LẠI */}
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
-            >
-                <IoChevronBack size={22} />
-                Quay lại
-            </button>
-
-            <div className="max-w-7xl mx-auto space-y-6 mt-4">
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
                 {/* PAGE TITLE BANNER */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
-                            <span className="p-3 bg-green-100 text-green-700 rounded-2xl text-2xl">❤️</span>
-                            Quản Lý Lượt Yêu Thích
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            Thống kê tổng số lượt thả tim trạm/sản phẩm và xem danh sách yêu thích từ khách hàng
-                        </p>
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                            title="Mở menu quản trị"
+                        >
+                            <FaBars size={18} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <span className="p-2.5 bg-pink-100 text-pink-600 rounded-2xl text-xl">❤️</span>
+                                Quản Lý Yêu Thích
+                            </h1>
+                            <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                Thống kê lượt thả tim yêu thích trạm & sản phẩm từ người dùng trên toàn hệ thống
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="px-4 py-2 bg-green-50 text-green-700 rounded-2xl font-bold text-sm border border-green-200 flex items-center gap-2">
+                    <div className="px-4 py-2 bg-pink-50 text-pink-700 rounded-2xl font-bold text-sm border border-pink-200 flex items-center gap-2">
                         <FaHeart className="text-red-500" /> Tổng lượt lưu: {(stationCount?.totalFavorites || 0) + (productCount?.totalFavorites || 0)}
                     </div>
                 </div>
@@ -545,6 +552,7 @@ function AdminFavoritesPage() {
                     </div>
                 )}
 
+                </main>
             </div>
         </div>
     );

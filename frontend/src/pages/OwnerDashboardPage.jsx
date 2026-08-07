@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import AdminSidebar from '../components/AdminSidebar';
 import { RiLogoutCircleRLine } from "react-icons/ri";
 import FloatingPrintButton from '../components/FloatingPrintButton';
 import { 
@@ -14,7 +15,8 @@ import {
     FaPrint,
     FaCalendarAlt,
     FaFilter,
-    FaUndo
+    FaUndo,
+    FaBars
 } from "react-icons/fa";
 import {
     ResponsiveContainer,
@@ -34,6 +36,7 @@ function OwnerDashboardPage() {
     const [stations, setStations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // BỘ LỌC NGÀY CHO BIỂU ĐỒ THỐNG KÊ
     const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | '7days' | '30days' | 'custom'
@@ -79,63 +82,56 @@ function OwnerDashboardPage() {
                 localStorage.setItem('user', JSON.stringify(profileRes.data));
             }
         } catch (error) {
-            console.error("Lỗi tải dữ liệu Dashboard Owner:", error);
+            console.error("Lỗi tải dashboard chủ trạm:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePresetFilter = (preset) => {
-        setDateFilter(preset);
-        const today = new Date();
-        const formatDateStr = (d) => d.toISOString().split('T')[0];
+    const handleApplyDateFilter = (filterType) => {
+        setDateFilter(filterType);
 
-        let from = '';
-        let to = '';
-
-        if (preset === 'today') {
-            from = formatDateStr(today);
-            to = formatDateStr(today);
-        } else if (preset === '7days') {
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - 6);
-            from = formatDateStr(startDate);
-            to = formatDateStr(today);
-        } else if (preset === '30days') {
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - 29);
-            from = formatDateStr(startDate);
-            to = formatDateStr(today);
+        if (filterType === 'all') {
+            setFromDate('');
+            setToDate('');
+            loadData('', '');
+            return;
         }
 
-        setFromDate(from);
-        setToDate(to);
-        loadData(from, to);
+        const today = new Date();
+        let from = new Date();
+
+        if (filterType === 'today') {
+            from = new Date();
+        } else if (filterType === '7days') {
+            from.setDate(today.getDate() - 7);
+        } else if (filterType === '30days') {
+            from.setDate(today.getDate() - 30);
+        }
+
+        const fromStr = from.toISOString().split('T')[0];
+        const toStr = today.toISOString().split('T')[0];
+
+        setFromDate(fromStr);
+        setToDate(toStr);
+        loadData(fromStr, toStr);
     };
 
-    const loadDashboardFilter = () => {
+    const handleCustomFilterSubmit = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
         if (!fromDate || !toDate) {
-            alert('Vui lòng chọn cả ngày bắt đầu và ngày kết thúc');
+            alert('Vui lòng chọn đầy đủ từ ngày và đến ngày');
             return;
         }
-        if (fromDate > toDate) {
-            alert('Ngày bắt đầu không được lớn hơn ngày kết thúc');
-            return;
-        }
+        setDateFilter('custom');
         loadData(fromDate, toDate);
     };
 
-    const clearFilter = () => {
+    const handleResetFilter = () => {
+        setDateFilter('all');
         setFromDate('');
         setToDate('');
         loadData('', '');
-    };
-
-    const formatDateDisplay = (dateStr) => {
-        if (!dateStr) return '';
-        const parts = dateStr.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        return dateStr;
     };
 
     const logout = () => {
@@ -186,196 +182,144 @@ function OwnerDashboardPage() {
         totalReviews: item.totalReviews || 0,
     }));
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-white to-green-300">
-                <div className="w-14 h-14 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-xl font-semibold text-green-800">Đang tải Bảng Điều Khiển Chủ Trạm...</p>
+            <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+                <AdminSidebar 
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    currentUser={currentUser}
+                />
+                <div className="flex-1 lg:ml-72 min-w-0 flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-lg font-bold text-slate-700">Đang tải dữ liệu...</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
+    // TÍNH TOÁN ĐIỂM TRUNG BÌNH & TỔNG ĐÁNH GIÁ MẶC ĐỊNH TOÀN THỜI GIAN (KHÔNG BỊ ẢNH HƯỞNG BỞI BỘ LỌC)
+    const ownerReviewsList = dashboard.reviews || [];
+    const stationRatingsArr = dashboard.stationRatings || [];
+    
+    const calculatedAllTimeTotalReviews = stationRatingsArr.reduce((sum, item) => sum + Number(item.totalReviews || 0), 0);
+    const calculatedAllTimeScoreSum = stationRatingsArr.reduce((sum, item) => sum + (Number(item.averageRating || 0) * Number(item.totalReviews || 0)), 0);
+    const calculatedAllTimeAvg = calculatedAllTimeTotalReviews > 0 ? (calculatedAllTimeScoreSum / calculatedAllTimeTotalReviews) : 0;
+
+    const totalOwnerReviews = dashboard.allTimeTotalReviews ?? (calculatedAllTimeTotalReviews > 0 ? calculatedAllTimeTotalReviews : (dashboard.totalReviews ?? ownerReviewsList.length));
+    const computedAverageRating = dashboard.allTimeAverageRating !== undefined && dashboard.allTimeAverageRating !== null
+        ? Number(dashboard.allTimeAverageRating).toFixed(1)
+        : (calculatedAllTimeTotalReviews > 0 
+            ? calculatedAllTimeAvg.toFixed(1)
+            : (dashboard.averageRating && Number(dashboard.averageRating) > 0 ? Number(dashboard.averageRating).toFixed(1) : "0.0"));
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF bảng điều khiển chủ trạm" />
-            <div className="max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)}
+                currentUser={currentUser}
+            />
 
-                {/* TOP HEADER */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-lg border border-green-100">
-                    <div className="flex items-center gap-4">
-                        {/* AVATAR CHỦ TRẠM */}
-                        <div 
-                            onClick={() => navigate('/profile')}
-                            className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100 flex items-center justify-center shrink-0 cursor-pointer hover:scale-105 transition group"
-                            title="Bấm để đến trang Hồ sơ cá nhân"
-                        >
-                            {avatarUrl ? (
-                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                            ) : (
-                                <FaUserCircle className="w-full h-full text-blue-500 p-1" />
-                            )}
-                        </div>
-
-                        <div>
-                            <h1 className="text-2xl md:text-4xl font-extrabold text-green-800 flex items-center gap-2">
-                                🏪 {currentUser?.full_name || "Chủ trạm"}
-                            </h1>
-                            <p className="text-gray-600 text-sm mt-1">
-                                Chào mừng quay trở lại, <span className="font-bold text-blue-700">{currentUser?.full_name || "Chủ trạm"}</span>!
-                            </p>
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+                    
+                    {/* PAGE TITLE BANNER */}
+                    <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                                title="Mở menu quản trị"
+                            >
+                                <FaBars size={18} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                    <span className="p-2.5 bg-emerald-100 text-emerald-700 rounded-2xl text-xl">📊</span>
+                                    Tổng Quan & Biểu Đồ Thống Kê
+                                </h1>
+                                <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                    Theo dõi chỉ số hoạt động trạm refill, thống kê đánh giá và quản lý sản phẩm
+                                </p>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-3 self-end md:self-auto flex-wrap">
-
-                        <button
-                            onClick={() => navigate('/profile')}
-                            className="
-                                flex items-center gap-2
-                                px-4 py-2.5
-                                bg-blue-600
-                                hover:bg-blue-700
-                                text-white
-                                rounded-2xl
-                                shadow-md
-                                hover:shadow-lg
-                                transition-all
-                                font-semibold
-                                text-sm
-                            "
-                        >
-                            {avatarUrl ? (
-                                <img src={avatarUrl} alt="Mini Avatar" className="w-5 h-5 rounded-full object-cover border border-white shrink-0" />
-                            ) : (
-                                <FaUserCircle size={18} />
-                            )}
-                            Hồ sơ cá nhân
-                        </button>
-                        <button
-                            onClick={logout}
-                            className="
-                                flex items-center gap-2
-                                px-4 py-2.5
-                                bg-red-500
-                                hover:bg-red-600
-                                text-white
-                                rounded-2xl
-                                shadow-md
-                                hover:shadow-lg
-                                transition-all
-                                font-semibold
-                                text-sm
-                            "
-                        >
-                            <RiLogoutCircleRLine size={18} />
-                            Đăng xuất
-                        </button>
-                    </div>
-                </div>
 
                 {/* THỐNG KÊ TỔNG QUAN (BUSINESS STATS GRID) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* TRẠM REFILL */}
-                    <div
-                        onClick={() => navigate('/owner/stations')}
-                        className="
-                            bg-white p-6 rounded-3xl shadow-md border border-blue-100
-                            cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300
-                            flex items-center justify-between group
-                        "
-                    >
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 font-semibold text-sm flex items-center gap-1.5">
+                            <p className="text-slate-500 font-semibold text-sm flex items-center gap-1.5">
                                 <FaStore className="text-blue-600" /> Trạm sở hữu
                             </p>
-                            <p className="text-4xl font-extrabold text-blue-700 mt-2">
+                            <p className="text-4xl font-black text-blue-600 dark:text-blue-400 mt-2 tracking-tight">
                                 {dashboard.totalStations || stations.length || 0}
                             </p>
-                            <span className="text-xs text-blue-600 font-medium group-hover:underline mt-1 inline-block">
-                                Quản lý danh sách trạm →
-                            </span>
+                            <p className="text-xs text-slate-400 font-medium mt-1">
+                                Trạm Refill trong hệ thống
+                            </p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shrink-0">
                             🏪
                         </div>
                     </div>
 
                     {/* SẢN PHẨM */}
-                    <div
-                        onClick={() => navigate('/owner/products')}
-                        className="
-                            bg-white p-6 rounded-3xl shadow-md border border-teal-100
-                            cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300
-                            flex items-center justify-between group
-                        "
-                    >
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 font-semibold text-sm flex items-center gap-1.5">
+                            <p className="text-slate-500 font-semibold text-sm flex items-center gap-1.5">
                                 <FaBoxes className="text-teal-600" /> Sản phẩm đăng bán
                             </p>
-                            <p className="text-4xl font-extrabold text-teal-700 mt-2">
+                            <p className="text-4xl font-black text-teal-600 dark:text-teal-400 mt-2 tracking-tight">
                                 {dashboard.totalProducts || 0}
                             </p>
-                            <span className="text-xs text-teal-600 font-medium group-hover:underline mt-1 inline-block">
-                                Quản lý sản phẩm →
-                            </span>
+                            <p className="text-xs text-slate-400 font-medium mt-1">
+                                Danh mục sản phẩm active
+                            </p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                        <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl shrink-0">
                             📦
                         </div>
                     </div>
 
-                    {/* ĐÁNH GIÁ */}
-                    <div
-                        onClick={() => navigate('/owner/reviews')}
-                        className="
-                            bg-white p-6 rounded-3xl shadow-md border border-amber-100
-                            cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300
-                            flex items-center justify-between group
-                        "
-                    >
+                    {/* ĐÁNH GIÁ CỬA HÀNG */}
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 font-semibold text-sm flex items-center gap-1.5">
+                            <p className="text-slate-500 font-semibold text-sm flex items-center gap-1.5">
                                 <FaStar className="text-amber-500" /> Đánh giá cửa hàng
                             </p>
-                            <p className="text-4xl font-extrabold text-amber-600 mt-2">
-                                {dashboard.averageRating ? Number(dashboard.averageRating).toFixed(1) : "5.0"} ⭐
+                            <p className="text-4xl font-black text-amber-500 dark:text-amber-400 mt-2 tracking-tight">
+                                {computedAverageRating} <span className="text-2xl">⭐</span>
                             </p>
-                            <span className="text-xs text-amber-600 font-medium group-hover:underline mt-1 inline-block">
-                                Xem &amp; Phản hồi đánh giá →
-                            </span>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mt-1">
+                                <span>Tổng: <b className="text-blue-600 dark:text-blue-400">{totalOwnerReviews}</b> đánh giá</span>
+                            </div>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl shrink-0">
                             ⭐
                         </div>
                     </div>
 
-                    {/* LƯỢT YÊU THÍCH (TỔNG TOÀN BỘ HỆ THỐNG - CHUẨN CỠ CHỮ TEXT-4XL) */}
-                    <div
-                        className="
-                            bg-white p-6 rounded-3xl shadow-md border border-pink-100
-                            cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300
-                            flex items-center justify-between group
-                        "
-                    >
+                    {/* LƯỢT YÊU THÍCH */}
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 font-semibold text-sm flex items-center gap-1.5">
+                            <p className="text-slate-500 font-semibold text-sm flex items-center gap-1.5">
                                 <FaHeart className="text-pink-500" /> Tổng yêu thích
                             </p>
-                            <p className="text-4xl font-extrabold text-pink-600 mt-2">
+                            <p className="text-4xl font-black text-pink-600 dark:text-pink-400 mt-2 tracking-tight">
                                 {dashboard.allTimeTotalFavorites ?? ((dashboard.allTimeStationFavorites || 0) + (dashboard.allTimeProductFavorites || 0))}
                             </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 font-medium mt-1">
+                            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium mt-1">
                                 <span>🏪 Trạm: <b className="text-pink-600">{dashboard.allTimeStationFavorites ?? 0}</b></span>
                                 <span>•</span>
                                 <span>📦 SP: <b className="text-purple-600">{dashboard.allTimeProductFavorites ?? 0}</b></span>
                             </div>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center text-2xl group-hover:scale-110 transition shrink-0">
+                        <div className="w-14 h-14 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center text-2xl shrink-0">
                             ❤️
                         </div>
                     </div>
@@ -391,7 +335,7 @@ function OwnerDashboardPage() {
                                 <span className="p-2 bg-green-100 text-green-700 rounded-xl">
                                     <FaChartBar />
                                 </span>
-                                Báo Cáo Thống Kê & Biểu Đồ Chủ Trạm
+                                Biểu Đồ Thống Kê
                             </h2>
                             <p className="text-gray-500 text-xs mt-1">
                                 Thống kê phân bố mức độ đánh giá, lượt yêu thích trạm & sản phẩm theo khoảng thời gian
@@ -427,7 +371,7 @@ function OwnerDashboardPage() {
 
                         {/* BUTTON LỌC & RESET */}
                         <button
-                            onClick={loadDashboardFilter}
+                            onClick={handleCustomFilterSubmit}
                             className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
                         >
                             <FaFilter size={11} /> Lọc dữ liệu
@@ -435,8 +379,8 @@ function OwnerDashboardPage() {
 
                         {(fromDate || toDate) && (
                             <button
-                                onClick={clearFilter}
-                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                                onClick={handleResetFilter}
+                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                             >
                                 <FaUndo size={11} /> Xóa bộ lọc
                             </button>
@@ -578,6 +522,7 @@ function OwnerDashboardPage() {
                     </div>
                 </div>
 
+                </main>
             </div>
         </div>
     );

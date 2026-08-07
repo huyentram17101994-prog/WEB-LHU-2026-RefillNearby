@@ -3,6 +3,7 @@ import api from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import FloatingPrintButton from '../components/FloatingPrintButton';
+import AdminSidebar from '../components/AdminSidebar';
 import {
     FaUsers,
     FaSearch,
@@ -18,7 +19,8 @@ import {
     FaKey,
     FaExclamationTriangle,
     FaCheckCircle,
-    FaPrint
+    FaPrint,
+    FaBars
 } from 'react-icons/fa';
 
 const USERS_PER_PAGE = 10;
@@ -30,6 +32,7 @@ function AdminUsersPage() {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [userToResetPassword, setUserToResetPassword] = useState(null);
     const [isResetting, setIsResetting] = useState(false);
@@ -192,30 +195,35 @@ function AdminUsersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF danh sách người dùng" />
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                pendingResetCount={pendingResetCount}
+            />
 
-            {/* BUTTON QUAY LẠI */}
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
-            >
-                <IoChevronBack size={22} />
-                Quay lại
-            </button>
-
-            <div className="max-w-7xl mx-auto space-y-6 mt-4">
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
                 {/* PAGE TITLE BANNER */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
-                            <span className="p-3 bg-blue-100 text-blue-700 rounded-2xl text-2xl">👤</span>
-                            Quản Lý Người Dùng
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            Xem danh sách tài khoản, duyệt yêu cầu reset mật khẩu và quản lý quyền truy cập
-                        </p>
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                            title="Mở menu quản trị"
+                        >
+                            <FaBars size={18} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <span className="p-2.5 bg-blue-100 text-blue-700 rounded-2xl text-xl">👤</span>
+                                Quản Lý Người Dùng
+                            </h1>
+                            <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                Xem danh sách tài khoản, duyệt yêu cầu reset mật khẩu và quản lý quyền truy cập
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
@@ -344,16 +352,19 @@ function AdminUsersPage() {
                                                         <span className="text-gray-400 text-xs italic">Bảo vệ quyền Admin</span>
                                                     ) : (
                                                         <div className="flex justify-center items-center gap-1.5 whitespace-nowrap">
-                                                            <button
-                                                                onClick={() => setUserToResetPassword(user)}
-                                                                className={`px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow transition flex items-center gap-1 ${Boolean(user.reset_requested)
-                                                                    ? "bg-amber-500 hover:bg-amber-600 animate-pulse ring-2 ring-amber-300"
-                                                                    : "bg-blue-600 hover:bg-blue-700"
-                                                                    }`}
-                                                                title={Boolean(user.reset_requested) ? "Người dùng này đang gửi yêu cầu Reset MK!" : "Reset Mật khẩu & Gửi Email Mật khẩu tạm"}
-                                                            >
-                                                                <FaKey size={11} /> {Boolean(user.reset_requested) ? "🔔 Duyệt Reset MK" : "Reset MK"}
-                                                            </button>
+                                                            {Boolean(user.reset_requested) ? (
+                                                                <button
+                                                                    onClick={() => setUserToResetPassword(user)}
+                                                                    className="px-3 py-1.5 rounded-xl text-white font-extrabold text-xs shadow transition flex items-center gap-1 bg-amber-500 hover:bg-amber-600 animate-pulse ring-2 ring-amber-300 cursor-pointer"
+                                                                    title="Người dùng này đang gửi yêu cầu Reset MK!"
+                                                                >
+                                                                    <FaKey size={11} /> 🔔 Duyệt Reset MK
+                                                                </button>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-semibold border border-slate-200/60 dark:border-slate-700 select-none">
+                                                                    Chưa yêu cầu reset
+                                                                </span>
+                                                            )}
 
                                                             <button
                                                                 onClick={() => toggleStatus(user)}
@@ -395,7 +406,6 @@ function AdminUsersPage() {
                         </>
                     )}
                 </div>
-            </div>
 
             {/* MODAL XÁC NHẬN RESET MẬT KHẨU */}
             {userToResetPassword && (
@@ -546,6 +556,8 @@ function AdminUsersPage() {
                     </div>
                 </div>
             )}
+                </main>
+            </div>
         </div>
     );
 }

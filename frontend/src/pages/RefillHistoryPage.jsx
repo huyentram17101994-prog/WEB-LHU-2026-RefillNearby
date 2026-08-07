@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import FloatingPrintButton from '../components/FloatingPrintButton';
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
@@ -275,8 +274,6 @@ function RefillHistoryPage() {
             md:p-8
             relative
         ">
-            <FloatingPrintButton title="In hoặc Xuất PDF lịch sử refill" />
-
             {/* BACK */}
 
             <button

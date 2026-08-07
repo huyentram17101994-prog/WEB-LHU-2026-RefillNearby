@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
 import { FaBell, FaStore, FaBoxOpen, FaMapMarkerAlt, FaExternalLinkAlt, FaCheckCircle } from "react-icons/fa";
-import FloatingPrintButton from "../components/FloatingPrintButton";
 
 function NotificationPage() {
     const [notifications, setNotifications] = useState([]);
@@ -90,8 +89,6 @@ function NotificationPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-emerald-200 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In danh sách thông báo" />
-
             {/* BUTTON QUAY LẠI GIỐNG CÁC TRANG KHÁC */}
             <button
                 onClick={() => navigate(-1)}

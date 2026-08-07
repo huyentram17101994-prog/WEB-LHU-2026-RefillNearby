@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import FloatingPrintButton from '../components/FloatingPrintButton';
+import AdminSidebar from '../components/AdminSidebar';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
@@ -13,7 +14,8 @@ import {
     FaImage,
     FaChevronLeft,
     FaChevronRight,
-    FaExclamationTriangle
+    FaExclamationTriangle,
+    FaBars
 } from 'react-icons/fa';
 
 const PRODUCTS_PER_PAGE = 10;
@@ -27,6 +29,7 @@ function AdminProductsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [productToDelete, setProductToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         loadProducts();
@@ -132,30 +135,34 @@ function AdminProductsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF danh sách sản phẩm" />
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
 
-            {/* BUTTON QUAY LẠI */}
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700"
-            >
-                <IoChevronBack size={22} />
-                Quay lại
-            </button>
-
-            <div className="max-w-7xl mx-auto space-y-6 mt-4">
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
                 {/* PAGE TITLE BANNER */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
-                            <span className="p-3 bg-purple-100 text-purple-700 rounded-2xl text-2xl">📦</span>
-                            Quản Lý Sản Phẩm Hệ Thống
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            Xem tất cả sản phẩm đăng bán tại các trạm Refill, kiểm tra tồn kho và quản lý xóa sản phẩm
-                        </p>
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                            title="Mở menu quản trị"
+                        >
+                            <FaBars size={18} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <span className="p-2.5 bg-purple-100 text-purple-700 rounded-2xl text-xl">📦</span>
+                                Quản Lý Sản Phẩm Hệ Thống
+                            </h1>
+                            <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                Xem tất cả sản phẩm đăng bán tại các trạm Refill, kiểm tra tồn kho và quản lý xóa sản phẩm
+                            </p>
+                        </div>
                     </div>
 
                     <div className="px-4 py-2 bg-purple-50 text-purple-700 rounded-2xl font-bold text-sm border border-purple-200 flex items-center gap-2">
@@ -211,8 +218,8 @@ function AdminProductsPage() {
                     ) : (
                         <>
                             <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-green-50 text-green-800 font-bold text-xs uppercase tracking-wider">
+                                <table className="w-full text-left text-sm whitespace-nowrap">
+                                    <thead className="bg-green-50 text-green-800 font-bold text-xs uppercase tracking-wider whitespace-nowrap">
                                         <tr>
                                             <th className="p-4">ID</th>
                                             <th className="p-4">Hình ảnh</th>
@@ -226,7 +233,7 @@ function AdminProductsPage() {
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-gray-100 whitespace-nowrap">
                                         {paginatedProducts.map((product) => {
                                             const imgSrc = product.image_url
                                                 ? product.image_url.startsWith('http')
@@ -236,11 +243,11 @@ function AdminProductsPage() {
 
                                             return (
                                                 <tr key={product.product_id} className="hover:bg-green-50/50 transition">
-                                                    <td className="p-4 font-mono font-bold text-gray-500">#{product.product_id}</td>
+                                                    <td className="p-4 font-mono font-bold text-gray-500 whitespace-nowrap">#{product.product_id}</td>
                                                     
                                                     {/* HÌNH ẢNH */}
-                                                    <td className="p-4">
-                                                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
                                                             {imgSrc ? (
                                                                 <img src={imgSrc} alt={product.product_name} className="w-full h-full object-cover" />
                                                             ) : (
@@ -249,52 +256,56 @@ function AdminProductsPage() {
                                                         </div>
                                                     </td>
 
-                                                    <td className="p-4 font-bold text-gray-800">{product.product_name}</td>
+                                                    <td className="p-4 font-bold text-gray-800 whitespace-nowrap max-w-[200px] truncate" title={product.product_name}>
+                                                        {product.product_name}
+                                                    </td>
                                                     
-                                                    <td className="p-4">
+                                                    <td className="p-4 whitespace-nowrap">
                                                         {product.brand ? (
-                                                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                                                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100 whitespace-nowrap">
                                                                 {product.brand}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-xs text-gray-400 italic">Khác</span>
+                                                            <span className="text-xs text-gray-400 italic whitespace-nowrap">Khác</span>
                                                         )}
                                                     </td>
 
-                                                    <td className="p-4 font-bold text-green-700">
+                                                    <td className="p-4 font-bold text-green-700 whitespace-nowrap">
                                                         {Number(product.price).toLocaleString('vi-VN')} VNĐ
                                                     </td>
 
-                                                    <td className="p-4 text-gray-700 flex items-center gap-1.5 mt-4">
-                                                        <FaUser className="text-blue-500 shrink-0 text-xs" />
-                                                        <span>{product.owner_name || 'N/A'}</span>
+                                                    <td className="p-4 text-gray-700 whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 font-medium">
+                                                            <FaUser className="text-blue-500 shrink-0 text-xs" />
+                                                            <span>{product.owner_name || 'N/A'}</span>
+                                                        </span>
                                                     </td>
 
-                                                    <td className="p-4 text-gray-700">
-                                                        <span className="flex items-center gap-1.5  font-medium">
+                                                    <td className="p-4 text-gray-700 whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 font-medium">
                                                             <FaStore className="text-green-600 shrink-0" />
-                                                            {product.station_name || 'Chưa chọn'}
+                                                            <span>{product.station_name || 'Chưa chọn'}</span>
                                                         </span>
                                                     </td>
 
                                                     {/* TRẠNG THÁI */}
-                                                    <td className="p-4">
+                                                    <td className="p-4 whitespace-nowrap">
                                                         {product.stock_status ? (
-                                                            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-extrabold text-xs border border-green-200 inline-block">
+                                                            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-extrabold text-xs border border-green-200 whitespace-nowrap inline-flex items-center gap-1">
                                                                 🟢 Còn hàng
                                                             </span>
                                                         ) : (
-                                                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 font-extrabold text-xs border border-red-200 inline-block">
+                                                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 font-extrabold text-xs border border-red-200 whitespace-nowrap inline-flex items-center gap-1">
                                                                 🔴 Hết hàng
                                                             </span>
                                                         )}
                                                     </td>
 
                                                     {/* THAO TÁC */}
-                                                    <td className="p-4 text-center">
+                                                    <td className="p-4 text-center whitespace-nowrap">
                                                         <button
                                                             onClick={() => setProductToDelete(product)}
-                                                            className="bg-red-500 hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center gap-1 mx-auto"
+                                                            className="bg-red-500 hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition inline-flex items-center gap-1 cursor-pointer"
                                                         >
                                                             <FaTrash size={11} /> Xóa
                                                         </button>
@@ -317,7 +328,6 @@ function AdminProductsPage() {
                         </>
                     )}
                 </div>
-            </div>
 
             {/* MODAL XÁC NHẬN XÓA SẢN PHẨM */}
             {productToDelete && (
@@ -365,6 +375,8 @@ function AdminProductsPage() {
                     </div>
                 </div>
             )}
+                </main>
+            </div>
         </div>
     );
 }

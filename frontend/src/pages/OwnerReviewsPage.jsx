@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
 import FloatingPrintButton from '../components/FloatingPrintButton';
+import AdminSidebar from '../components/AdminSidebar';
 import {
     FaStar,
     FaSearch,
@@ -17,7 +18,8 @@ import {
     FaBox,
     FaChevronLeft,
     FaChevronRight,
-    FaPrint
+    FaPrint,
+    FaBars
 } from 'react-icons/fa';
 
 const REVIEWS_PER_PAGE = 10;
@@ -66,6 +68,7 @@ const formatDateDisplay = (dateStr) => {
 
 function OwnerReviewsPage() {
     const navigate = useNavigate();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [ratingFilter, setRatingFilter] = useState('');
     const [stationFilter, setStationFilter] = useState('all');
@@ -258,19 +261,19 @@ function OwnerReviewsPage() {
                 <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
-                    <FaChevronLeft size={13} className="text-gray-600" />
+                    <FaChevronLeft size={13} className="text-slate-600 dark:text-slate-300" />
                 </button>
 
                 {pages.map((p) => (
                     <button
                         key={p}
                         onClick={() => setCurrentPage(p)}
-                        className={`w-9 h-9 rounded-xl font-bold text-sm transition shadow-sm ${
+                        className={`w-9 h-9 rounded-xl font-bold text-sm transition shadow-sm cursor-pointer ${
                             currentPage === p
-                                ? 'bg-green-600 text-white shadow-green-200 shadow-md'
-                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-400'
+                                ? 'bg-emerald-600 text-white shadow-emerald-600/30 shadow-md'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-800'
                         }`}
                     >
                         {p}
@@ -280,9 +283,9 @@ function OwnerReviewsPage() {
                 <button
                     onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
-                    <FaChevronRight size={13} className="text-gray-600" />
+                    <FaChevronRight size={13} className="text-slate-600 dark:text-slate-300" />
                 </button>
             </div>
         );
@@ -293,55 +296,59 @@ function OwnerReviewsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In hoặc Xuất PDF danh sách đánh giá" />
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            <AdminSidebar 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
 
-            {/* BUTTON QUAY LẠI */}
-            <button
-                onClick={() => navigate('/owner')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden"
-            >
-                <IoChevronBack size={22} />
-                Quay lại
-            </button>
+            <div className="flex-1 lg:ml-72 min-w-0 flex flex-col min-h-screen">
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
-            <div className="max-w-6xl mx-auto space-y-6 mt-4">
+                    {/* PAGE TITLE BANNER */}
+                    <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                                title="Mở menu quản trị"
+                            >
+                                <FaBars size={18} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                    <span className="p-2.5 bg-amber-100 text-amber-700 rounded-2xl text-xl">⭐</span>
+                                    Quản Lý Đánh Giá
+                                </h1>
+                                <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                    Xem phản hồi đánh giá từ khách hàng, lọc theo trạm / mức sao / thời gian và trực tiếp tương tác
+                                </p>
+                            </div>
+                        </div>
 
-                {/* PAGE TITLE BANNER */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-green-800 flex items-center gap-3">
-                            <span className="p-3 bg-amber-100 text-amber-700 rounded-2xl text-2xl">⭐</span>
-                            Quản Lý Đánh Giá
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            Xem phản hồi đánh giá từ khách hàng, lọc theo trạm / mức sao / thời gian và trực tiếp tương tác
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-2xl font-bold text-sm border border-amber-200 flex items-center gap-2">
-                            <FaStar className="text-amber-500" /> Tổng số: {totalReviewsCount} đánh giá
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-2xl font-bold text-sm border border-amber-200 flex items-center gap-2">
+                                <FaStar className="text-amber-500" /> Tổng số: {totalReviewsCount} đánh giá
+                            </div>
                         </div>
                     </div>
-                </div>
 
                 {/* MAIN CONTENT CARD */}
-                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-100">
+                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-200/80">
 
                     {/* BAR BỘ LỌC */}
-                    <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
+                    <div className="space-y-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                         <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center flex-wrap">
 
                             {/* TÌM KIẾM */}
                             <div className="relative flex-1 min-w-[220px]">
-                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     placeholder="Tìm theo tên người dùng, trạm, sản phẩm, nội dung..."
                                     value={search}
                                     onChange={(e) => handleSearchChange(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition"
+                                    className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white transition placeholder:text-slate-400"
                                 />
                             </div>
 
@@ -349,7 +356,7 @@ function OwnerReviewsPage() {
                             <select
                                 value={stationFilter}
                                 onChange={(e) => handleStationFilterChange(e.target.value)}
-                                className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition text-gray-700 font-medium min-w-[160px]"
+                                className="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium min-w-[160px] transition cursor-pointer"
                             >
                                 <option value="all">🏪 Tất cả trạm</option>
                                 {stationList.map((st) => (
@@ -363,7 +370,7 @@ function OwnerReviewsPage() {
                             <select
                                 value={ratingFilter}
                                 onChange={(e) => handleRatingFilterChange(e.target.value)}
-                                className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition text-gray-700 font-medium min-w-[130px]"
+                                className="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium min-w-[130px] transition cursor-pointer"
                             >
                                 <option value="">⭐ Tất cả sao</option>
                                 <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
@@ -374,26 +381,26 @@ function OwnerReviewsPage() {
                             </select>
 
                             {/* TỪ NGÀY */}
-                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 text-xs font-semibold text-gray-600">
-                                <FaCalendarAlt className="text-green-600 shrink-0" />
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                <FaCalendarAlt className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 <span>Từ:</span>
                                 <input
                                     type="date"
                                     value={fromDate}
                                     onChange={(e) => handleFromDateChange(e.target.value)}
-                                    className="bg-transparent outline-none text-gray-800 font-medium cursor-pointer"
+                                    className="bg-transparent outline-none text-slate-900 dark:text-white font-semibold cursor-pointer"
                                 />
                             </div>
 
                             {/* ĐẾN NGÀY */}
-                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 text-xs font-semibold text-gray-600">
-                                <FaCalendarAlt className="text-green-600 shrink-0" />
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                <FaCalendarAlt className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 <span>Đến:</span>
                                 <input
                                     type="date"
                                     value={toDate}
                                     onChange={(e) => handleToDateChange(e.target.value)}
-                                    className="bg-transparent outline-none text-gray-800 font-medium cursor-pointer"
+                                    className="bg-transparent outline-none text-slate-900 dark:text-white font-semibold cursor-pointer"
                                 />
                             </div>
 
@@ -401,7 +408,7 @@ function OwnerReviewsPage() {
                             {hasFilter && (
                                 <button
                                     onClick={resetFilters}
-                                    className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap"
+                                    className="px-4 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
                                 >
                                     <FaUndo size={12} /> Xóa lọc
                                 </button>
@@ -410,12 +417,12 @@ function OwnerReviewsPage() {
 
                         {/* BÁO LỖI KHOẢNG NGÀY KHÔNG HỢP LỆ */}
                         {fromDate && toDate && daysBetween(fromDate, toDate) < 0 && (
-                            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-2.5 text-red-600 text-xs font-semibold flex items-center gap-2">
+                            <div className="rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold px-4 py-2.5 flex items-center gap-2">
                                 ⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.
                             </div>
                         )}
                         {fromDate && toDate && daysBetween(fromDate, toDate) > MAX_DAYS && (
-                            <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-amber-700 text-xs font-semibold flex items-center gap-2">
+                            <div className="rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-4 py-2.5 flex items-center gap-2">
                                 ⚠️ Chỉ hỗ trợ lọc thời gian trong tối đa 30 ngày.
                             </div>
                         )}
@@ -439,22 +446,25 @@ function OwnerReviewsPage() {
                                         <div key={stationName} className="space-y-4">
 
                                             {/* HEADER CỦA TRẠM: HIỂN THỊ TÊN TRẠM, ĐIỂM TRUNG BÌNH & TỔNG LƯỢT ĐÁNH GIÁ */}
-                                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2.5 bg-green-600 text-white rounded-xl text-lg">
+                                            <div className="bg-emerald-50/90 dark:bg-slate-900 p-4 md:p-5 rounded-3xl border-2 border-emerald-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="p-3 bg-emerald-600 text-white rounded-2xl text-xl font-black shadow-md shrink-0">
                                                         <FaStore />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-xl font-extrabold text-green-900">
+                                                        <h3 className="text-xl md:text-2xl font-black text-emerald-950 dark:text-emerald-300 tracking-tight">
                                                             {stationName}
                                                         </h3>
+                                                        <p className="text-xs text-emerald-700 dark:text-slate-400 font-bold mt-0.5">
+                                                            Trạm Refill sở hữu
+                                                        </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-green-200 shadow-sm self-start sm:self-auto">
-                                                    <FaStar className="text-amber-400 text-base" />
-                                                    <span className="font-extrabold text-gray-800 text-base">{avgRating}</span>
-                                                    <span className="text-gray-500 text-xs font-semibold">({totalReviewsForStation} đánh giá)</span>
+                                                <div className="flex items-center gap-2.5 bg-white dark:bg-slate-950 px-4 py-2.5 rounded-2xl border border-emerald-200 dark:border-slate-700 shadow-sm self-start sm:self-auto">
+                                                    <FaStar className="text-amber-400 text-lg" />
+                                                    <span className="font-black text-slate-900 dark:text-white text-lg">{avgRating}</span>
+                                                    <span className="text-slate-600 dark:text-slate-400 text-xs font-bold">({totalReviewsForStation} đánh giá)</span>
                                                 </div>
                                             </div>
 
@@ -463,74 +473,74 @@ function OwnerReviewsPage() {
                                                 {reviews.map((review) => (
                                                     <div
                                                         key={review.review_id}
-                                                        className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-200 p-5 transition duration-200 space-y-3"
+                                                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-800 p-5 transition duration-200 space-y-3"
                                                     >
                                                         {/* NGUỜI DÙNG & ĐIỂM SỐ */}
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                                                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0">
                                                                     <FaUser />
                                                                 </div>
                                                                 <div>
-                                                                    <p className="font-bold text-gray-800 text-base">
+                                                                    <p className="font-black text-slate-900 dark:text-white text-base">
                                                                         {review.full_name || 'Khách hàng'}
                                                                     </p>
-                                                                    <p className="text-xs text-gray-400">
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                                                         📅 {formatDateDisplay(review.created_at)}
                                                                     </p>
                                                                 </div>
                                                             </div>
 
                                                             {/* ĐIỂM SAO */}
-                                                            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 self-start sm:self-auto">
+                                                            <div className="flex items-center gap-1 bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-400 px-3.5 py-1.5 rounded-full text-xs font-black border border-amber-200 dark:border-slate-700 self-start sm:self-auto">
                                                                 {[...Array(5)].map((_, i) => (
                                                                     <FaStar
                                                                         key={i}
                                                                         className={`text-sm ${
-                                                                            i < review.rating ? 'text-amber-400' : 'text-gray-300'
+                                                                            i < review.rating ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'
                                                                         }`}
                                                                     />
                                                                 ))}
-                                                                <span className="ml-1 text-gray-700">{review.rating}/5</span>
+                                                                <span className="ml-1 text-slate-900 dark:text-slate-100">{review.rating}/5</span>
                                                             </div>
                                                         </div>
 
                                                         {/* NỘI DUNG ĐÁNH GIÁ */}
                                                         {review.comment && (
-                                                            <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-3.5 rounded-xl italic border border-gray-100">
+                                                            <p className="text-slate-900 dark:text-slate-100 text-sm font-medium leading-relaxed bg-slate-100 dark:bg-slate-800/80 p-4 rounded-2xl italic border border-slate-200 dark:border-slate-700">
                                                                 "{review.comment}"
                                                             </p>
                                                         )}
 
                                                         {/* TÊN SẢN PHẨM MUA */}
                                                         {review.product_name && (
-                                                            <div className="flex items-center gap-2 text-xs font-semibold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl w-fit">
-                                                                <FaBox className="text-purple-500" />
+                                                            <div className="flex items-center gap-2 text-xs font-extrabold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/80 px-3.5 py-2 rounded-xl w-fit border border-purple-200 dark:border-purple-800">
+                                                                <FaBox className="text-purple-600 dark:text-purple-400" />
                                                                 <span>Sản phẩm: {review.product_name}</span>
                                                             </div>
                                                         )}
 
                                                         {/* PHẢN HỒI ĐÃ CÓ */}
                                                         {review.owner_reply && editingReview !== review.review_id && (
-                                                            <div className="mt-3 bg-green-50/80 rounded-2xl border border-green-200 p-4 space-y-2">
+                                                            <div className="mt-3 bg-emerald-100/70 dark:bg-slate-950 rounded-2xl border-2 border-emerald-500/50 dark:border-emerald-500/50 p-4 shadow-sm space-y-2">
                                                                 <div className="flex justify-between items-center">
-                                                                    <div className="font-bold text-green-800 text-xs flex items-center gap-2">
-                                                                        <FaReply className="text-green-600 transform rotate-180" />
-                                                                        <span>Phản hồi từ chủ trạm</span>
+                                                                    <div className="font-extrabold text-emerald-900 dark:text-emerald-400 text-xs flex items-center gap-2">
+                                                                        <FaReply className="text-emerald-600 dark:text-emerald-400 transform rotate-180" />
+                                                                        <span>PHẢN HỒI TỪ CHỦ TRẠM</span>
                                                                         {review.replied_at && (
-                                                                            <span className="text-[11px] font-normal text-gray-400">• {formatDateDisplay(review.replied_at)}</span>
+                                                                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">• {formatDateDisplay(review.replied_at)}</span>
                                                                         )}
                                                                     </div>
 
                                                                     <button
                                                                         onClick={() => startEditReply(review)}
-                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 hover:underline transition"
+                                                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-extrabold flex items-center gap-1 hover:underline transition cursor-pointer"
                                                                     >
                                                                         <FaEdit size={12} /> Chỉnh sửa
                                                                     </button>
                                                                 </div>
 
-                                                                <p className="text-gray-800 text-xs whitespace-pre-line leading-relaxed pl-5 border-l-2 border-green-500">
+                                                                <p className="text-slate-900 dark:text-white font-semibold text-sm whitespace-pre-line leading-relaxed pl-3.5 border-l-4 border-emerald-600 dark:border-emerald-400">
                                                                     {review.owner_reply}
                                                                 </p>
                                                             </div>
@@ -539,8 +549,8 @@ function OwnerReviewsPage() {
                                                         {/* FORM SOẠN THẢO / CHỈNH SỬA PHẢN HỒI */}
                                                         {(editingReview === review.review_id || !review.owner_reply) && (
                                                             <div className="mt-3 pt-2">
-                                                                <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                                                                    <FaCommentDots className="text-green-600" />
+                                                                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1.5 flex items-center gap-1.5">
+                                                                    <FaCommentDots className="text-emerald-600 dark:text-emerald-400" />
                                                                     {editingReview === review.review_id ? 'Chỉnh sửa phản hồi của bạn:' : 'Nhập phản hồi cho khách hàng:'}
                                                                 </label>
 
@@ -549,7 +559,7 @@ function OwnerReviewsPage() {
                                                                     value={reply[review.review_id] || ''}
                                                                     onChange={(e) => handleReplyChange(review.review_id, e.target.value)}
                                                                     placeholder="Cảm ơn khách hàng hoặc giải đáp thắc mắc về sản phẩm / dịch vụ..."
-                                                                    className="w-full p-3 text-xs bg-white rounded-2xl border border-gray-300 focus:ring-2 focus:ring-green-400 outline-none transition"
+                                                                    className="w-full p-3.5 text-sm font-medium bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white rounded-2xl border-2 border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none transition placeholder:text-slate-400"
                                                                 />
 
                                                                 <div className="flex gap-2 justify-end mt-2">
@@ -558,7 +568,7 @@ function OwnerReviewsPage() {
                                                                             type="button"
                                                                             onClick={() => setEditingReview(null)}
                                                                             disabled={submittingReply}
-                                                                            className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold transition"
+                                                                            className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold transition cursor-pointer"
                                                                         >
                                                                             Hủy
                                                                         </button>
@@ -568,7 +578,7 @@ function OwnerReviewsPage() {
                                                                         type="button"
                                                                         onClick={() => replyReview(review.review_id)}
                                                                         disabled={submittingReply}
-                                                                        className="px-5 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5 disabled:opacity-50"
+                                                                        className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                                                                     >
                                                                         <FaCheck size={12} />
                                                                         {submittingReply ? 'Đang gửi...' : editingReview === review.review_id ? 'Lưu cập nhật' : 'Gửi phản hồi'}
@@ -619,6 +629,8 @@ function OwnerReviewsPage() {
                         </div>
                     )}
                 </div>
+
+                </main>
             </div>
         </div>
     );

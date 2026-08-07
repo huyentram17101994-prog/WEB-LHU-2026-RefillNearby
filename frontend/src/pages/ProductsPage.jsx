@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
 import useFavorite from "../hooks/useFavorite";
-import FloatingPrintButton from "../components/FloatingPrintButton";
 
 function ProductsPage() {
     const [products, setProducts] = useState([]);
@@ -71,8 +70,7 @@ function ProductsPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-emerald-200 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In danh sách sản phẩm refill" />
-{/* NÚT QUAY LẠI CHUẨN */}
+            {/* NÚT QUAY LẠI CHUẨN */}
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden cursor-pointer"

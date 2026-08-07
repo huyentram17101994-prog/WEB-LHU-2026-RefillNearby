@@ -862,6 +862,17 @@ const getOwnerDashboard = async (req, res) => {
             console.error("Refill history query error:", e.message);
         }
 
+        const reviewsArr = reviewResult.recordset || [];
+        const totalReviewsCount = reviewsArr.length;
+        const totalRatingSum = reviewsArr.reduce((sum, r) => sum + Number(r.rating || 0), 0);
+        const averageRating = totalReviewsCount > 0 ? Number((totalRatingSum / totalReviewsCount).toFixed(1)) : 0;
+
+        // Tính điểm trung bình & tổng số đánh giá TOÀN THỜI GIAN từ vw_StationRatings (không tốn thêm query SQL)
+        const stationRatingsArr = stationRatingResult.recordset || [];
+        const allTimeTotalReviews = stationRatingsArr.reduce((sum, item) => sum + Number(item.totalReviews || 0), 0);
+        const allTimeRatingSum = stationRatingsArr.reduce((sum, item) => sum + (Number(item.averageRating || 0) * Number(item.totalReviews || 0)), 0);
+        const allTimeAverageRating = allTimeTotalReviews > 0 ? Number((allTimeRatingSum / allTimeTotalReviews).toFixed(1)) : 0;
+
         res.json({
             totalStations: stationResult.recordset[0].totalStations,
             totalProducts: productResult.recordset[0].totalProducts,
@@ -871,10 +882,14 @@ const getOwnerDashboard = async (req, res) => {
             allTimeStationFavorites,
             allTimeProductFavorites,
             allTimeTotalFavorites,
+            allTimeAverageRating,
+            allTimeTotalReviews,
+            averageRating,
+            totalReviews: totalReviewsCount,
             stationFavorites: stationFavoriteResult.recordset,
             productFavorites: productFavoriteResult.recordset,
             stationRatings: stationRatingResult.recordset,
-            reviews: reviewResult.recordset,
+            reviews: reviewsArr,
             totalRefillQuantity: refillResult.recordset[0]?.totalRefillQuantity || 0,
             totalRefillCount: refillResult.recordset[0]?.totalRefillCount || 0,
             fromDate: fromDate || null,

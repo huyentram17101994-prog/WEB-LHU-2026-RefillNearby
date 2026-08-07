@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import AdminSidebar from "../components/AdminSidebar";
 import { 
     FaUserShield, 
     FaStore, 
@@ -15,13 +16,15 @@ import {
     FaKey,
     FaCheckCircle,
     FaArrowRight,
-    FaMapMarkerAlt
+    FaMapMarkerAlt,
+    FaBars
 } from "react-icons/fa";
 
 function ProfilePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
 
@@ -356,59 +359,58 @@ function ProfilePage() {
         admin: "bg-purple-100 text-purple-800 border-purple-300"
     };
 
+    const isAdminOrOwner = user.role === 'admin' || user.role === 'store_owner';
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-300 p-4 md:p-10">
-            {/* BUTTON QUAY LẠI */}
-            <button
-                    onClick={() => navigate(-1)}
-                    className="
-                        flex items-center gap-2
-                        px-5 py-2.5
-                        bg-white
-                        rounded-full
-                        shadow-md
-                        hover:shadow-lg
-                        hover:bg-gray-50
-                        transition-all
-                        duration-200
-                        text-base
-                        font-semibold
-                        text-gray-700
-                    "
-                >
-                    <IoChevronBack size={22} />
-                    Quay lại
-                </button>
-            <div className="max-w-6xl mx-auto mb-6">
-                
-            </div>
+        <div className="min-h-screen bg-slate-100 text-slate-800 flex">
+            {isAdminOrOwner && (
+                <AdminSidebar 
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    currentUser={user}
+                />
+            )}
 
-            {/* HEADER PROFILES */}
-            <div className="max-w-6xl mx-auto mb-8 text-center">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-green-800 flex items-center justify-center gap-3">
-                    {user.role === 'admin' && <FaUserShield className="text-green-500" />}
-                    {user.role === 'store_owner' && <FaStore className="text-green-500" />}
-                    {user.role === 'user' && <span>👤</span>}
-                    Hồ Sơ Cá Nhân
-                </h1>
-                <p className="text-gray-600 mt-2 text-lg">
-                    Quản lý thông tin cá nhân, cài đặt bảo mật và bảng điều khiển vai trò hệ thống
-                </p>
-            </div>
+            <div className={`flex-1 ${isAdminOrOwner ? 'lg:ml-72' : ''} min-w-0 flex flex-col min-h-screen`}>
+                <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
-            {/* CONTAINER CHÍNH */}
-            <div className="max-w-6xl mx-auto space-y-8">
+                {/* PAGE TITLE BANNER */}
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        {isAdminOrOwner && (
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0"
+                                title="Mở menu quản trị"
+                            >
+                                <FaBars size={18} />
+                            </button>
+                        )}
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <span className="p-2.5 bg-blue-100 text-blue-700 rounded-2xl text-xl">👤</span>
+                                Hồ Sơ Cá Nhân
+                            </h1>
+                            <p className="text-slate-500 text-xs md:text-sm mt-1">
+                                Quản lý thông tin cá nhân, cài đặt bảo mật và cài đặt tài khoản của bạn
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* CONTAINER CHÍNH */}
+                <div className="space-y-8">
                 
                 {/* PROFILE CARD CARD HÀNG ĐẦU */}
-                <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden border border-green-100">
-                    <div className={`${user.role === 'admin' ? 'bg-gradient-to-r from-green-600 to-teal-600' : user.role === 'store_owner' ? 'bg-gradient-to-r from-green-600 to-teal-600' : 'bg-gradient-to-r from-green-600 to-teal-600'} text-white p-8`}>
-                        <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-md overflow-hidden border border-emerald-100">
+                    <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-slate-800 text-white p-5 md:p-6">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
                             {/* AVATAR SECTION */}
                             <div className="flex flex-col items-center flex-shrink-0">
-                                <div className="relative w-32 h-32">
+                                <div className="relative w-20 h-20 md:w-24 md:h-24">
                                     <label
                                         htmlFor="avatarInput"
-                                        className="block w-full h-full rounded-full overflow-hidden shadow-2xl cursor-pointer relative border-4 border-white/80 hover:opacity-90 transition"
+                                        className="block w-full h-full rounded-full overflow-hidden shadow-lg cursor-pointer relative border-2 border-white/90 hover:opacity-90 transition"
                                     >
                                         {avatarPreview ? (
                                             <img
@@ -424,12 +426,12 @@ function ProfilePage() {
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-white flex items-center justify-center">
-                                                <span className="text-6xl text-gray-400">👤</span>
+                                                <span className="text-3xl text-slate-400">👤</span>
                                             </div>
                                         )}
 
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-80 hover:opacity-100 transition">
-                                            <span className="text-2xl">📷</span>
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                            <span className="text-base">📷</span>
                                         </div>
 
                                         <input
@@ -443,12 +445,12 @@ function ProfilePage() {
                                 </div>
 
                                 {selectedAvatar && (
-                                    <div className="flex gap-2 mt-3">
+                                    <div className="flex gap-2 mt-2">
                                         <button
                                             type="button"
                                             onClick={handleUploadAvatar}
                                             disabled={uploadingAvatar}
-                                            className="bg-white text-green-700 px-3 py-1.5 rounded-xl font-semibold shadow hover:bg-green-50 transition text-sm disabled:opacity-50"
+                                            className="bg-white text-emerald-800 px-2.5 py-1 rounded-xl font-bold shadow hover:bg-emerald-50 transition text-xs disabled:opacity-50"
                                         >
                                             {uploadingAvatar ? "⏳ Đang tải..." : "💾 Lưu ảnh"}
                                         </button>
@@ -460,7 +462,7 @@ function ProfilePage() {
                                                 setAvatarPreview(null);
                                             }}
                                             disabled={uploadingAvatar}
-                                            className="bg-white/20 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-white/30 transition text-sm"
+                                            className="bg-white/20 text-white px-2.5 py-1 rounded-xl font-bold hover:bg-white/30 transition text-xs"
                                         >
                                             Hủy
                                         </button>
@@ -469,21 +471,19 @@ function ProfilePage() {
                             </div>
 
                             {/* USER BASIC DETAILS */}
-                            <div className="text-center md:text-left flex-1">
-                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                                    <h2 className="text-3xl md:text-4xl font-extrabold">
+                            <div className="text-center sm:text-left flex-1 space-y-1">
+                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                    <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">
                                         {user.full_name}
                                     </h2>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-bold border ${roleBadgeColor[user.role]}`}>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${roleBadgeColor[user.role]}`}>
                                         {roleText[user.role]}
                                     </span>
                                 </div>
 
-                                <p className="text-green-100 mt-2 text-lg">
+                                <p className="text-emerald-100 text-xs md:text-sm font-medium">
                                     📧 {user.email}
                                 </p>
-
-                                
                             </div>
                         </div>
                     </div>
@@ -570,16 +570,16 @@ function ProfilePage() {
 
                         {/* NÚT LƯU HỦY THÔNG TIN CÁ NHÂN */}
                         {isEditing && (
-                            <div className="flex gap-4 mt-6 pt-4 border-t border-gray-100">
+                            <div className="flex gap-4 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                                 <button
                                     onClick={handleCancel}
-                                    className="flex-1 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold transition"
+                                    className="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     onClick={handleSaveProfile}
-                                    className="flex-1 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold shadow transition"
+                                    className="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold shadow transition cursor-pointer"
                                 >
                                     💾 Lưu cập nhật
                                 </button>
@@ -742,7 +742,7 @@ function ProfilePage() {
                                             type="button"
                                             onClick={handleCancelChangePassword}
                                             disabled={changingPassword}
-                                            className="px-5 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold transition"
+                                            className="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold transition cursor-pointer"
                                         >
                                             Hủy
                                         </button>
@@ -830,7 +830,10 @@ function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            </main>
         </div>
+    </div>
     );
 }
 

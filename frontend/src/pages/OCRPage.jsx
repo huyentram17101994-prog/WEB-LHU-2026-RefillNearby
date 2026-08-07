@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
-import FloatingPrintButton from "../components/FloatingPrintButton";
 
 function OCRPage() {
     const navigate = useNavigate();
@@ -58,8 +57,6 @@ function OCRPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-emerald-200 p-4 md:p-8 relative">
-            <FloatingPrintButton title="In kết quả phân tích hóa đơn" />
-
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* NÚT QUAY LẠI CHUẨN */}

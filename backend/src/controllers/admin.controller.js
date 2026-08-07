@@ -1234,7 +1234,7 @@ const resetUserPassword = async (req, res) => {
 
         // Lấy thông tin user
         const userCheck = await sql.query`
-            SELECT user_id, full_name, email, role, status
+            SELECT user_id, full_name, email, role, status, reset_requested
             FROM users
             WHERE user_id = ${id}
         `;
@@ -1247,6 +1247,10 @@ const resetUserPassword = async (req, res) => {
 
         if (targetUser.role === 'admin') {
             return res.status(403).json({ message: 'Không thể reset mật khẩu của tài khoản Admin khác.' });
+        }
+
+        if (!targetUser.reset_requested) {
+            return res.status(400).json({ message: 'Người dùng này chưa gửi yêu cầu Quên / Reset mật khẩu.' });
         }
 
         // Sinh mật khẩu tạm an toàn
