@@ -1,6 +1,10 @@
 const sql = require('mssql');
 const config = require('../config/db.config');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { sendTempPasswordEmail, sendApprovalEmail } = require('../services/email.service');
+const { logAudit } = require('../services/audit.service');
+const { ensureUsersTableColumns } = require('../services/dbSetup.service');
 
 const getDashboard = async (req, res) => {
 
@@ -1005,6 +1009,38 @@ const getTopFavoriteProducts = async (req, res) => {
 
 };
 
+const approveUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        await sql.connect(config);
+
+        const userCheck = await sql.query`
+            SELECT user_id, full_name, email FROM users WHERE user_id = ${userId}
+        `;
+
+        await sql.query`
+            UPDATE users
+            SET status = 'active'
+            WHERE user_id = ${userId}
+        `;
+
+        if (userCheck.recordset.length > 0) {
+            const targetUser = userCheck.recordset[0];
+            await sendApprovalEmail(targetUser.email, targetUser.full_name);
+        }
+
+        res.json({
+            message: "Duyệt tài khoản Chủ trạm thành công! Người dùng hiện đã có quyền đăng nhập và sử dụng trang quản lý."
+        });
+
+    } catch (error) {
+        console.error("Lỗi approveUser:", error);
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 const toggleUserStatus = async (req, res) => {
 
     try {
@@ -1053,7 +1089,6 @@ const toggleUserStatus = async (req, res) => {
         res.status(500).json({
             error: error.message
         });
-
     }
 
 };
@@ -1191,10 +1226,7 @@ const getTopStations = async (req, res) => {
 
 };
 
-const crypto = require('crypto');
-const { sendTempPasswordEmail } = require('../services/email.service');
-const { logAudit } = require('../services/audit.service');
-const { ensureUsersTableColumns } = require('../services/dbSetup.service');
+
 
 /**
  * Tạo mật khẩu tạm ngẫu nhiên đủ độ phức tạp (chữ hoa, chữ thường, số, ký tự đặc biệt)
@@ -1297,10 +1329,42 @@ const resetUserPassword = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { full_name, email } = req.body;
+        await sql.connect(config);
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({ message: 'Email không được để trống.' });
+        }
+
+        const checkEmail = await sql.query`
+            SELECT user_id FROM users WHERE email = ${email.trim()} AND user_id != ${id}
+        `;
+        if (checkEmail.recordset.length > 0) {
+            return res.status(400).json({ message: 'Email này đã được sử dụng bởi tài khoản khác.' });
+        }
+
+        await sql.query`
+            UPDATE users
+            SET full_name = ${full_name ? full_name.trim() : ''},
+                email = ${email.trim()}
+            WHERE user_id = ${id}
+        `;
+
+        res.json({ message: 'Cập nhật thông tin người dùng thành công!' });
+    } catch (error) {
+        console.error("Lỗi updateUser:", error);
+        res.status(500).json({ error: error.message || 'Không thể cập nhật người dùng.' });
+    }
+};
+
 module.exports = {
     getDashboard,
     getAllUsers,
     deleteUser,
+    updateUser,
     getAllStations,
     getTopStations,
     deleteStation,
@@ -1321,6 +1385,7 @@ module.exports = {
     getFavoriteStationCount,
     getFavoriteProductCount,
     toggleUserStatus,
+    approveUser,
     getStationDetail,
     getTopRefillProducts,
     resetUserPassword

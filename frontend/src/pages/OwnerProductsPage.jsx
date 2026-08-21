@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
 import FloatingPrintButton from '../components/FloatingPrintButton';
@@ -195,13 +195,7 @@ function OwnerProductsPage() {
 
     const editProduct = (product) => {
         setProductImageFile(null);
-        setPreviewImage(
-            product.image_url
-                ? product.image_url.startsWith('http')
-                    ? product.image_url
-                    : `http://localhost:5000${product.image_url}`
-                : ''
-        );
+        setPreviewImage(getImageUrl(product.image_url));
         setProductForm({
             station_id: product.station_id || '',
             category_id: product.category_id || '',
@@ -630,11 +624,7 @@ function OwnerProductsPage() {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                                 {paginatedProducts.map((product) => {
-                                    const imgSrc = product.image_url
-                                        ? product.image_url.startsWith('http')
-                                            ? product.image_url
-                                            : `http://localhost:5000${product.image_url}`
-                                        : null;
+                                    const imgSrc = getImageUrl(product.image_url);
 
                                     return (
                                         <div

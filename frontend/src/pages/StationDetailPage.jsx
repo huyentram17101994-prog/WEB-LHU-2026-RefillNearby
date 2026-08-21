@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import useFavorite from "../hooks/useFavorite";
 
 function StationDetailPage() {
@@ -370,7 +370,7 @@ if (Number.isNaN(quantityNumber) || quantityNumber <= 0) {
 
                         <img
 
-                            src={`http://localhost:5000${station.image_url}`}
+                            src={getImageUrl(station.image_url)}
 
                             alt={station.station_name}
 
@@ -648,7 +648,7 @@ if (Number.isNaN(quantityNumber) || quantityNumber <= 0) {
 
                 {/* Ảnh nhỏ hơn */}
                 <img
-                    src={`http://localhost:5000${product.image_url}`}
+                    src={getImageUrl(product.image_url)}
                     alt={product.product_name}
                     className="w-full md:w-48 h-32 object-cover border border-green-500"
                 />

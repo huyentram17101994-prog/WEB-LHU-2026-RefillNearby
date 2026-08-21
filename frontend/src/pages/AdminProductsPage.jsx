@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import FloatingPrintButton from '../components/FloatingPrintButton';
 import AdminSidebar from '../components/AdminSidebar';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
 import { 
@@ -235,11 +235,7 @@ function AdminProductsPage() {
 
                                     <tbody className="divide-y divide-gray-100 whitespace-nowrap">
                                         {paginatedProducts.map((product) => {
-                                            const imgSrc = product.image_url
-                                                ? product.image_url.startsWith('http')
-                                                    ? product.image_url
-                                                    : `http://localhost:5000${product.image_url}`
-                                                : null;
+                                            const imgSrc = getImageUrl(product.image_url);
 
                                             return (
                                                 <tr key={product.product_id} className="hover:bg-green-50/50 transition">

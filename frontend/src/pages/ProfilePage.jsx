@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
@@ -29,6 +29,7 @@ function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
 
     const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [selectedAvatar, setSelectedAvatar] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -67,6 +68,7 @@ function ProfilePage() {
             const userData = response.data;
             setUser(userData);
             setFullName(userData.full_name || "");
+            setEmail(userData.email || "");
             setPhone(userData.phone || "");
 
             // Cập nhật lại user trong localStorage
@@ -149,11 +151,7 @@ function ProfilePage() {
     // =========================
     // AVATAR
     // =========================
-    const avatarUrl = user.avatar
-        ? user.avatar.startsWith("/uploads")
-            ? `http://localhost:5000${user.avatar}`
-            : user.avatar
-        : null;
+    const avatarUrl = user.avatar ? getImageUrl(user.avatar) : null;
 
     // =========================
     // FORMAT NGÀY
@@ -168,6 +166,7 @@ function ProfilePage() {
     // =========================
     const handleCancel = () => {
         setFullName(user.full_name || "");
+        setEmail(user.email || "");
         setPhone(user.phone || "");
         setIsEditing(false);
     };
@@ -243,6 +242,7 @@ function ProfilePage() {
                 "/auth/profile",
                 {
                     full_name: fullName,
+                    email: email,
                     phone: phone,
                 },
                 {
@@ -256,6 +256,7 @@ function ProfilePage() {
 
             setUser(updatedUser);
             setFullName(updatedUser.full_name || "");
+            setEmail(updatedUser.email || "");
             setPhone(updatedUser.phone || "");
 
             localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -372,7 +373,21 @@ function ProfilePage() {
             )}
 
             <div className={`flex-1 ${isAdminOrOwner ? 'lg:ml-72' : ''} min-w-0 flex flex-col min-h-screen`}>
+                 
                 <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+
+                {/* NÚT QUAY LẠI CHUẨN (CHỈ HIỂN THỊ DÀNH CHO USER THƯỜNG) */}
+                {!isAdminOrOwner && (
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden cursor-pointer"
+                        >
+                            <IoChevronBack size={22} />
+                            Quay lại
+                        </button>
+                    </div>
+                )}
 
                 {/* PAGE TITLE BANNER */}
                 <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -538,12 +553,17 @@ function ProfilePage() {
                                     </label>
                                     <input
                                         type="email"
-                                        value={user.email || ""}
-                                        disabled
-                                        className="w-full p-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        value={email}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className={`w-full p-2 rounded-xl border outline-none transition ${
+                                            isEditing
+                                                ? "border-green-400 focus:ring-2 focus:ring-green-300 bg-white"
+                                                : "bg-gray-100 border-gray-200 text-gray-700"
+                                        }`}
                                     />
                                     <p className="text-xs text-gray-400 mt-1">
-                                        Email cố định dùng để xác thực tài khoản nên không thể sửa.
+                                        Email dùng để đăng nhập và nhận thông báo khôi phục mật khẩu từ hệ thống.
                                     </p>
                                 </div>
 

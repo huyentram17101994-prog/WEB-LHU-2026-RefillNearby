@@ -14,42 +14,77 @@ const register = async (req, res) => {
             phone,
             role
         } = req.body;
+
         // Mật khẩu phải đúng 8 ký tự
-if (!isValidPassword(password)) {
-    return res.status(400).json({
-        message: 'Mật khẩu phải có đúng 8 ký tự'
-    });
-}
+        if (!isValidPassword(password)) {
+            return res.status(400).json({
+                message: 'Mật khẩu phải có đúng 8 ký tự'
+            });
+        }
+
+        await ensureUsersTableColumns();
+        await sql.connect(config);
+
+        // Kiểm tra email hoặc số điện thoại đã đăng ký chưa
+        const checkDuplicate = await sql.query`
+            SELECT user_id, email, phone FROM users
+            WHERE email = ${email} OR (phone = ${phone} AND ${phone} <> '')
+        `;
+
+        if (checkDuplicate.recordset.length > 0) {
+            const dup = checkDuplicate.recordset[0];
+            if (dup.email === email) {
+                return res.status(400).json({
+                    message: '⚠️ Email này đã được đăng ký. Vui lòng sử dụng Email khác hoặc chọn Đăng nhập.'
+                });
+            }
+            if (dup.phone === phone) {
+                return res.status(400).json({
+                    message: '⚠️ Số điện thoại này đã được đăng ký. Vui lòng sử dụng Số điện thoại khác.'
+                });
+            }
+        }
+
         // mã hóa password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // kết nối database
-        await sql.connect(config);
+        // Nếu là Chủ trạm (store_owner) -> Trạng thái ban đầu là 'pending' (chờ admin duyệt)
+        // Nếu là Người dùng thường (user) hoặc admin -> Trạng thái 'active'
+        const initialStatus = role === 'store_owner' ? 'pending' : 'active';
 
         // insert user
         await sql.query`
             INSERT INTO users
-            (full_name, email, password, phone, role)
+            (full_name, email, password, phone, role, status)
             VALUES
             (
                 ${full_name},
                 ${email},
                 ${hashedPassword},
                 ${phone},
-                ${role}
+                ${role},
+                ${initialStatus}
             )
         `;
 
+        if (role === 'store_owner') {
+            return res.status(201).json({
+                message: '🎉 Đăng ký tài khoản Chủ trạm thành công!\n\n⏳ Tài khoản của bạn đang ở trạng thái CHỜ XÉT DUYỆT. Quản trị viên (Admin) sẽ kiểm tra và kích hoạt tài khoản trước khi bạn có thể đăng nhập.',
+                pendingApproval: true
+            });
+        }
+
         res.status(201).json({
-            message: 'Đăng ký thành công'
+            message: '🎉 Đăng ký tài khoản thành công',
+            pendingApproval: false
         });
 
     } catch (error) {
-
+        console.error("Lỗi đăng ký:", error);
         res.status(500).json({
+            message: error.message || 'Lỗi khi đăng ký tài khoản. Vui lòng thử lại!',
             error: error.message
         });
-
     }
 };
 const { ensureUsersTableColumns } = require('../services/dbSetup.service');
@@ -99,10 +134,17 @@ const login = async (req, res) => {
         }
 
         const user = result.recordset[0];
-        // kiểm tra tài khoản có bị khóa không
-        if (user.status === 'inactive') {
+        const userStatus = user.status ? String(user.status).trim() : 'active';
+
+        // kiểm tra tài khoản có đang chờ xét duyệt hoặc bị khóa không
+        if (userStatus === 'pending') {
             return res.status(403).json({
-                message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'
+                message: '⏳ Tài khoản Chủ trạm của bạn đang chờ Quản trị viên (Admin) xét duyệt. Vui lòng quay lại sau hoặc liên hệ Admin để được hỗ trợ.'
+            });
+        }
+        if (userStatus === 'inactive') {
+            return res.status(403).json({
+                message: '🔒 Tài khoản đã bị khóa. Vui lòng liên hệ Quản trị viên.'
             });
         }
 
@@ -138,6 +180,7 @@ const login = async (req, res) => {
             {
                 user_id: user.user_id,
                 role: user.role,
+                status: userStatus,
                 must_change_password: mustChangePassword
             },
             process.env.JWT_SECRET,
@@ -155,6 +198,7 @@ const login = async (req, res) => {
                 full_name: user.full_name,
                 email: user.email,
                 role: user.role,
+                status: userStatus,
                 badge: user.badge,
                 must_change_password: mustChangePassword
             }
@@ -211,12 +255,12 @@ const profile = async (req, res) => {
 };
 const updateProfile = async (req, res) => {
     try {
-
         const {
-    full_name,
-    phone,
-    avatar
-} = req.body;
+            full_name,
+            email,
+            phone,
+            avatar
+        } = req.body;
 
         // Kiểm tra họ tên
         if (!full_name || !full_name.trim()) {
@@ -237,14 +281,48 @@ const updateProfile = async (req, res) => {
 
         await sql.connect(config);
 
-        await sql.query`
-    UPDATE users
-    SET
-        full_name = ${full_name.trim()},
-        phone = ${phone || null},
-        avatar = ${avatar || null}
-    WHERE user_id = ${req.user.user_id}
-`;
+        // Kiểm tra email và tính duy nhất nếu có truyền email mới
+        let emailToUpdate = null;
+        if (email && email.trim()) {
+            emailToUpdate = email.trim().toLowerCase();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailToUpdate)) {
+                return res.status(400).json({
+                    message: 'Địa chỉ Email không hợp lệ'
+                });
+            }
+
+            const checkEmail = await sql.query`
+                SELECT user_id FROM users
+                WHERE email = ${emailToUpdate} AND user_id != ${req.user.user_id}
+            `;
+            if (checkEmail.recordset.length > 0) {
+                return res.status(400).json({
+                    message: 'Email này đã được sử dụng bởi một tài khoản khác'
+                });
+            }
+        }
+
+        if (emailToUpdate) {
+            await sql.query`
+                UPDATE users
+                SET
+                    full_name = ${full_name.trim()},
+                    email = ${emailToUpdate},
+                    phone = ${phone || null},
+                    avatar = ${avatar || null}
+                WHERE user_id = ${req.user.user_id}
+            `;
+        } else {
+            await sql.query`
+                UPDATE users
+                SET
+                    full_name = ${full_name.trim()},
+                    phone = ${phone || null},
+                    avatar = ${avatar || null}
+                WHERE user_id = ${req.user.user_id}
+            `;
+        }
 
         // Lấy lại thông tin mới nhất
         const result = await sql.query`

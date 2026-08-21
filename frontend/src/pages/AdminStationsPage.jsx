@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import FloatingPrintButton from '../components/FloatingPrintButton';
 import AdminSidebar from '../components/AdminSidebar';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
 import { 
@@ -417,7 +417,7 @@ function AdminStationsPage() {
                                     <div className="w-full h-64 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
                                         {selectedStation.image_url ? (
                                             <img
-                                                src={selectedStation.image_url.startsWith('http') ? selectedStation.image_url : `http://localhost:5000${selectedStation.image_url}`}
+                                                src={getImageUrl(selectedStation.image_url)}
                                                 alt={selectedStation.station_name}
                                                 className="w-full h-full object-cover"
                                             />

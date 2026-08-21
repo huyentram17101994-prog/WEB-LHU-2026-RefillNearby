@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../components/AdminSidebar';
 import { RiLogoutCircleRLine } from "react-icons/ri";
@@ -141,12 +141,7 @@ function OwnerDashboardPage() {
         navigate('/login');
     };
 
-    // Đường dẫn ảnh đại diện
-    const avatarUrl = currentUser?.avatar
-        ? currentUser.avatar.startsWith('/uploads')
-            ? `http://localhost:5000${currentUser.avatar}`
-            : currentUser.avatar
-        : null;
+    const avatarUrl = currentUser?.avatar ? getImageUrl(currentUser.avatar) : null;
 
     // ============================================
     // XỬ LÝ DỮ LIỆU BIỂU ĐỒ (RECHARTS DATA)

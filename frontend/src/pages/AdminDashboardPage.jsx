@@ -316,15 +316,6 @@ function AdminDashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-3 shrink-0 flex-wrap">
-                            {pendingResetUsers.length > 0 && (
-                                <button
-                                    onClick={() => navigate('/admin/users')}
-                                    className="flex items-center gap-2 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow font-bold text-xs transition animate-pulse cursor-pointer"
-                                >
-                                    <FaBell /> Reset Mật Khẩu ({pendingResetUsers.length})
-                                </button>
-                            )}
-
                             <button
                                 onClick={loadAllData}
                                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow transition flex items-center gap-2 cursor-pointer"

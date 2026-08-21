@@ -25,9 +25,11 @@ const {
     getFavoriteStationCount,
     getFavoriteProductCount,
     toggleUserStatus,
+    approveUser,
     getStationDetail,
     getTopRefillProducts,
-    resetUserPassword
+    resetUserPassword,
+    updateUser
 } = require('../controllers/admin.controller');
 
 const {
@@ -49,6 +51,12 @@ router.get(
     getAllUsers
 );
 
+router.put(
+    '/users/:id',
+    verifyToken,
+    authorizeRoles('admin'),
+    updateUser
+);
 
 router.delete(
     '/users/:id',
@@ -61,6 +69,12 @@ router.put(
     verifyToken,
     authorizeRoles('admin'),
     toggleUserStatus
+);
+router.put(
+    '/users/:id/approve',
+    verifyToken,
+    authorizeRoles('admin'),
+    approveUser
 );
 router.post(
     '/users/:id/reset-password',

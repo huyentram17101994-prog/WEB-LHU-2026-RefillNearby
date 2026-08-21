@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import api, { getImageUrl } from '../services/api';
 import { 
     FaUsers, 
     FaStore, 
@@ -35,6 +36,8 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
         return localStorage.getItem('admin_sidebar_collapsed') === 'true';
     });
 
+    const [userNotificationCount, setUserNotificationCount] = useState(0);
+
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
@@ -55,14 +58,6 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
         }
     }, [isCollapsed]);
 
-    const toggleTheme = () => {
-        setIsDarkMode(prev => !prev);
-    };
-
-    const toggleCollapse = () => {
-        setIsCollapsed(prev => !prev);
-    };
-
     const storedUser = currentUser || (() => {
         try {
             return JSON.parse(localStorage.getItem('user'));
@@ -71,11 +66,31 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
         }
     })();
 
-    const avatarUrl = storedUser?.avatar
-        ? storedUser.avatar.startsWith('/uploads')
-            ? `http://localhost:5000${storedUser.avatar}`
-            : storedUser.avatar
-        : null;
+    const isOwnerRole = storedUser?.role === 'store_owner' || location.pathname.startsWith('/owner');
+
+    // Tự động tải số lượng thông báo (Yêu cầu Reset MK + Chủ trạm chờ duyệt) nếu là Admin
+    useEffect(() => {
+        if (!isOwnerRole && storedUser?.role === 'admin') {
+            api.get('/admin/users')
+                .then(res => {
+                    const list = res.data || [];
+                    const pendingResets = list.filter(u => Boolean(u.reset_requested)).length;
+                    const pendingApprovals = list.filter(u => u.status === 'pending').length;
+                    setUserNotificationCount(pendingResets + pendingApprovals);
+                })
+                .catch(err => console.error("Lỗi lấy thông báo người dùng cho sidebar:", err));
+        }
+    }, [isOwnerRole, storedUser?.role, location.pathname]);
+
+    const toggleTheme = () => {
+        setIsDarkMode(prev => !prev);
+    };
+
+    const toggleCollapse = () => {
+        setIsCollapsed(prev => !prev);
+    };
+
+    const avatarUrl = storedUser?.avatar ? getImageUrl(storedUser.avatar) : null;
 
     const logout = () => {
         localStorage.removeItem('token');
@@ -88,7 +103,7 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
         window.print();
     };
 
-    const isOwnerRole = storedUser?.role === 'store_owner' || location.pathname.startsWith('/owner');
+    const totalPendingCount = Math.max(userNotificationCount, pendingResetCount);
 
     // Danh sách chức năng menu cho Admin
     const adminMenuItems = [
@@ -105,8 +120,8 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
             shortLabel: "Người dùng",
             path: "/admin/users",
             icon: FaUsers,
-            badge: pendingResetCount > 0 ? `${pendingResetCount}` : null,
-            badgeColor: "bg-amber-500 text-white animate-pulse",
+            badge: totalPendingCount > 0 ? `${totalPendingCount}` : null,
+            badgeColor: "bg-amber-500 text-white animate-pulse shadow-sm ring-1 ring-amber-300",
             color: isDarkMode ? "text-blue-400" : "text-blue-600"
         },
         {
@@ -358,8 +373,8 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
                                     <span className="truncate lg:hidden">{item.label}</span>
                                 </div>
 
-                                {item.badge && !isCollapsed && (
-                                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0 hidden lg:inline-block ${
+                                {item.badge && (
+                                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${isCollapsed ? 'hidden lg:hidden' : 'inline-block'} ${
                                         item.badgeColor || (isDarkMode ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-800')
                                     }`}>
                                         {item.badge}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import useFavorite from "../hooks/useFavorite";
 
 function FavoritesPage() {
@@ -353,11 +353,7 @@ function FavoritesPage() {
                                 <div className="relative">
 
                                     <img
-                                        src={
-                                            station.image_url?.startsWith('/uploads')
-                                                ? `http://localhost:5000${station.image_url}`
-                                                : station.image_url
-                                        }
+                                        src={getImageUrl(station.image_url)}
                                         alt={station.station_name}
                                         className="
                                             w-full
@@ -563,11 +559,7 @@ function FavoritesPage() {
                                 <div className="relative overflow-hidden">
 
                                     <img
-                                        src={
-                                            product.image_url?.startsWith("/uploads")
-                                                ? `http://localhost:5000${product.image_url}`
-                                                : product.image_url
-                                        }
+                                        src={getImageUrl(product.image_url)}
                                         alt={product.product_name}
                                         className="
                                             w-full

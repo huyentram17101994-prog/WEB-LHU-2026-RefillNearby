@@ -24,6 +24,8 @@ function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
+    const [showPendingModal, setShowPendingModal] = useState(false);
+    const [registeredOwnerData, setRegisteredOwnerData] = useState(null);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -42,7 +44,7 @@ function RegisterPage() {
 
         try {
             setLoading(true);
-            await api.post('/auth/register', {
+            const res = await api.post('/auth/register', {
                 full_name: fullName,
                 email,
                 password,
@@ -50,8 +52,16 @@ function RegisterPage() {
                 role: isOwner ? 'store_owner' : 'user'
             });
 
-            alert('🎉 Đăng ký tài khoản thành công!');
-            navigate('/login');
+            if (isOwner || res.data?.pendingApproval) {
+                setRegisteredOwnerData({
+                    fullName,
+                    email
+                });
+                setShowPendingModal(true);
+            } else {
+                alert('🎉 Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.');
+                navigate('/login');
+            }
         } catch (error) {
             console.error(error);
             alert(
@@ -198,16 +208,29 @@ function RegisterPage() {
                     </div>
 
                     {/* ĐĂNG KÝ LÀM CHỦ TRẠM */}
-                    <div className="flex items-center gap-2.5 bg-green-50/70 p-2.5 rounded-xl border border-green-100 cursor-pointer" onClick={() => setIsOwner(!isOwner)}>
-                        <input
-                            type="checkbox"
-                            checked={isOwner}
-                            onChange={(e) => setIsOwner(e.target.checked)}
-                            className="w-4 h-4 text-green-600 rounded focus:ring-green-400 cursor-pointer"
-                        />
-                        <label className="text-xs font-semibold text-green-900 cursor-pointer select-none flex items-center gap-1.5">
-                            <FaStore className="text-green-600 shrink-0" /> Đăng ký tài khoản làm Chủ trạm Refill
-                        </label>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2.5 bg-green-50/70 p-2.5 rounded-xl border border-green-100 cursor-pointer" onClick={() => setIsOwner(!isOwner)}>
+                            <input
+                                type="checkbox"
+                                checked={isOwner}
+                                onChange={(e) => setIsOwner(e.target.checked)}
+                                className="w-4 h-4 text-green-600 rounded focus:ring-green-400 cursor-pointer"
+                            />
+                            <label className="text-xs font-semibold text-green-900 cursor-pointer select-none flex items-center gap-1.5">
+                                <FaStore className="text-green-600 shrink-0" /> Đăng ký tài khoản làm Chủ trạm Refill
+                            </label>
+                        </div>
+
+                        {isOwner && (
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+                                <p className="font-bold flex items-center gap-1 text-amber-900">
+                                    <FaExclamationCircle className="text-amber-600 shrink-0" /> Yêu cầu xét duyệt từ Admin:
+                                </p>
+                                <p className="text-[11px] leading-relaxed text-amber-800">
+                                    Tài khoản Chủ trạm sau khi đăng ký sẽ cần Quản trị viên (Admin) kiểm tra và xét duyệt trước khi bạn có thể đăng nhập để đăng trạm và sản phẩm.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* NÚT ĐĂNG KÝ */}
@@ -239,6 +262,51 @@ function RegisterPage() {
                 </p>
 
             </div>
+
+            {/* POPUP THÔNG BÁO TÀI KHOẢN CHỦ TRẠM CHỜ ADMIN DUYỆT */}
+            {showPendingModal && registeredOwnerData && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-emerald-100">
+                        <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-4xl mx-auto shadow-inner ring-8 ring-amber-50">
+                            <FaStore />
+                        </div>
+
+                        <div>
+                            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full font-bold text-xs inline-block mb-2 border border-amber-200">
+                                ⏳ Đang Chờ Admin Phê Duyệt
+                            </span>
+                            <h3 className="text-2xl font-black text-gray-800">
+                                Đăng Ký Chủ Trạm Thành Công!
+                            </h3>
+                            <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                                Cảm ơn bạn <b className="text-gray-900 font-extrabold">"{registeredOwnerData.fullName}"</b> đã đăng ký làm Chủ trạm Refill!
+                            </p>
+                            <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left text-xs text-emerald-900 space-y-2">
+                                <p className="font-semibold flex items-start gap-1.5">
+                                    <span>📩</span>
+                                    <span>Hệ thống sẽ gửi <b>Email thông báo kích hoạt</b> tới hòm thư <b className="text-emerald-800 underline">{registeredOwnerData.email}</b> ngay khi Quản trị viên (Admin) phê duyệt.</span>
+                                </p>
+                                <p className="font-semibold flex items-start gap-1.5">
+                                    <span>🔑</span>
+                                    <span>Sau khi được duyệt, bạn có thể đăng nhập để bắt đầu tạo và quản lý các trạm Refill của mình.</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                onClick={() => {
+                                    setShowPendingModal(false);
+                                    navigate('/login');
+                                }}
+                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-extrabold text-sm shadow-lg shadow-emerald-200 transition cursor-pointer"
+                            >
+                                Đã hiểu, chuyển đến Đăng nhập
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

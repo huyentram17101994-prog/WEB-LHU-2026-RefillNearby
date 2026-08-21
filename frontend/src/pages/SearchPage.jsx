@@ -5,7 +5,7 @@ import {
     useNavigate
 } from "react-router-dom";
 
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 import { IoChevronBack } from "react-icons/io5";
 
@@ -562,17 +562,7 @@ function SearchPage() {
                                                 <img
 
                                                     src={
-                                                        station.image_url?.startsWith(
-                                                            "/uploads"
-                                                        )
-
-                                                            ?
-
-                                                            `http://localhost:5000${station.image_url}`
-
-                                                            :
-
-                                                            station.image_url
+                                                        getImageUrl(station.image_url)
                                                     }
 
                                                     alt={

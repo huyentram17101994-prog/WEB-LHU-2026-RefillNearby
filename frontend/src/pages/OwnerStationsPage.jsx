@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack } from "react-icons/io5";
 import FloatingPrintButton from '../components/FloatingPrintButton';
@@ -18,7 +18,8 @@ import {
     FaCheck, 
     FaGlobe,
     FaPrint,
-    FaBars
+    FaBars,
+    FaExclamationTriangle
 } from 'react-icons/fa';
 import { formatTimeDisplay, formatTimeInput } from '../utils/formatters';
 
@@ -35,6 +36,8 @@ function OwnerStationsPage() {
     const [previewImage, setPreviewImage] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [stationToDelete, setStationToDelete] = useState(null);
+    const [isDeletingStation, setIsDeletingStation] = useState(false);
 
     const [stationForm, setStationForm] = useState({
         station_name: '',
@@ -199,18 +202,18 @@ function OwnerStationsPage() {
         }
     };
 
-    const deleteStation = async (id) => {
-        if (!window.confirm('⚠️ Bạn có chắc chắn muốn xóa trạm Refill này không? Hành động này không thể hoàn tác.')) {
-            return;
-        }
-
+    const confirmDeleteStation = async () => {
+        if (!stationToDelete) return;
+        setIsDeletingStation(true);
         try {
-            await api.delete(`/owner/stations/${id}`);
-            alert('🗑️ Đã xóa trạm thành công');
+            await api.delete(`/owner/stations/${stationToDelete.station_id}`);
+            setStationToDelete(null);
             loadStations();
         } catch (error) {
             console.error("Lỗi xóa trạm:", error);
-            alert('Không thể xóa trạm.');
+            alert(error.response?.data?.message || 'Không thể xóa trạm.');
+        } finally {
+            setIsDeletingStation(false);
         }
     };
 
@@ -440,7 +443,7 @@ function OwnerStationsPage() {
                                                 <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
                                             ) : stationForm.image_url ? (
                                                 <img 
-                                                    src={stationForm.image_url.startsWith('http') ? stationForm.image_url : `http://localhost:5000${stationForm.image_url}`} 
+                                                    src={getImageUrl(stationForm.image_url)} 
                                                     alt="Station" 
                                                     className="w-full h-full object-cover" 
                                                 />
@@ -559,7 +562,7 @@ function OwnerStationsPage() {
                                         <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                             {station.image_url ? (
                                                 <img
-                                                    src={station.image_url.startsWith('http') ? station.image_url : `http://localhost:5000${station.image_url}`}
+                                                    src={getImageUrl(station.image_url)}
                                                     alt={station.station_name}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                                 />
@@ -611,7 +614,7 @@ function OwnerStationsPage() {
                                         </button>
 
                                         <button
-                                            onClick={() => deleteStation(station.station_id)}
+                                            onClick={() => setStationToDelete(station)}
                                             className="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
                                         >
                                             <FaTrash /> Xóa
@@ -622,6 +625,53 @@ function OwnerStationsPage() {
                         </div>
                     )}
                 </div>
+
+                {/* MODAL XÁC NHẬN XÓA TRẠM REFILL */}
+                {stationToDelete && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-red-100">
+                            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                                <FaExclamationTriangle />
+                            </div>
+
+                            <div>
+                                <h3 className="text-xl font-extrabold text-gray-800">Xác Nhận Xóa Trạm Refill</h3>
+                                <p className="text-gray-600 text-sm mt-2">
+                                    Bạn có chắc chắn muốn xóa trạm Refill <b className="text-gray-900 font-extrabold">"{stationToDelete.station_name}"</b>?
+                                </p>
+                                <p className="text-red-500 text-xs font-semibold mt-1">
+                                    ⚠️ Hành động này sẽ xóa trạm khỏi hệ thống và không thể hoàn tác!
+                                </p>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-3 pt-2">
+                                <button
+                                    onClick={() => setStationToDelete(null)}
+                                    disabled={isDeletingStation}
+                                    className="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-sm transition flex-1 disabled:opacity-50 cursor-pointer"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    onClick={confirmDeleteStation}
+                                    disabled={isDeletingStation}
+                                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 transition flex-1 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    {isDeletingStation ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Đang xóa...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaTrash /> Xác nhận xóa
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 </main>
             </div>

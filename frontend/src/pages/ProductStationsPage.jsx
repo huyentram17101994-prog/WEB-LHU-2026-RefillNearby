@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { IoChevronBack } from "react-icons/io5";
 
 function ProductStationsPage() {
@@ -102,10 +102,7 @@ function ProductStationsPage() {
 
     return (
         <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-300 via-white to-green-500">
-            {/* KHUNG CỐ ĐỊNH MAX-W-7XL CHO TOÀN BỘ TRANG */}
-            <div className="max-w-7xl mx-auto space-y-6">
-
-                {/* NÚT QUAY LẠI CHUẨN */}
+            {/* NÚT QUAY LẠI CHUẨN */}
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden cursor-pointer"
@@ -113,6 +110,10 @@ function ProductStationsPage() {
                     <IoChevronBack size={22} />
                     Quay lại
                 </button>
+            {/* KHUNG CỐ ĐỊNH MAX-W-7XL CHO TOÀN BỘ TRANG */}
+            <div className="max-w-7xl mx-auto space-y-6">
+
+                
 
                 {/* TIÊU ĐỀ SẢN PHẨM */}
                 <h1 className="text-4xl md:text-5xl text-green-600 text-center font-bold mb-6">
@@ -126,11 +127,7 @@ function ProductStationsPage() {
                             {/* IMAGE */}
                             <div className="flex justify-center">
                                 <img
-                                    src={
-                                        stations[0].image_url?.startsWith('/uploads')
-                                            ? `http://localhost:5000${stations[0].image_url}`
-                                            : stations[0].image_url
-                                    }
+                                    src={getImageUrl(stations[0].image_url)}
                                     alt={stations[0].product_name}
                                     className="w-52 h-52 object-cover rounded-3xl shadow-lg border border-green-500"
                                 />

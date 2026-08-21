@@ -262,7 +262,7 @@ function AdminRefillStatisticsPage() {
                         {(fromDate || toDate) && (
                             <button
                                 onClick={handleRefresh}
-                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
+                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
                             >
                                 <FaUndo size={11} /> Làm mới
                             </button>
@@ -271,7 +271,7 @@ function AdminRefillStatisticsPage() {
 
                     {/* KẾT QUẢ LỌC (NẾU CÓ) */}
                     {filteredQuantity !== null && (
-                        <div className="bg-gradient-to-r from-cyan-50 to-green-50 border border-cyan-200 rounded-2xl p-6 text-center shadow-inner space-y-2">
+                        <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-6 text-center shadow-sm space-y-2">
                             <p className="text-sm font-bold text-gray-700">
                                 📊 Tổng lượng Refill từ ngày <span className="text-red-600 font-extrabold">{formatDate(fromDate)}</span> đến ngày <span className="text-red-600 font-extrabold">{formatDate(toDate)}</span> là:
                             </p>

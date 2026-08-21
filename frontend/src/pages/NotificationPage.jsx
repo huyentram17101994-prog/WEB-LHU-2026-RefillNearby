@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import { IoChevronBack } from "react-icons/io5";
 import { FaBell, FaStore, FaBoxOpen, FaMapMarkerAlt, FaExternalLinkAlt, FaCheckCircle } from "react-icons/fa";
 
@@ -174,11 +174,7 @@ function NotificationPage() {
                     <div className="space-y-4">
                         {displayedNotifications.map((item) => {
                             const isUnread = !item.is_read;
-                            const imageSrc = item.image_url
-                                ? item.image_url.startsWith("http")
-                                    ? item.image_url
-                                    : `http://localhost:5000${item.image_url}`
-                                : null;
+                            const imageSrc = getImageUrl(item.image_url);
 
                             return (
                                 <div

@@ -5,153 +5,90 @@ const config = require('../config/db.config');
 
 // ================= GET ALL PRODUCTS =================
 const getAllProducts = async (req, res) => {
-
     try {
-
         await sql.connect(config);
 
-        // =========================
-        // PHÂN TRANG
-        // =========================
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.max(parseInt(req.query.limit) || 15, 1);
+        const offset = (page - 1) * limit;
+        const search = req.query.search || "";
+        const categoryId = req.query.categoryId || req.query.category_id || "";
 
-        const page =
-            Math.max(
-                parseInt(req.query.page) || 1,
-                1
-            );
+        const request = new sql.Request();
+        request.input("search", sql.NVarChar, `%${search}%`);
+        request.input("offset", sql.Int, offset);
+        request.input("limit", sql.Int, limit);
 
-        const limit =
-            Math.max(
-                parseInt(req.query.limit) || 15,
-                1
-            );
+        let whereConditions = [`rs.status = 'active'`, `p.product_name LIKE @search`];
 
-        const offset =
-            (page - 1) * limit;
+        if (categoryId && categoryId !== 'all') {
+            request.input("categoryId", sql.Int, parseInt(categoryId));
+            whereConditions.push(`p.category_id = @categoryId`);
+        }
 
+        const whereClause = `WHERE ` + whereConditions.join(" AND ");
 
-        // =========================
-        // TÌM KIẾM
-        // =========================
-
-        const search =
-            req.query.search || "";
-
-
-        // =========================
-        // LẤY TỔNG SỐ SẢN PHẨM
-        // =========================
-
-        const countResult = await sql.query`
-
+        const countQuery = `
             SELECT COUNT(*) AS total
-
             FROM (
-
-                SELECT
-                    p.product_name
-
+                SELECT p.product_name
                 FROM products p
-
-                INNER JOIN refill_stations rs
-                    ON p.station_id = rs.station_id
-
-                WHERE
-                    rs.status = 'active'
-
-                    AND p.product_name LIKE
-                        ${`%${search}%`}
-
-                GROUP BY
-                    p.product_name
-
+                INNER JOIN refill_stations rs ON p.station_id = rs.station_id
+                ${whereClause}
+                GROUP BY p.product_name
             ) AS product_list
-
         `;
 
+        const countResult = await request.query(countQuery);
+        const total = countResult.recordset[0].total;
+        const totalPages = Math.ceil(total / limit);
 
-        const total =
-            countResult.recordset[0].total;
-
-
-        const totalPages =
-            Math.ceil(total / limit);
-
-
-        // =========================
-        // LẤY SẢN PHẨM THEO TRANG
-        // =========================
-
-        const result = await sql.query`
-
+        const dataQuery = `
             SELECT
-
                 MIN(p.product_id) AS product_id,
-
                 p.product_name,
-
                 MIN(p.price) AS min_price,
-
                 COUNT(*) AS total_stations,
-
-                MIN(p.image_url) AS image_url
-
+                MIN(p.image_url) AS image_url,
+                MIN(p.category_id) AS category_id
             FROM products p
-
-            INNER JOIN refill_stations rs
-                ON p.station_id = rs.station_id
-
-            WHERE
-                rs.status = 'active'
-
-                AND p.product_name LIKE
-                    ${`%${search}%`}
-
-            GROUP BY
-                p.product_name
-
-            ORDER BY
-                p.product_name
-
-            OFFSET ${offset} ROWS
-
-            FETCH NEXT ${limit} ROWS ONLY
-
+            INNER JOIN refill_stations rs ON p.station_id = rs.station_id
+            ${whereClause}
+            GROUP BY p.product_name
+            ORDER BY p.product_name
+            OFFSET @offset ROWS
+            FETCH NEXT @limit ROWS ONLY
         `;
 
-
-        // =========================
-        // TRẢ KẾT QUẢ
-        // =========================
+        const result = await request.query(dataQuery);
 
         res.json({
-
             data: result.recordset,
-
             total: total,
-
             page: page,
-
             limit: limit,
-
             totalPages: totalPages
-
         });
-
+    } catch (error) {
+        console.error("Lỗi lấy sản phẩm:", error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    catch (error) {
-
-        console.log(error);
-
-        res.status(500).json({
-
-            error: error.message
-
-        });
-
+// ================= GET CATEGORIES =================
+const getCategories = async (req, res) => {
+    try {
+        await sql.connect(config);
+        const result = await sql.query`
+            SELECT category_id, category_name, description
+            FROM categories
+            ORDER BY category_name ASC
+        `;
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Lỗi lấy danh mục:", error);
+        res.status(500).json({ error: error.message });
     }
-
 };
 // ================= CREATE PRODUCT =================
 const createProduct = async (req, res) => {
@@ -441,6 +378,7 @@ const getProductStations = async (req, res) => {
 
 module.exports = {
     getAllProducts,
+    getCategories,
     getProductsByStation,
     createProduct,
     updateProduct,

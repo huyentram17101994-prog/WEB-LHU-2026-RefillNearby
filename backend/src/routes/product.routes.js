@@ -4,6 +4,7 @@ const router = express.Router();
 
 const {
     getAllProducts,
+    getCategories,
     getProductsByStation,
     createProduct,
     updateProduct,
@@ -18,8 +19,9 @@ const {
 
 
 
-// ================= GET PRODUCTS =================
+// ================= GET PRODUCTS & CATEGORIES =================
 router.get('/', getAllProducts);
+router.get('/categories', getCategories);
 router.get(
     '/station/:stationId',
     getProductsByStation

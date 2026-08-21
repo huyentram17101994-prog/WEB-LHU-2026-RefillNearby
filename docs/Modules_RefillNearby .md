@@ -80,6 +80,7 @@ Người dùng cuối
 * Đăng ký
 * Đăng nhập
 * Quên mật khẩu
+* Quản lý hồ sơ cá nhân
 * Xem trạm refill
 * Tìm kiếm trạm refill
 * Xem sản phẩm refill
@@ -96,7 +97,7 @@ Người dùng cuối
 Chủ trạm refill
 
 ### Chức năng
-
+* Quản lý hồ sơ cá nhân
 * Quản lý trạm refill
 * Thêm trạm
 * Sửa trạm
@@ -114,7 +115,7 @@ Chủ trạm refill
 ## Admin
 
 ### Chức năng
-
+* Quản lý hồ sơ cá nhân
 * Dashboard
 * Quản lý User
 * Quản lý Trạm refill

@@ -1,5 +1,4 @@
-const sql = require('mssql');
-const config = require('../config/db.config');
+const { sql, config } = require('../config/db.config');
 
 /**
  * Đảm bảo các cột must_change_password và temp_password_expires_at đã sẵn sàng trong bảng users
@@ -49,6 +48,17 @@ const ensureUsersTableColumns = async () => {
             )
             BEGIN
                 ALTER TABLE users ADD reset_requested_at DATETIME2 NULL;
+            END
+        `;
+
+        // Kiểm tra & Thêm cột status
+        await sql.query`
+            IF NOT EXISTS (
+                SELECT * FROM sys.columns 
+                WHERE object_id = OBJECT_ID('users') AND name = 'status'
+            )
+            BEGIN
+                ALTER TABLE users ADD status VARCHAR(50) DEFAULT 'active';
             END
         `;
     } catch (err) {

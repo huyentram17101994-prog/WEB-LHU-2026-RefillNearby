@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
 
@@ -57,9 +57,7 @@ function OCRPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-emerald-200 p-4 md:p-8 relative">
-            <div className="max-w-7xl mx-auto space-y-6">
-
-                {/* NÚT QUAY LẠI CHUẨN */}
+            {/* NÚT QUAY LẠI CHUẨN */}
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 text-base font-semibold text-gray-700 print:hidden cursor-pointer"
@@ -67,6 +65,9 @@ function OCRPage() {
                     <IoChevronBack size={22} />
                     Quay lại
                 </button>
+            <div className="max-w-7xl mx-auto space-y-6">
+
+                
 
                 {/* TIÊU ĐỀ CĂN GIỮA */}
                 <div className="flex items-center justify-center gap-3 my-8">
@@ -192,11 +193,7 @@ function OCRPage() {
                                     className="flex items-center gap-4 bg-white/90 backdrop-blur-md rounded-3xl shadow-lg p-5 border border-green-100 hover:shadow-xl hover:-translate-y-1 transition duration-300 group"
                                 >
                                     <img
-                                        src={
-                                            product.image_url?.startsWith("/uploads")
-                                                ? `http://localhost:5000${product.image_url}`
-                                                : product.image_url
-                                        }
+                                        src={getImageUrl(product.image_url)}
                                         alt={product.product_name}
                                         className="w-24 h-24 rounded-2xl object-cover shadow-sm border border-gray-100 shrink-0 group-hover:scale-105 transition duration-300"
                                     />

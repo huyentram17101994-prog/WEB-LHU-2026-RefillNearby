@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import api from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 import { useNavigate } from "react-router-dom";
 
@@ -1335,20 +1335,7 @@ function HomePage() {
                                 ">
 
                                     <img
-
-                                        src={
-                                            station.image_url?.startsWith(
-                                                "/uploads"
-                                            )
-
-                                                ?
-
-                                                `http://localhost:5000${station.image_url}`
-
-                                                :
-
-                                                station.image_url
-                                        }
+                                        src={getImageUrl(station.image_url)}
 
                                         alt={
                                             station.station_name

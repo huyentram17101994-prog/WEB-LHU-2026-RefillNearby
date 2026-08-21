@@ -20,7 +20,8 @@ import {
     FaExclamationTriangle,
     FaCheckCircle,
     FaPrint,
-    FaBars
+    FaBars,
+    FaEdit
 } from 'react-icons/fa';
 
 const USERS_PER_PAGE = 10;
@@ -40,6 +41,9 @@ function AdminUsersPage() {
 
     const [userToDelete, setUserToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [approveSuccessUser, setApproveSuccessUser] = useState(null);
+    const [isApproving, setIsApproving] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -93,6 +97,7 @@ function AdminUsersPage() {
     };
 
     const pendingResetCount = users.filter(u => Boolean(u.reset_requested)).length;
+    const pendingApprovalCount = users.filter(u => u.status === 'pending').length;
 
     const filteredUsers = users.filter(user => {
         const matchSearch =
@@ -102,6 +107,8 @@ function AdminUsersPage() {
         let matchRole = true;
         if (roleFilter === 'reset_requested') {
             matchRole = Boolean(user.reset_requested);
+        } else if (roleFilter === 'pending') {
+            matchRole = user.status === 'pending';
         } else if (roleFilter !== '') {
             matchRole = user.role === roleFilter;
         }
@@ -124,6 +131,20 @@ function AdminUsersPage() {
     const handleRoleFilterChange = (val) => {
         setRoleFilter(val);
         setCurrentPage(1);
+    };
+
+    const handleApproveUser = async (user) => {
+        setIsApproving(true);
+        try {
+            const res = await api.put(`/admin/users/${user.user_id}/approve`);
+            setApproveSuccessUser(user);
+            loadUsers();
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || "Không thể duyệt tài khoản người dùng.");
+        } finally {
+            setIsApproving(false);
+        }
     };
 
     const toggleStatus = async (user) => {
@@ -227,16 +248,6 @@ function AdminUsersPage() {
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
-                        {pendingResetCount > 0 && (
-                            <div 
-                                onClick={() => { setRoleFilter('reset_requested'); setCurrentPage(1); }}
-                                className="px-4 py-2 bg-amber-100 text-amber-900 rounded-2xl font-bold text-sm border border-amber-300 flex items-center gap-2 animate-bounce cursor-pointer shadow-sm hover:bg-amber-200 transition"
-                                title="Bấm để xem người dùng đang chờ duyệt Reset MK"
-                            >
-                                🔔 {pendingResetCount} yêu cầu Reset MK
-                            </div>
-                        )}
-
                         <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl font-bold text-sm border border-blue-200 flex items-center gap-2">
                             <FaUsers /> Tổng số: {users.length} tài khoản
                         </div>
@@ -265,6 +276,9 @@ function AdminUsersPage() {
                             className="px-4 py-2.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-sm bg-gray-50 focus:bg-white transition font-medium min-w-[200px]"
                         >
                             <option value="">👤 Tất cả vai trò</option>
+                            {pendingApprovalCount > 0 && (
+                                <option value="pending">⏳ Chờ duyệt ({pendingApprovalCount})</option>
+                            )}
                             {pendingResetCount > 0 && (
                                 <option value="reset_requested">🔔 Yêu cầu Reset MK ({pendingResetCount})</option>
                             )}
@@ -295,8 +309,7 @@ function AdminUsersPage() {
                                             <th className="p-4">ID</th>
                                             <th className="p-4">Họ tên</th>
                                             <th className="p-4">Email</th>
-                                            <th className="p-4">Vai trò</th>
-                                            <th className="p-4">Trạng thái</th>
+                                            <th className="p-4">Vai trò & Trạng thái</th>
                                             <th className="p-4">Ngày tạo</th>
                                             <th className="p-4 text-center">Thao tác</th>
                                         </tr>
@@ -309,36 +322,39 @@ function AdminUsersPage() {
                                                 <td className="p-4 font-bold text-gray-800">{user.full_name}</td>
                                                 <td className="p-4 text-gray-600">{user.email}</td>
 
-                                                {/* VAI TRÒ BADGE */}
-                                                <td className="p-4">
-                                                    {user.role === 'admin' && (
-                                                        <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-xs inline-flex items-center gap-1 border border-purple-200">
-                                                            <FaUserShield /> Admin
-                                                        </span>
-                                                    )}
-                                                    {user.role === 'store_owner' && (
-                                                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs inline-flex items-center gap-1 border border-blue-200">
-                                                            <FaStore /> Chủ trạm
-                                                        </span>
-                                                    )}
-                                                    {user.role === 'user' && (
-                                                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-xs inline-flex items-center gap-1 border border-green-200">
-                                                            <FaUser /> Người dùng
-                                                        </span>
-                                                    )}
-                                                </td>
+                                                {/* VAI TRÒ & TRẠNG THÁI ON SAME LINE */}
+                                                <td className="p-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        {user.role === 'admin' && (
+                                                            <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-xs inline-flex items-center gap-1 border border-purple-200">
+                                                                <FaUserShield /> Admin
+                                                            </span>
+                                                        )}
+                                                        {user.role === 'store_owner' && (
+                                                            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs inline-flex items-center gap-1 border border-blue-200">
+                                                                <FaStore /> Chủ trạm
+                                                            </span>
+                                                        )}
+                                                        {user.role === 'user' && (
+                                                            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-xs inline-flex items-center gap-1 border border-green-200">
+                                                                <FaUser /> Người dùng
+                                                            </span>
+                                                        )}
 
-                                                {/* TRẠNG THÁI BADGE */}
-                                                <td className="p-4">
-                                                    {user.status === "active" ? (
-                                                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-extrabold border border-green-200 inline-flex items-center gap-1">
-                                                            🟢 Hoạt động
-                                                        </span>
-                                                    ) : (
-                                                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-extrabold border border-red-200 inline-flex items-center gap-1">
-                                                            🔴 Đã bị khóa
-                                                        </span>
-                                                    )}
+                                                        {user.status === "active" ? (
+                                                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-extrabold border border-green-200 inline-flex items-center gap-1">
+                                                                🟢 Hoạt động
+                                                            </span>
+                                                        ) : user.status === "pending" ? (
+                                                            <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-extrabold border border-amber-300 inline-flex items-center gap-1 animate-pulse">
+                                                                🟡 Chờ xét duyệt
+                                                            </span>
+                                                        ) : (
+                                                            <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-extrabold border border-red-200 inline-flex items-center gap-1">
+                                                                🔴 Đã bị khóa
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* NGÀY TẠO */}
@@ -352,7 +368,17 @@ function AdminUsersPage() {
                                                         <span className="text-gray-400 text-xs italic">Bảo vệ quyền Admin</span>
                                                     ) : (
                                                         <div className="flex justify-center items-center gap-1.5 whitespace-nowrap">
-                                                            {Boolean(user.reset_requested) ? (
+                                                            {user.status === "pending" && (
+                                                                <button
+                                                                    onClick={() => handleApproveUser(user)}
+                                                                    className="px-3 py-1.5 rounded-xl text-white font-extrabold text-xs shadow transition flex items-center gap-1 bg-green-600 hover:bg-green-700 animate-pulse ring-2 ring-green-300 cursor-pointer"
+                                                                    title="Bấm để kích hoạt tài khoản Chủ trạm này"
+                                                                >
+                                                                    <FaCheckCircle size={11} /> Duyệt tài khoản
+                                                                </button>
+                                                            )}
+
+                                                            {Boolean(user.reset_requested) && (
                                                                 <button
                                                                     onClick={() => setUserToResetPassword(user)}
                                                                     className="px-3 py-1.5 rounded-xl text-white font-extrabold text-xs shadow transition flex items-center gap-1 bg-amber-500 hover:bg-amber-600 animate-pulse ring-2 ring-amber-300 cursor-pointer"
@@ -360,10 +386,6 @@ function AdminUsersPage() {
                                                                 >
                                                                     <FaKey size={11} /> 🔔 Duyệt Reset MK
                                                                 </button>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-semibold border border-slate-200/60 dark:border-slate-700 select-none">
-                                                                    Chưa yêu cầu reset
-                                                                </span>
                                                             )}
 
                                                             <button
@@ -382,7 +404,7 @@ function AdminUsersPage() {
 
                                                             <button
                                                                 onClick={() => setUserToDelete(user)}
-                                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center gap-1"
+                                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center gap-1 cursor-pointer"
                                                             >
                                                                 <FaTrash size={11} /> Xóa
                                                             </button>
@@ -556,7 +578,42 @@ function AdminUsersPage() {
                     </div>
                 </div>
             )}
-                </main>
+            {/* MODAL THÔNG BÁO DUYỆT TÀI KHOẢN CHỦ TRẠM THÀNH CÔNG */}
+            {approveSuccessUser && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center space-y-5 border border-emerald-100">
+                        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto shadow-inner ring-8 ring-emerald-50">
+                            <FaCheckCircle />
+                        </div>
+
+                        <div>
+                            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs inline-block mb-2">
+                                🎉 Duyệt Tài Khoản Thành Công
+                            </span>
+                            <h3 className="text-2xl font-black text-gray-800">
+                                Đã Duyệt Chủ Trạm!
+                            </h3>
+                            <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                                Tài khoản chủ trạm <b className="text-gray-900 font-extrabold">"{approveSuccessUser.full_name}"</b> (<span className="text-emerald-700 font-semibold">{approveSuccessUser.email}</span>) đã được kích hoạt thành công.
+                            </p>
+                            <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-left text-xs text-emerald-900 space-y-1">
+                                <p>✅ Chủ trạm hiện có thể đăng nhập vào hệ thống.</p>
+                                <p>🏪 Chủ trạm đã có đầy đủ quyền quản lý các trạm Refill của mình.</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                onClick={() => setApproveSuccessUser(null)}
+                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-extrabold text-sm shadow-lg shadow-emerald-200 transition cursor-pointer"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </main>
             </div>
         </div>
     );

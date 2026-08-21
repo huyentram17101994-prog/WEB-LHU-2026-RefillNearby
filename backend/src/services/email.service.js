@@ -126,6 +126,98 @@ const sendTempPasswordEmail = async (toEmail, fullName, tempPassword, expireMinu
     return true;
 };
 
+/**
+ * Gửi Email thông báo tài khoản Chủ trạm đã được Quản trị viên phê duyệt
+ * @param {string} toEmail - Email chủ trạm
+ * @param {string} fullName - Họ tên chủ trạm
+ */
+const sendApprovalEmail = async (toEmail, fullName) => {
+    const appName = "Refill Nearby";
+    const loginUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/login$/, '') + "/login";
+
+    const subject = `[${appName}] 🎉 Tài Khoản Chủ Trạm Của Bạn Đã Được Phê Duyệt!`;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tài Khoản Được Phê Duyệt - ${appName}</title>
+        <style>
+            body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0fdf4; margin: 0; padding: 20px; color: #1f2937; }
+            .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #dcfce7; }
+            .header { background: linear-gradient(135deg, #16a34a, #059669); padding: 32px 24px; text-align: center; color: #ffffff; }
+            .header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+            .header p { margin: 6px 0 0; opacity: 0.9; font-size: 14px; }
+            .content { padding: 32px 28px; }
+            .greeting { font-size: 16px; font-weight: 600; color: #15803d; margin-bottom: 12px; }
+            .badge { display: inline-block; background-color: #dcfce7; color: #15803d; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-bottom: 20px; border: 1px solid #bbf7d0; }
+            .info-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 16px; padding: 20px; margin: 24px 0; }
+            .info-box p { margin: 6px 0; font-size: 13.5px; color: #166534; line-height: 1.5; }
+            .btn-container { text-align: center; margin-top: 28px; }
+            .btn { display: inline-block; background-color: #16a34a; color: #ffffff !important; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: all 0.2s; }
+            .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #f3f4f6; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🌱 ${appName}</h1>
+                <p>Hệ Thống Trạm Refill Xanh Gần Bạn</p>
+            </div>
+            <div class="content">
+                <div class="greeting">Xin chào ${fullName || 'Chủ trạm'},</div>
+                <div class="badge">🎉 Tài Khoản Đã Được Phê Duyệt</div>
+                
+                <p style="font-size: 14px; line-height: 1.6; color: #4b5563;">
+                    Chúc mừng bạn! Tài khoản Chủ trạm của bạn trên hệ thống <b>${appName}</b> đã được Quản trị viên (Admin) xét duyệt và kích hoạt thành công.
+                </p>
+
+                <div class="info-box">
+                    <p>✅ <b>Trạng thái:</b> Đã kích hoạt (Active)</p>
+                    <p>🏪 <b>Quyền hạn:</b> Bạn hiện có thể tạo, chỉnh sửa và quản lý các trạm Refill của mình trên ứng dụng.</p>
+                </div>
+
+                <div class="btn-container">
+                    <a href="${loginUrl}" class="btn" target="_blank">Đăng Nhập Ngay</a>
+                </div>
+            </div>
+            <div class="footer">
+                <p>Email này được tự động gửi từ hệ thống ${appName}. Vui lòng không phản hồi email này.</p>
+                <p>&copy; 2026 ${appName}. Tất cả các quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    const transporter = createTransporter();
+
+    if (transporter) {
+        try {
+            await transporter.sendMail({
+                from: `"${appName}" <${process.env.SMTP_USER}>`,
+                to: toEmail,
+                subject,
+                html: htmlContent
+            });
+            console.log(`✉️ [EMAIL SENT] Thông báo duyệt tài khoản đã được gửi tới ${toEmail}`);
+            return true;
+        } catch (err) {
+            console.error(`❌ [EMAIL ERROR] Không thể gửi mail duyệt tài khoản tới ${toEmail}:`, err.message);
+        }
+    }
+
+    console.log("\n=======================================================");
+    console.log(`✉️ [SIMULATED APPROVAL EMAIL TO: ${toEmail}]`);
+    console.log(`👤 Người nhận: ${fullName}`);
+    console.log(`🎉 Trạng thái: Tài khoản Chủ trạm đã được duyệt`);
+    console.log("=======================================================\n");
+    return true;
+};
+
 module.exports = {
-    sendTempPasswordEmail
+    sendTempPasswordEmail,
+    sendApprovalEmail
 };
