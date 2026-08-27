@@ -403,11 +403,11 @@ function AdminReviewsPage() {
                                                     <p className="text-gray-800 font-medium italic">"{review.comment}"</p>
                                                     
                                                     {review.owner_reply ? (
-                                                        <div className="bg-green-50 p-2.5 rounded-xl border border-green-200 text-xs text-gray-700 space-y-0.5">
-                                                            <span className="font-bold text-green-800 flex items-center gap-1">
-                                                                <FaCommentDots /> Phản hồi từ chủ trạm:
+                                                        <div className="bg-green-50 dark:bg-slate-900 p-2.5 rounded-xl border border-green-200 dark:border-emerald-800/60 text-xs text-gray-700 dark:text-gray-200 space-y-1">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-md text-[11px] font-black tracking-wider shadow-sm">
+                                                                <FaCommentDots size={11} className="text-white" /> Phản hồi từ chủ trạm:
                                                             </span>
-                                                            <p className="pl-4 border-l-2 border-green-500">{review.owner_reply}</p>
+                                                            <p className="pl-3 border-l-2 border-green-500 dark:border-emerald-400 text-gray-800 dark:text-slate-100 font-semibold">{review.owner_reply}</p>
                                                         </div>
                                                     ) : (
                                                         <span className="text-[11px] text-gray-400 italic">Chưa có phản hồi từ trạm</span>

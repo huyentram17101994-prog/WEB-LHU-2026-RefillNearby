@@ -960,23 +960,16 @@ if (Number.isNaN(quantityNumber) || quantityNumber <= 0) {
                                         {
 
                                             review.owner_reply &&
-
-                                            <div className="mt-5 bg-orange-100 border-l-4 border-orange-500 rounded-xl p-4">
-
-                                                <div className="font-bold text-orange-600 mb-2">
-
-                                                    Phản hồi của chủ trạm
-
+                                            <div className="mt-5 bg-white dark:bg-slate-900 border-l-4 border-green-600 rounded-xl p-4 space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-3 py-1 bg-green-600 dark:bg-amber-500 text-white font-black text-xs rounded-lg shadow-sm">
+                                                        Phản hồi của chủ trạm
+                                                    </span>
                                                 </div>
-
-                                                <p>
-
+                                                <p className="text-slate-800 dark:text-slate-100 font-medium text-sm">
                                                     {review.owner_reply}
-
                                                 </p>
-
                                             </div>
-
                                         }
 
                                     </div>

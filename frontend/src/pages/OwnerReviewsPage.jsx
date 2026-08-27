@@ -522,19 +522,21 @@ function OwnerReviewsPage() {
 
                                                         {/* PHẢN HỒI ĐÃ CÓ */}
                                                         {review.owner_reply && editingReview !== review.review_id && (
-                                                            <div className="mt-3 bg-emerald-100/70 dark:bg-slate-950 rounded-2xl border-2 border-emerald-500/50 dark:border-emerald-500/50 p-4 shadow-sm space-y-2">
-                                                                <div className="flex justify-between items-center">
-                                                                    <div className="font-extrabold text-emerald-900 dark:text-emerald-400 text-xs flex items-center gap-2">
-                                                                        <FaReply className="text-emerald-600 dark:text-emerald-400 transform rotate-180" />
-                                                                        <span>PHẢN HỒI TỪ CHỦ TRẠM</span>
+                                                            <div className="mt-3 bg-emerald-50 dark:bg-slate-950/90 rounded-2xl border-2 border-emerald-500/50 dark:border-emerald-500/60 p-4 shadow-sm space-y-2">
+                                                                <div className="flex justify-between items-center flex-wrap gap-2">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="px-3 py-1 bg-emerald-600 dark:bg-emerald-500 text-white dark:text-white rounded-lg text-xs font-black tracking-wider flex items-center gap-1.5 shadow-sm">
+                                                                            <FaReply className="transform rotate-180 text-white" size={11} />
+                                                                            PHẢN HỒI TỪ CHỦ TRẠM
+                                                                        </span>
                                                                         {review.replied_at && (
-                                                                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">• {formatDateDisplay(review.replied_at)}</span>
+                                                                            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">• {formatDateDisplay(review.replied_at)}</span>
                                                                         )}
                                                                     </div>
 
                                                                     <button
                                                                         onClick={() => startEditReply(review)}
-                                                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-extrabold flex items-center gap-1 hover:underline transition cursor-pointer"
+                                                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-extrabold flex items-center gap-1 hover:underline transition cursor-pointer"
                                                                     >
                                                                         <FaEdit size={12} /> Chỉnh sửa
                                                                     </button>
