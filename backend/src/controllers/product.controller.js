@@ -82,7 +82,7 @@ const getCategories = async (req, res) => {
         const result = await sql.query`
             SELECT category_id, category_name, description
             FROM categories
-            ORDER BY category_name ASC
+            ORDER BY category_id ASC
         `;
         res.json(result.recordset);
     } catch (error) {

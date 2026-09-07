@@ -98,88 +98,79 @@ export default function useFavorite(type) {
     // ==========================
 
     const removeFavorite = async (id) => {
+        if (!id) return;
 
-    const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
 
-    if (type === "products") {
+        if (type === "products") {
+            const old = favorites.find(
+                item => item.product_id === id || item.favorite_product_id === id
+            );
 
-        const old = favorites.find(
-            item => item.product_id === id
-        );
+            if (!old) return;
 
-        if (!old) return;
-
-        await api.delete(
-
-            `/favorites/products/${old.favorite_product_id}`,
-
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            await api.delete(
+                `/favorites/products/${old.favorite_product_id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            }
+            );
+        }
+        else {
+            const old = favorites.find(
+                item => item.station_id === id || item.favorite_id === id
+            );
 
-        );
+            if (!old) return;
 
-    }
-
-    else {
-
-        const old = favorites.find(
-            item => item.station_id === id
-        );
-
-        if (!old) return;
-
-        await api.delete(
-
-            `/favorites/${old.favorite_id}`,
-
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            await api.delete(
+                `/favorites/${old.favorite_id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            }
+            );
+        }
 
-        );
-
-    }
-
-    fetchFavorites();
-
-};
+        fetchFavorites();
+    };
 
     // ==========================
     // Check
     // ==========================
 
-    const isFavorite = (id)=>{
+    const isFavorite = (id) => {
+        if (!id) return false;
 
-        return favorites.some(item=>{
-
-            return type==="products"
-
-                ?
-
-                item.product_id===id
-
-                :
-
-                item.station_id===id;
-
+        return favorites.some(item => {
+            return type === "products"
+                ? (item.product_id === id || item.favorite_product_id === id)
+                : (item.station_id === id || item.favorite_id === id);
         });
-
     };
 
     // ==========================
     // Toggle
     // ==========================
 
-    const toggleFavorite = async (id) => { const favorite = favorites.find(item => 
-        { 
-            return type === "products" ? item.product_id === id : item.station_id === id; }); 
-    if (favorite) { await removeFavorite(id); } 
-    else { await addFavorite(id); } };
+    const toggleFavorite = async (id) => {
+        if (!id) return;
+
+        const favorite = favorites.find(item => {
+            return type === "products"
+                ? (item.product_id === id || item.favorite_product_id === id)
+                : (item.station_id === id || item.favorite_id === id);
+        });
+
+        if (favorite) {
+            await removeFavorite(id);
+        } else {
+            await addFavorite(id);
+        }
+    };
     useEffect(()=>{
 
         fetchFavorites();

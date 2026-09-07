@@ -575,7 +575,7 @@ function FavoritesPage() {
                                         onClick={async () => {
 
                                             await removeProductFavorite(
-                                                product.product_id
+                                                product.favorite_product_id || product.product_id
                                             );
 
                                             fetchData();

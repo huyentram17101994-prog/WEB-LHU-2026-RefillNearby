@@ -41,11 +41,13 @@ function ProductsPage() {
     const setDefaultCategories = () => {
         setCategories([
             { category_id: 1, category_name: "Nước giặt" },
-            { category_id: 2, category_name: "Nước rửa chén" },
-            { category_id: 3, category_name: "Dầu gội" },
-            { category_id: 4, category_name: "Sữa tắm" },
-            { category_id: 5, category_name: "Nước lau nhà" },
-            { category_id: 6, category_name: "Nước xả vải" },
+            { category_id: 2, category_name: "Dầu gội" },
+            { category_id: 3, category_name: "Dầu xả" },
+            { category_id: 4, category_name: "Nước lau nhà" },
+            { category_id: 5, category_name: "Nước rửa chén" },
+            { category_id: 6, category_name: "Sữa tắm" },
+            { category_id: 7, category_name: "Nước xả vải" },
+            { category_id: 8, category_name: "Nước rửa tay" },
         ]);
     };
 
@@ -86,7 +88,6 @@ function ProductsPage() {
     const handleCategoryChange = (categoryId) => {
         setSelectedCategory(categoryId);
         setCurrentPage(1);
-        fetchProducts(1, search, categoryId);
     };
 
     const handlePageChange = (page) => {

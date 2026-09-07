@@ -60,6 +60,8 @@ const getFavoriteProducts = async (req, res) => {
 
                 MIN(fp.favorite_product_id) AS favorite_product_id,
 
+                MIN(p.product_id) AS product_id,
+
                 p.product_name,
 
                 MIN(p.price) AS min_price,
