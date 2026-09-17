@@ -240,8 +240,8 @@ function AdminSidebar({ isOpen, onClose, pendingResetCount = 0, currentUser }) {
                 }`}>
                     <div 
                         className="flex items-center gap-3 cursor-pointer overflow-hidden min-w-0" 
-                        onClick={() => navigate('/admin')}
-                        title="Về tổng quan hệ thống"
+                        onClick={() => navigate(isOwnerRole ? '/owner' : '/admin')}
+                        title={isOwnerRole ? "Về trang chủ trạm" : "Về tổng quan hệ thống"}
                     >
                         <div className="w-10 h-10 rounded-xl bg-green-100 text-green-700 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 shrink-0">
                             <span className="text-2xl select-none">🌱</span>

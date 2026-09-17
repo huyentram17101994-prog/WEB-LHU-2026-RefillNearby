@@ -33,16 +33,33 @@ import {
     XAxis,
     YAxis,
     Tooltip,
-    Legend
+    Legend,
+    Sector
 } from "recharts";
 
 const COLORS = [
-    "#22c55e",
+    "#10b981",
     "#3b82f6",
     "#f59e0b",
-    "#ef4444",
-    "#8b5cf6"
+    "#f97316",
+    "#ef4444"
 ];
+
+const RATING_COLORS = {
+    5: "#10b981",
+    4: "#3b82f6",
+    3: "#f59e0b",
+    2: "#f97316",
+    1: "#ef4444"
+};
+
+const RATING_GRADIENTS = {
+    5: { start: "#34d399", end: "#059669" },
+    4: { start: "#60a5fa", end: "#2563eb" },
+    3: { start: "#fbbf24", end: "#d97706" },
+    2: { start: "#fb923c", end: "#ea580c" },
+    1: { start: "#f87171", end: "#dc2626" }
+};
 
 function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -63,6 +80,63 @@ function AdminDashboardPage() {
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [pendingResetUsers, setPendingResetUsers] = useState([]);
+    const [activePieIndex, setActivePieIndex] = useState(null);
+
+    const renderActivePieShape = (props) => {
+        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+        return (
+            <g>
+                <Sector
+                    cx={cx}
+                    cy={cy}
+                    innerRadius={innerRadius - 2}
+                    outerRadius={outerRadius + 8}
+                    startAngle={startAngle}
+                    endAngle={endAngle}
+                    fill={fill}
+                    cornerRadius={8}
+                />
+            </g>
+        );
+    };
+
+    const RatingTooltip = ({ active, payload }) => {
+        if (!active || !payload || !payload.length) return null;
+        const data = payload[0].payload;
+        const total = ratingStatistics.reduce((sum, item) => sum + Number(item.total), 0);
+        const percent = total > 0 ? ((data.total / total) * 100).toFixed(1) : 0;
+        const ratingNum = Number(data.rating);
+        const color = RATING_COLORS[ratingNum] || "#10b981";
+
+        const ratingLabels = {
+            5: "Tuyệt vời (5★)",
+            4: "Rất tốt (4★)",
+            3: "Bình thường (3★)",
+            2: "Kém (2★)",
+            1: "Rất kém (1★)"
+        };
+
+        return (
+            <div className="bg-slate-900/95 backdrop-blur-md text-white shadow-2xl rounded-2xl p-3.5 border border-slate-700/60 transition-all z-50">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-800">
+                    <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }} />
+                    <span className="font-extrabold text-xs text-amber-400">
+                        {ratingLabels[ratingNum] || `${ratingNum}⭐`}
+                    </span>
+                </div>
+                <div className="space-y-1 text-xs">
+                    <div className="flex justify-between gap-6 text-slate-300">
+                        <span>Số lượng:</span>
+                        <b className="text-white">{data.total} đánh giá</b>
+                    </div>
+                    <div className="flex justify-between gap-6 text-slate-300">
+                        <span>Tỷ lệ:</span>
+                        <b className="text-emerald-400">{percent}%</b>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -146,27 +220,6 @@ function AdminDashboardPage() {
         setFromDate("");
         setToDate("");
         loadAllData();
-    };
-
-    const RatingTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const data = payload[0].payload;
-        const total = ratingStatistics.reduce((sum, item) => sum + item.total, 0);
-        const percent = total > 0 ? ((data.total / total) * 100).toFixed(1) : 0;
-
-        return (
-            <div className="bg-slate-900 text-white shadow-2xl rounded-2xl p-4 border border-slate-700">
-                <p className="font-bold text-base text-amber-400 flex items-center gap-1">
-                    ⭐ {data.rating} sao
-                </p>
-                <p className="text-xs text-slate-300 mt-1">
-                    Số lượt đánh giá: <b className="text-white">{data.total}</b>
-                </p>
-                <p className="text-xs text-slate-300">
-                    Tỷ lệ: <b className="text-emerald-400">{percent}%</b>
-                </p>
-            </div>
-        );
     };
 
     if (loading && !dashboard) {
@@ -454,38 +507,158 @@ function AdminDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* BIỂU ĐỒ PHÂN BỐ ĐÁNH GIÁ */}
-                            <div className="bg-slate-50/70 rounded-3xl border border-slate-200 p-5 space-y-4">
-                                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                                    ⭐ Phân Bố Đánh Giá Theo Sao
-                                </h3>
-                                <div className="h-[320px] w-full">
-                                    {ratingStatistics && ratingStatistics.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={ratingStatistics}
-                                                    dataKey="total"
-                                                    nameKey="rating"
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    outerRadius={100}
-                                                    label={({ rating, percent }) => `${rating}⭐ (${(percent * 100).toFixed(0)}%)`}
-                                                >
-                                                    {ratingStatistics.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip content={<RatingTooltip />} />
-                                                <Legend />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    ) : (
-                                        <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
-                                            Chưa có dữ liệu phân bố đánh giá
-                                        </div>
-                                    )}
-                                </div>
+                            {/* BIỂU ĐỒ PHÂN BỐ ĐÁNH GIÁ (MODERN DONUT CHART) */}
+                            <div className="bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-5 shadow-sm hover:shadow-md transition-all">
+                                {(() => {
+                                    const totalReviews = ratingStatistics ? ratingStatistics.reduce((sum, item) => sum + Number(item.total), 0) : 0;
+                                    const weightedSum = ratingStatistics ? ratingStatistics.reduce((sum, item) => sum + (Number(item.rating) * Number(item.total)), 0) : 0;
+                                    const avgRating = totalReviews > 0 ? (weightedSum / totalReviews).toFixed(1) : "0.0";
+                                    const positiveCount = ratingStatistics ? ratingStatistics.filter(i => Number(i.rating) >= 4).reduce((sum, i) => sum + Number(i.total), 0) : 0;
+                                    const positivePercent = totalReviews > 0 ? Math.round((positiveCount / totalReviews) * 100) : 0;
+
+                                    const sortedRatingsDesc = [5, 4, 3, 2, 1].map(r => {
+                                        const found = ratingStatistics ? ratingStatistics.find(item => Number(item.rating) === r) : null;
+                                        return {
+                                            rating: r,
+                                            total: found ? Number(found.total) : 0
+                                        };
+                                    });
+
+                                    return (
+                                        <>
+                                            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                                                <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                                    <span className="p-1.5 bg-amber-500/10 text-amber-500 rounded-xl">⭐</span> Phân Bố Đánh Giá Theo Sao
+                                                </h3>
+                                                {totalReviews > 0 && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-3 py-1 text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-full border border-amber-200/60 dark:border-amber-800/60 flex items-center gap-1">
+                                                            🌟 {avgRating}/5.0
+                                                        </span>
+                                                        <span className="px-3 py-1 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                                                            👍 {positivePercent}% Tốt
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {ratingStatistics && ratingStatistics.length > 0 && totalReviews > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                                    {/* Donut Chart (Left) */}
+                                                    <div className="md:col-span-6 relative flex justify-center items-center h-[260px]">
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <PieChart>
+                                                                <defs>
+                                                                    {[1, 2, 3, 4, 5].map((s) => {
+                                                                        const g = RATING_GRADIENTS[s];
+                                                                        return (
+                                                                            <linearGradient id={`gradient-star-${s}`} key={s} x1="0" y1="0" x2="1" y2="1">
+                                                                                <stop offset="0%" stopColor={g.start} />
+                                                                                <stop offset="100%" stopColor={g.end} />
+                                                                            </linearGradient>
+                                                                        );
+                                                                    })}
+                                                                </defs>
+                                                                <Pie
+                                                                    data={ratingStatistics}
+                                                                    dataKey="total"
+                                                                    nameKey="rating"
+                                                                    cx="50%"
+                                                                    cy="50%"
+                                                                    innerRadius={68}
+                                                                    outerRadius={96}
+                                                                    paddingAngle={4}
+                                                                    cornerRadius={6}
+                                                                    activeIndex={activePieIndex !== null ? activePieIndex : undefined}
+                                                                    activeShape={renderActivePieShape}
+                                                                    onMouseEnter={(_, index) => setActivePieIndex(index)}
+                                                                    onMouseLeave={() => setActivePieIndex(null)}
+                                                                >
+                                                                    {ratingStatistics.map((entry) => {
+                                                                        const ratingNum = Number(entry.rating);
+                                                                        const gradId = `gradient-star-${ratingNum}`;
+                                                                        const solidColor = RATING_COLORS[ratingNum] || "#10b981";
+                                                                        return (
+                                                                            <Cell
+                                                                                key={`cell-${entry.rating}`}
+                                                                                fill={`url(#${gradId})`}
+                                                                                stroke={solidColor}
+                                                                                strokeWidth={1}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                </Pie>
+                                                                <Tooltip content={<RatingTooltip />} />
+                                                            </PieChart>
+                                                        </ResponsiveContainer>
+
+                                                        {/* Center Donut Overlay */}
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                                            <div className="text-3xl font-black text-slate-800 dark:text-white flex items-center gap-1">
+                                                                {avgRating} <span className="text-amber-400 text-2xl">★</span>
+                                                            </div>
+                                                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                                                Trung bình
+                                                            </span>
+                                                            <span className="mt-1 px-2.5 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-700">
+                                                                {totalReviews} đánh giá
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Breakdown Rows (Right) */}
+                                                    <div className="md:col-span-6 space-y-2.5">
+                                                        {sortedRatingsDesc.map((item) => {
+                                                            const star = item.rating;
+                                                            const percent = totalReviews > 0 ? ((item.total / totalReviews) * 100).toFixed(1) : 0;
+                                                            const color = RATING_COLORS[star];
+                                                            const isHovered = activePieIndex !== null && Number(ratingStatistics[activePieIndex]?.rating) === star;
+
+                                                            return (
+                                                                <div
+                                                                    key={star}
+                                                                    onMouseEnter={() => {
+                                                                        const idx = ratingStatistics.findIndex(r => Number(r.rating) === star);
+                                                                        if (idx !== -1) setActivePieIndex(idx);
+                                                                    }}
+                                                                    onMouseLeave={() => setActivePieIndex(null)}
+                                                                    className={`flex items-center gap-3 p-2 rounded-xl transition-all cursor-pointer ${
+                                                                        isHovered
+                                                                            ? 'bg-slate-100 dark:bg-slate-800/80 scale-[1.02] shadow-sm'
+                                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center gap-1 w-12 text-xs font-extrabold text-slate-700 dark:text-slate-200">
+                                                                        <span>{star}</span>
+                                                                        <span className="text-amber-400 text-sm">★</span>
+                                                                    </div>
+                                                                    <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
+                                                                        <div
+                                                                            className="h-full rounded-full transition-all duration-500 ease-out"
+                                                                            style={{
+                                                                                width: `${percent}%`,
+                                                                                backgroundColor: color
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="w-24 text-right text-xs">
+                                                                        <span className="font-extrabold text-slate-800 dark:text-slate-100">{item.total}</span>
+                                                                        <span className="text-slate-400 text-[10px] ml-1">({percent}%)</span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-[260px] flex flex-col items-center justify-center text-slate-400 gap-2">
+                                                    <span className="text-3xl">⭐</span>
+                                                    <p className="text-xs italic">Chưa có dữ liệu phân bố đánh giá</p>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 
